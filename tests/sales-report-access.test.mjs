@@ -8,7 +8,8 @@ function harness(canLink){
  globalThis.window={matchMedia:()=>({matches:true,addEventListener(){},removeEventListener(){}}),addEventListener(){},removeEventListener(){},dispatchEvent(){}};
  const React={createElement:(type,props,...children)=>({type,props:props||{},children}),useState(initial){const i=index++;if(!(i in state))state[i]=typeof initial==='function'?initial():initial;return [state[i],value=>state[i]=value];},useEffect(fn){effects.push(fn);}};
  let requestedFull=false;
- const {Scene}=createDashboardStudio({React,useApp:()=>({demoMode:false,profile:{id:'viewer',is_active:true}}),readTargets:async(year,demo,profile,full)=>{requestedFull=full;return {scope:'company',can_link_sales:canLink,plan:{},people:[person('Sales A','Sales'),person('Accountant','Accounting'),person('Engineer','Software')],months:[]};}});
+ const readTargets={subscribe(year,demo,profile,full,listener){requestedFull=full;listener({data:{scope:'company',can_link_sales:canLink,plan:{},people:[person('Sales A','Sales'),person('Accountant','Accounting'),person('Engineer','Software')],months:[]}});return ()=>{};}};
+ const {Scene}=createDashboardStudio({React,useApp:()=>({demoMode:false,profile:{id:'viewer',is_active:true}}),readTargets});
  return {async render(){index=0;effects=[];let tree=Scene({role:'sales',lang:'en'});if(!state[1]?.members.length){const cleanups=effects.slice(0,1).map(fn=>fn());await new Promise(resolve=>setImmediate(resolve));cleanups.forEach(fn=>fn?.());index=0;tree=Scene({role:'sales',lang:'en'});}return tree;},full:()=>requestedFull};
 }
 function planets(node){if(!node||typeof node!=='object')return [];if(Array.isArray(node))return node.flatMap(planets);return [...(node.props?.className==='dash-sales-planet'?[node]:[]),...node.children.flatMap(planets)];}

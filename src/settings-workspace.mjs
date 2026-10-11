@@ -1,3 +1,4 @@
+import {observeRead,readIdentity} from './read-coordinator.mjs';
 import {createAISettings} from './ai-settings.mjs';
 import {invitationError} from './invite-error.mjs?v=20261006';
 import {demoCompanyStore} from './quotation-company.mjs?v=20261004';
@@ -159,11 +160,22 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
  };
  const AccessManagement=createAccessManagement({React,RecordEditor,Permissions,Feed,client,useApp,demoStats:()=>[demo.profiles.filter(p=>p.is_active&&!p.deleted_at).length,0,demo.custom_roles.length,(demo.crm_approval_policies||[]).filter(p=>p.is_active).length]});
  function DataEditor(props){return ['users','roles'].includes(props.kind)?h(AccessManagement,{lang:props.lang}):h(RecordEditor,props);}
- function RecordEditor({lang,kind,initialEdit=null,initialCreate=false,onSaved,onCancel,hidePermissions=false}){
+ function RecordEditor({lang,kind,active=true,initialEdit=null,initialCreate=false,onSaved,onCancel,hidePermissions=false}){
   const def=definitions[kind],{demoMode,profile}=useApp(),task=useTask(),tr=(a,b)=>lang==='th'?a:b,access=useAccess(),canEdit=demoMode||(['users','roles'].includes(kind)?profile?.is_super_admin===true:access.can('settings',kind==='workflow'?'manage_settings':'edit')),canCreate=demoMode||(['users','roles'].includes(kind)?profile?.is_super_admin===true:access.can('settings',kind==='workflow'?'manage_settings':'create'));
   const [rows,S]=React.useState([]),[people,P]=React.useState([]),[edit,E]=React.useState(null),[original,O]=React.useState(null),[query,Q]=React.useState(''),[loaded,L]=React.useState(false),[deleting,D]=React.useState(null),[statusTarget,ST]=React.useState(null),[roleOptions,RO]=React.useState([]),[statusFilter,SF]=React.useState('all'),[showDeleted,SD]=React.useState(false);
-  async function read(){if(kind==='users')RO(demoMode?copy(demo.custom_roles):await unwrap(client.from('custom_roles').select('*').order('role_key')));const data=demoMode?copy(demo[def.table]||[]):await unwrap((kind==='users'?client.from(def.table).select('*'):client.from(def.table).select('*')).order(def.key).limit(1000));S(data);L(true);if(['teams','workflow'].includes(kind))P(demoMode?[]:await unwrap(client.from('profiles').select('id,display_name,email,is_active').eq('is_active',true)));}
-  const load=()=>task.run(read);React.useEffect(()=>{load();const refresh=()=>{read().catch(e=>task.setMessage(e.message));};window.addEventListener('crm-access-changed',refresh);window.addEventListener('focus',refresh);const timer=setInterval(refresh,30000);return()=>{window.removeEventListener('crm-access-changed',refresh);window.removeEventListener('focus',refresh);clearInterval(timer);};},[kind,demoMode]);
+  const subscription=React.useRef(null);
+  const read=()=>subscription.current?.refresh();
+  const load=()=>task.run(read);
+  React.useEffect(()=>{
+   if(!active)return;
+   const stop=observeRead(client,{key:'settings-records:'+kind+':'+readIdentity(profile),userId:profile?.id,demo:demoMode,load:async signal=>{
+    const roleOptions=kind==='users'?(demoMode?copy(demo.custom_roles):await unwrap(client.from('custom_roles').select('*').order('role_key').abortSignal(signal))):[];
+    const rows=demoMode?copy(demo[def.table]||[]):await unwrap(client.from(def.table).select('*').order(def.key).limit(1000).abortSignal(signal));
+    const people=['teams','workflow'].includes(kind)&&!demoMode?await unwrap(client.from('profiles').select('id,display_name,email,is_active').eq('is_active',true).abortSignal(signal)):[];
+    return {rows,people,roleOptions};
+   }},({data,error})=>{if(error)task.setMessage(error.message);if(data){S(data.rows);P(data.people);RO(data.roleOptions);L(true);}else{S([]);P([]);RO([]);L(false);}});
+   subscription.current=stop;return stop;
+  },[kind,demoMode,readIdentity(profile),active]);
   const start=row=>{O(row?copy(row):null);E(row?{...copy(row),...(kind==='users'?profileNames(row):{})}:Object.fromEntries(def.fields.map(([key,,,type])=>[key,type==='checkbox'?true:type==='members'?[]:''])));task.setMessage('');};
   React.useEffect(()=>{if(initialCreate||initialEdit)start(initialEdit);},[initialCreate,initialEdit]);
   const save=()=>task.run(async()=>{
@@ -179,7 +191,7 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
    if(demoMode){row={...edit,...patch,[def.key]:edit[def.key]||crypto.randomUUID(),updated_at:String(Date.now())};const list=demo[def.table]||[];if(!original&&list.some(x=>x[def.key]===row[def.key]||(kind==='teams'&&(x.name_th===row.name_th||x.name_en===row.name_en))))throw Error(tr('ข้อมูลซ้ำ','Duplicate record'));demo[def.table]=original?list.map(x=>x[def.key]===row[def.key]?row:x):[...list,row];}
    else if(original){let q=client.from(def.table).update({...patch,updated_at:new Date().toISOString()}).eq(def.key,original[def.key]);if(original.updated_at)q=q.eq('updated_at',original.updated_at);row=await unwrap(q.select().maybeSingle());if(!row)throw Error(tr('ข้อมูลถูกแก้ไขหรือไม่มีสิทธิ์ กรุณาโหลดใหม่','Data changed or access denied; reload'));}
    else row=await unwrap(client.from(def.table).insert(patch).select().single());
-   await read();notifyAccessChanged();E(null);O(null);if(onSaved)onSaved();task.setMessage(tr(demoMode?'บันทึกเฉพาะโหมดทดลอง':'บันทึกลงฐานข้อมูลแล้ว',demoMode?'Saved for demo only':'Saved to database'));
+   notifyAccessChanged();E(null);O(null);if(onSaved)onSaved();task.setMessage(tr(demoMode?'บันทึกเฉพาะโหมดทดลอง':'บันทึกลงฐานข้อมูลแล้ว',demoMode?'Saved for demo only':'Saved to database'));
   });
   const remove=async row=>{if(demoMode){demo.profiles=demo.profiles.filter(p=>p.id!==row.id);}else await removeUser(client,row.id);S(old=>old.filter(p=>p.id!==row.id));notifyAccessChanged();D(null);if(edit?.id===row.id){E(null);O(null);}task.setMessage(tr(demoMode?'ลบเฉพาะโหมดทดลองแล้ว':'ลบผู้ใช้ออกจากรายชื่อและระงับการเข้าใช้แล้ว โดยเก็บประวัติงานเดิมไว้',demoMode?'Removed in demo only':'User removed and access disabled. Work history retained.'));};
   const changeStatus=()=>task.run(async()=>{
@@ -189,7 +201,7 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
     let q=client.from('profiles').update(patch).eq('id',row.id).eq('is_active',row.is_active);if(row.updated_at)q=q.eq('updated_at',row.updated_at);
     const saved=await unwrap(q.select('id').maybeSingle());if(!saved)throw Error(tr('ข้อมูลเปลี่ยนแปลง กรุณาโหลดใหม่','Data changed; reload'));
    }
-   await read();notifyAccessChanged();ST(null);task.setMessage(tr(patch.is_active?'เปิดใช้งานผู้ใช้แล้ว':'ระงับผู้ใช้แล้ว',patch.is_active?'User activated':'User suspended'));
+   notifyAccessChanged();ST(null);task.setMessage(tr(patch.is_active?'เปิดใช้งานผู้ใช้แล้ว':'ระงับผู้ใช้แล้ว',patch.is_active?'User activated':'User suspended'));
   });
   const tableFields=kind==='users'?[['display_name','ชื่อผู้ใช้งาน','Display name'],...def.fields.filter(f=>['email','job_title','department_group','role','is_active'].includes(f[0]))]:def.fields.slice(0,4);
   const visible=rows.filter(row=>(kind!=='users'||((showDeleted||!row.deleted_at)&&(statusFilter==='all'||(statusFilter==='active'?row.is_active:!row.is_active))))&&JSON.stringify(row).toLowerCase().includes(query.toLowerCase()));

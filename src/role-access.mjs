@@ -1,3 +1,4 @@
+import {observeRead,readIdentity} from './read-coordinator.mjs';
 export const ACCESS_CHANGED='crm-access-changed';
 export function effectiveRole(profile){return profile?.is_active===true&&!profile.deleted_at&&!profile.deletion_requested_at&&profile.access_active!==false?(profile.role==='custom'?profile.custom_role_key:profile.role):null;}
 export function canAccess(profile,rows,module,action='view'){
@@ -31,23 +32,25 @@ export function createRoleAccess({React,client,useApp}){
  const Context=React.createContext(empty);
  function Provider({children}){
   const {session,demoMode,profile:appProfile,syncProfile}=useApp();
-  const [state,setState]=React.useState(empty),[revision,setRevision]=React.useState(0);
-  React.useEffect(()=>{const refresh=()=>setRevision(n=>n+1);const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);window.addEventListener(ACCESS_CHANGED,refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);window.removeEventListener(ACCESS_CHANGED,refresh);};},[]);
+  const [state,setState]=React.useState(empty);
+  const subscription=React.useRef(null);
   React.useEffect(()=>{
-   let active=true;
    if(demoMode){setState({profile:appProfile,rows:[],dashboards:[],loading:false,error:''});return;}
-   if(!session?.user?.id){setState(empty);return;}
-   (async()=>{try{
-    const {data:profile,error}=await client.from('profiles').select('*').eq('id',session.user.id).single();if(error)throw error;
-    const {data:context,error:contextError}=await client.rpc('crm_access_context');if(contextError)throw contextError;profile.access_active=context?.active===true;
+   setState(empty);if(!session?.user?.id)return;
+   const stop=observeRead(client,{key:'role-access',userId:session.user.id,interval:30_000,load:async signal=>{
+    const {data:profile,error}=await client.from('profiles').select('*').eq('id',session.user.id).single().abortSignal(signal);if(error)throw error;
+    const {data:context,error:contextError}=await client.rpc('crm_access_context').abortSignal(signal);if(contextError)throw contextError;profile.access_active=context?.active===true;
     const role=effectiveRole(profile);if(!role)throw Error('บัญชีไม่มีสิทธิ์ใช้งาน / Account access is disabled');
-    const [permissions,dashboards]=await Promise.all([client.from('role_permissions').select('*').eq('role_key',role).order('module'),client.from('dashboard_type_access').select('*').eq('role_key',role).order('dashboard_type')]);
+    const [permissions,dashboards]=await Promise.all([client.from('role_permissions').select('*').eq('role_key',role).order('module').abortSignal(signal),client.from('dashboard_type_access').select('*').eq('role_key',role).order('dashboard_type').abortSignal(signal)]);
     if(permissions.error||dashboards.error)throw permissions.error||dashboards.error;
-    if(active){syncProfile?.(profile);setState({profile,rows:permissions.data||[],dashboards:dashboards.data||[],loading:false,error:''});}
-   }catch(error){if(active){syncProfile?.(null);setState({...empty,loading:false,error:error.message||String(error)});}}})();
-   return()=>{active=false;};
-  },[session?.user?.id,demoMode,revision]);
-  const value={...state,can:(module,action='view')=>demoMode||canAccess(state.profile,state.rows,module,action),refresh:()=>setRevision(n=>n+1)};
+    return {profile,rows:permissions.data||[],dashboards:dashboards.data||[]};
+   }},({data,error})=>{
+    if(error){syncProfile?.(null);setState({...empty,loading:false,error:error.message||String(error)});}
+    else if(data){syncProfile?.(data.profile);setState({...data,loading:false,error:''});}
+    else setState(empty);
+   });subscription.current=stop;return stop;
+  },[session?.user?.id,demoMode]);
+  const value={...state,can:(module,action='view')=>demoMode||canAccess(state.profile,state.rows,module,action),refresh:()=>subscription.current?.refresh()};
   return h(Context.Provider,{value},children);
  }
  const useAccess=()=>React.useContext(Context);
