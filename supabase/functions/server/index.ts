@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { microsoftMailbox, microsoftExternalId, microsoftCredentials } from "./microsoft-calendar.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -65,13 +66,13 @@ async function finishRun(id:string|null,status:string,c:any={},details:any={},er
   await adminClient.from("integration_sync_runs").update({status,records_seen:c.seen??0,records_created:c.created??0,records_updated:c.updated??0,records_failed:c.failed??0,details,error_message:error??null,finished_at:new Date().toISOString()}).eq("id",id);
 }
 async function msConfig(){
-  const c=await config("microsoft_calendar");
-  return{
-    tenant:await secret("MS365_TENANT_ID"),
-    clientId:await secret("MS365_CLIENT_ID"),
-    clientSecret:await secret("MS365_CLIENT_SECRET"),
-    calendarUser:String(c.calendar_user??"").trim()
-  };
+  return await microsoftCredentials(secret,env);
+}
+async function ownerMailbox(id:string){
+  const profile=await getProfile(id);
+  const {data,error}=await adminClient.auth.admin.getUserById(id);
+  if(error||!profile?.is_active)throw new Error("Active calendar owner required");
+  return microsoftMailbox(data.user);
 }
 async function msToken(){
   const c=await msConfig();
@@ -108,7 +109,7 @@ async function googleToken(){
   if(!r.ok)throw new Error(`Google OAuth token request failed (${r.status})`);
   return (await r.json()).access_token as string;
 }
-async function checkProvider(provider:string){
+async function checkProvider(provider:string,user:any=null){
   if(provider==="kc_account_360")return{configured:false,connected:false,message:"Direct connector disconnected; use Inventory API v1"};
   if(provider==="microsoft_intune"){
     const token=await msToken();if(!token)return{configured:false,connected:false,message:"Microsoft Graph credentials missing"};
@@ -117,11 +118,11 @@ async function checkProvider(provider:string){
     return{configured:true,connected:true,message:"Microsoft Intune connected"};
   }
   if(provider==="microsoft_calendar"){
-    const c=await msConfig(),token=await msToken();
-    if(!token||!c.calendarUser)return{configured:false,connected:false,message:"Microsoft Calendar credentials or calendar user missing"};
-    const r=await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(c.calendarUser)}/calendar?$select=id,name,owner`,{headers:{Authorization:`Bearer ${token}`}});
+    const calendarUser=microsoftMailbox(user),token=await msToken();
+    if(!token)return{configured:false,connected:false,message:"Microsoft Calendar credentials missing"};
+    const r=await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(calendarUser)}/calendar?$select=id,name,owner`,{headers:{Authorization:`Bearer ${token}`}});
     if(!r.ok)throw new Error(`Microsoft Calendar check failed (${r.status})`);
-    const cal=await r.json();return{configured:true,connected:true,account:c.calendarUser,calendar:cal.name??null};
+    const cal=await r.json();return{configured:true,connected:true,account:calendarUser,calendar:cal.name??null};
   }
   if(provider==="google_calendar"){
     const token=await googleToken();if(!token)return{configured:false,connected:false,message:"Google Calendar OAuth credentials missing"};
@@ -171,7 +172,7 @@ async function checkProvider(provider:string){
 }
 const allowedConfig:any={
   microsoft_intune:{secrets:["MS365_TENANT_ID","MS365_CLIENT_ID","MS365_CLIENT_SECRET"],config:[]},
-  microsoft_calendar:{secrets:["MS365_TENANT_ID","MS365_CLIENT_ID","MS365_CLIENT_SECRET"],config:["calendar_user"]},
+  microsoft_calendar:{secrets:["MS365_TENANT_ID","MS365_CLIENT_ID","MS365_CLIENT_SECRET"],config:[]},
   google_calendar:{secrets:["GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","GOOGLE_REFRESH_TOKEN"],config:["calendar_id"]},
   inventory:{secrets:["INVENTORY_API_KEY"],config:["base_url","assets_path","auth_header","auth_scheme"]},
   kc_account_360:{secrets:["KC_ACCOUNT360_API_KEY"],config:["base_url"]},
@@ -193,7 +194,7 @@ async function handleConfigure(req:Request){
     await adminClient.from("integration_connections").update({config:{...current,...safeConfig},updated_by:admin.user.id,updated_at:new Date().toISOString()}).eq("provider",provider);
   }
   try{
-    const result=await checkProvider(provider),status=result.connected?"connected":result.configured?"configured":"not_configured";
+    const result=await checkProvider(provider,admin.user),status=result.connected?"connected":result.configured?"configured":"not_configured";
     await setStatus(provider,status,result.connected?null:result.message??null);
     return json({ok:true,provider,status,...result});
   }catch(e){
@@ -206,13 +207,14 @@ async function handleStatus(req:Request){
   const {data}=await adminClient.from("integration_connections").select("provider,display_name,category,enabled,status,config,required_secrets,last_checked_at,last_success_at,last_error").order("category").order("provider");
   const {data:presence}=await adminClient.rpc("kc_integration_secret_presence");
   const present=new Set((presence??[]).filter((x:any)=>x.present).map((x:any)=>x.secret_name));
+  const microsoft=await msConfig();
   return json({integrations:(data??[]).map((x:any)=>{
-    const credentials_present=(x.required_secrets??[]).every((n:string)=>present.has(n)||Boolean(env(n)));
+    const credentials_present=x.provider.startsWith("microsoft_")?Boolean(microsoft.tenant&&microsoft.clientId&&microsoft.clientSecret):(x.required_secrets??[]).every((n:string)=>present.has(n)||Boolean(env(n)));
     return{
       ...x,
       status:credentials_present?x.status:"not_configured",
       enabled:credentials_present?x.enabled:false,
-      config:x.provider==="stripe"?{...(x.config??{}),webhook_url:`${supabaseUrl}/functions/v1/stripe-webhook`}:x.config,
+      config:x.provider==="stripe"?{...(x.config??{}),webhook_url:`${supabaseUrl}/functions/v1/stripe-webhook`}:x.provider==="microsoft_calendar"?{calendar_mode:"per_user",domain:"kai-com.com"}:x.config,
       credentials_present
     };
   })});
@@ -220,7 +222,7 @@ async function handleStatus(req:Request){
 async function handleCheck(req:Request){
   const admin=await requireAdmin(req);if("error"in admin)return admin.error;
   const provider=String((await req.json().catch(()=>({})))?.provider??""),run=await startRun(provider,"connection","health_check",admin.user.id);
-  try{const result=await checkProvider(provider),status=result.connected?"connected":result.configured?"configured":"not_configured";await setStatus(provider,status,result.connected?null:result.message??null);await finishRun(run,result.connected?"success":"skipped",{},result);return json({provider,status,...result});}
+  try{const result=await checkProvider(provider,admin.user),status=result.connected?"connected":result.configured?"configured":"not_configured";await setStatus(provider,status,result.connected?null:result.message??null);await finishRun(run,result.connected?"success":"skipped",{},result);return json({provider,status,...result});}
   catch(e){const message=e instanceof Error?e.message:"Connection test failed";await setStatus(provider,"error",message);await finishRun(run,"failed",{}, {},message);return json({provider,status:"error",connected:false,error:message},502);}
 }
 async function handleIntune(req:Request){
@@ -231,10 +233,10 @@ async function handleIntune(req:Request){
   while(next&&pages<5){const r=await fetch(next,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}});if(!r.ok)return json({error:`Microsoft Graph failed (${r.status})`},502);const d=await r.json();devices.push(...(d.value??[]));next=d["@odata.nextLink"]??null;pages++;}
   await setStatus("microsoft_intune","connected",null);return json({devices,truncated:Boolean(next),configured:true,status:"connected"});
 }
-async function pullMicrosoftCalendar(start:string,end:string){
-  const c=await msConfig(),token=await msToken();if(!token||!c.calendarUser)throw new Error("Microsoft Calendar is not configured");
+async function pullMicrosoftCalendar(start:string,end:string,calendarUser:string){
+  const token=await msToken();if(!token)throw new Error("Microsoft Calendar is not configured");
   const params=new URLSearchParams({startDateTime:start,endDateTime:end,"$top":"500","$select":"id,subject,bodyPreview,start,end,organizer,location,isOnlineMeeting,onlineMeeting,webLink,isCancelled,lastModifiedDateTime"});
-  let next:string|null=`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(c.calendarUser)}/calendarView?${params.toString()}`;
+  let next:string|null=`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(calendarUser)}/calendarView?${params.toString()}`;
   const rows:any[]=[];let pages=0;
   while(next&&pages<5){const r=await fetch(next,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}});if(!r.ok)throw new Error(`Microsoft Calendar pull failed (${r.status})`);const d=await r.json();rows.push(...(d.value??[]));next=d["@odata.nextLink"]??null;pages++;}
   return rows;
@@ -262,25 +264,30 @@ async function handleCalendarPull(req:Request){
   const now=new Date(),start=String(body.start??new Date(now.getTime()-30*86400000).toISOString()),end=String(body.end??new Date(now.getTime()+90*86400000).toISOString()),run=await startRun(provider,"calendar_events","pull",access.user.id);
   try{
     let events:any[]=[],calendarId="primary";
-    if(provider==="microsoft_calendar"){events=await pullMicrosoftCalendar(start,end);}
+    if(provider==="microsoft_calendar"){calendarId=microsoftMailbox(access.user);events=await pullMicrosoftCalendar(start,end,calendarId);}
     else{const result=await pullGoogleCalendar(start,end);events=result.rows;calendarId=result.calendarId;}
-    const mapped=events.map((x:any)=>externalCalendarActivity(provider,x,calendarId)).filter(Boolean);
+    const mapped=events.map((x:any)=>externalCalendarActivity(provider,x,calendarId)).filter(Boolean).map((x:any)=>provider==="microsoft_calendar"?{...x,external_id:microsoftExternalId(calendarId,x.external_event_id),owner_id:access.user.id,owner_name:access.profile.display_name||calendarId}:x);
     const ids=mapped.map((x:any)=>x.external_id);
     const {data:existing}=ids.length?await adminClient.from("activities").select("external_id").eq("external_provider",provider).in("external_id",ids):{data:[] as any[]};
     const existingSet=new Set((existing??[]).map((x:any)=>x.external_id)),created=mapped.filter((x:any)=>!existingSet.has(x.external_id)).length,updated=mapped.length-created;
+    if(provider==="microsoft_calendar"&&updated>0){const {data:canEdit,error}=await adminClient.rpc("crm_actor_can",{p_actor:access.user.id,p_module:"activities",p_action:"edit"});if(error||canEdit!==true)throw new Error("Activity edit permission required to update existing calendar events");}
     if(mapped.length){const {error}=await adminClient.from("activities").upsert(mapped,{onConflict:"external_provider,external_id"});if(error)throw new Error(error.message);}
     await setStatus(provider,"connected",null);await finishRun(run,"success",{seen:events.length,created,updated},{start,end});
     return json({ok:true,provider,seen:events.length,created,updated});
   }catch(e){const message=e instanceof Error?e.message:"Calendar pull failed";await setStatus(provider,message.includes("not configured")?"not_configured":"error",message);await finishRun(run,"failed",{}, {},message);return json({error:message,provider},message.includes("not configured")?409:502);}
 }
 function times(a:any){const start=new Date(a.scheduled_at),end=new Date(start.getTime()+3600000);return{start,end};}
-async function pushMicrosoft(a:any){
-  const c=await msConfig(),token=await msToken();if(!token||!c.calendarUser)throw new Error("Microsoft Calendar is not configured");
-  const {start,end}=times(a),body:any={subject:a.subject,body:{contentType:"HTML",content:a.description||""},start:{dateTime:start.toISOString().replace("Z",""),timeZone:"UTC"},end:{dateTime:end.toISOString().replace("Z",""),timeZone:"UTC"},isOnlineMeeting:a.type==="Online Meeting"};
+async function pushMicrosoft(a:any,calendarUser:string){
+  const token=await msToken();if(!token)throw new Error("Microsoft Calendar is not configured");
+  const {start,end}=times(a),body:any={subject:a.subject,body:{contentType:"Text",content:a.description||""},start:{dateTime:start.toISOString().replace("Z",""),timeZone:"UTC"},end:{dateTime:end.toISOString().replace("Z",""),timeZone:"UTC"},isOnlineMeeting:a.type==="Online Meeting"};
   if(a.type==="Online Meeting")body.onlineMeetingProvider="teamsForBusiness";
-  const r=await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(c.calendarUser)}/calendar/events`,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(body)});
-  if(!r.ok)throw new Error(`Microsoft Calendar create failed (${r.status})`);
-  const event=await r.json();return{id:event.id,calendarId:"primary",webUrl:event.webLink??null,meetingUrl:event.onlineMeeting?.joinUrl??null};
+  const linked=a.calendar_provider==="microsoft_calendar"&&a.external_event_id;
+  if(linked&&a.external_calendar_id!==calendarUser)throw new Error("Calendar owner changed; unlink the previous event before syncing");
+  if(!linked)body.transactionId=`cuto-${a.id}`;
+  const endpoint=`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(calendarUser)}/calendar/events`+(linked?`/${encodeURIComponent(a.external_event_id)}`:"");
+  const r=await fetch(endpoint,{method:linked?"PATCH":"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(`Microsoft Calendar sync failed (${r.status})`);
+  const event=await r.json();return{id:event.id,calendarId:calendarUser,webUrl:event.webLink??null,meetingUrl:event.onlineMeeting?.joinUrl??null};
 }
 async function pushGoogle(a:any){
   const token=await googleToken();if(!token)throw new Error("Google Calendar is not configured");
@@ -297,11 +304,22 @@ async function handleCalendarPush(req:Request){
   const body=await req.json().catch(()=>({})),provider=String(body.provider??""),activityId=String(body.activity_id??"");
   if(!["microsoft_calendar","google_calendar"].includes(provider)||!activityId)return json({error:"provider and activity_id are required"},400);
   const {data:a}=await adminClient.from("activities").select("*").eq("id",activityId).maybeSingle();if(!a)return json({error:"Activity not found"},404);
+  let calendarUser="";
+  if(provider==="microsoft_calendar"){
+    if(!a.owner_id)return json({error:"Set an activity owner before syncing"},409);
+    if(a.owner_id!==access.user.id){
+      const {data:canAssign,error}=await adminClient.rpc("crm_actor_can",{p_actor:access.user.id,p_module:"activities",p_action:"assign"});
+      if(error||canAssign!==true)return json({error:"Activity assignment permission required to sync another owner"},403);
+    }
+    calendarUser=await ownerMailbox(a.owner_id);
+  }
   const run=await startRun(provider,"calendar_event","push",access.user.id);
   try{
-    const event=provider==="microsoft_calendar"?await pushMicrosoft(a):await pushGoogle(a);
-    await adminClient.from("calendar_event_links").upsert({activity_id:activityId,provider,external_event_id:event.id,external_calendar_id:event.calendarId,web_url:event.webUrl,sync_status:"synced",last_error:null,last_synced_at:new Date().toISOString()},{onConflict:"activity_id,provider"});
-    await adminClient.from("activities").update({calendar_provider:provider,external_event_id:event.id,external_calendar_id:event.calendarId,meeting_url:event.meetingUrl,sync_status:"synced",sync_error:null,external_provider:provider,external_id:event.id,external_url:event.webUrl,external_synced_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",activityId);
+    const event=provider==="microsoft_calendar"?await pushMicrosoft(a,calendarUser):await pushGoogle(a);
+    const {error:linkError}=await adminClient.from("calendar_event_links").upsert({activity_id:activityId,provider,external_event_id:event.id,external_calendar_id:event.calendarId,web_url:event.webUrl,sync_status:"synced",last_error:null,last_synced_at:new Date().toISOString()},{onConflict:"activity_id,provider"});
+    if(linkError)throw new Error("Calendar event saved remotely; local link failed. Retry sync.");
+    const {error:activityError}=await adminClient.from("activities").update({calendar_provider:provider,external_event_id:event.id,external_calendar_id:event.calendarId,meeting_url:event.meetingUrl,sync_status:"synced",sync_error:null,external_provider:provider,external_id:provider==="microsoft_calendar"?microsoftExternalId(event.calendarId,event.id):event.id,external_url:event.webUrl,external_synced_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",activityId);
+    if(activityError)throw new Error("Calendar event saved remotely; local activity update failed. Retry sync.");
     await setStatus(provider,"connected",null);await finishRun(run,"success",{seen:1,updated:1},{external_event_id:event.id});
     return json({ok:true,provider,activity_id:activityId,...event});
   }catch(e){
