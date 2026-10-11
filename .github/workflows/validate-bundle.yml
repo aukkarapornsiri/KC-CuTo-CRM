@@ -40,6 +40,8 @@ jobs:
           grep -q "app-C2ITSffc.js" index.html
       - name: Validate integration contracts
         run: node tests/integration-contract.mjs
+      - name: Validate shared notification polling
+        run: node --test tests/notification-store.test.mjs
       - name: Validate settings source and input boundaries
         run: |
           node --check src/customer360.mjs
