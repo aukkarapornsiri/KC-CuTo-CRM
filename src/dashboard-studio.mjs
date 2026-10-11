@@ -1,3 +1,4 @@
+import {readIdentity} from './read-coordinator.mjs';
 import {TARGET_EVENT,targetMetrics} from './sales-target-model.mjs?v=20261002-targets';
 import {createSalesMotion} from './sales-motion.mjs?v=20261004-loop';
 import {createAIRobot} from './ai-robot.mjs?v=20261002-wave';
@@ -19,10 +20,14 @@ export function createDashboardStudio({React,useApp,readTargets}){
   const config=DASHBOARD_ROLES[role]||DASHBOARD_ROLES.my,i=lang==='th'?0:1,{demoMode,profile}=useApp();
   const [motion,Motion]=React.useState(()=>{try{return localStorage.getItem('kc-dashboard-motion')!=='off';}catch{return true;}});
   const [sales,Sales]=React.useState({percent:null,status:'loading',members:[],canLink:false});
-  React.useEffect(()=>{let active=true,request=0;
-   async function refresh(){const id=++request;try{const data=await readTargets(new Date().getFullYear(),demoMode,profile,role==='sales');if(!active||id!==request)return;const scope=role==='my'||data.scope==='self'?profile?.id:data.scope==='team'?'team':'company';const metrics=targetMetrics(data,{scope});const percent=data.plan&&metrics.attainment!==null?metrics.attainment*100:null;Sales({percent:Number.isFinite(percent)?percent:null,status:percent===null?'empty':'ready',canLink:role==='sales'&&data.can_link_sales===true,members:(data.people||[]).filter(p=>isSalesDashboardPerson(p)&&(scope==='company'||scope==='team'||p.id===scope)).map(p=>({id:p.id,name:p.name||'Sales',percent:targetMetrics(data,{scope:p.id}).attainment,actual:targetMetrics(data,{scope:p.id,from:new Date().getFullYear()+'-01',to:new Date().toISOString().slice(0,7)}).actual})).sort((a,b)=>b.actual-a.actual||a.id.localeCompare(b.id))});}catch{if(active&&id===request)Sales({percent:null,status:'error',members:[]});}}
-   Sales({percent:null,status:'loading',members:[],canLink:false});if(role==='ai')return;refresh();window.addEventListener(TARGET_EVENT,refresh);window.addEventListener('focus',refresh);const timer=setInterval(refresh,30000);return()=>{active=false;window.removeEventListener(TARGET_EVENT,refresh);window.removeEventListener('focus',refresh);clearInterval(timer);};
-  },[role,demoMode,profile?.id,profile?.role,profile?.department_group]);
+  React.useEffect(()=>{
+   Sales({percent:null,status:'loading',members:[],canLink:false});if(role==='ai')return;
+   return readTargets.subscribe(new Date().getFullYear(),demoMode,profile,role==='sales',({data,error})=>{
+    if(error){Sales({percent:null,status:'error',members:[],canLink:false});return;}if(!data)return;
+    const scope=role==='my'||data.scope==='self'?profile?.id:data.scope==='team'?'team':'company',metrics=targetMetrics(data,{scope}),percent=data.plan&&metrics.attainment!==null?metrics.attainment*100:null;
+    Sales({percent:Number.isFinite(percent)?percent:null,status:percent===null?'empty':'ready',canLink:role==='sales'&&data.can_link_sales===true,members:(data.people||[]).filter(p=>isSalesDashboardPerson(p)&&(scope==='company'||scope==='team'||p.id===scope)).map(p=>({id:p.id,name:p.name||'Sales',percent:targetMetrics(data,{scope:p.id}).attainment,actual:targetMetrics(data,{scope:p.id,from:new Date().getFullYear()+'-01',to:new Date().toISOString().slice(0,7)}).actual})).sort((a,b)=>b.actual-a.actual||a.id.localeCompare(b.id))});
+   });
+  },[role,demoMode,readIdentity(profile)]);
   const [reduced,Reduced]=React.useState(()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   React.useEffect(()=>{const media=window.matchMedia('(prefers-reduced-motion: reduce)'),change=()=>Reduced(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
   const fill=Math.max(0,Math.min(100,sales.percent??0)),[growth,Growth]=React.useState(0);

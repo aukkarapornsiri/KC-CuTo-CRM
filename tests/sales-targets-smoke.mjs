@@ -53,6 +53,7 @@ try { for(const width of [1440,390]) {
   await page.getByRole('button',{name:'รายงานและการวิเคราะห์',exact:true}).filter({visible:true}).click();
  }
  await page.getByRole('button',{name:'รายงานเป้ายอดขาย',exact:true}).click();
+ await page.getByText('ผลงานรายพนักงาน',{exact:true}).waitFor(); // Shared reads settle asynchronously.
  assert.ok(await page.getByText('ผลงานรายพนักงาน',{exact:true}).isVisible(),'Report retains employee details');
  await page.getByLabel('ปีเป้าหมาย (ค.ศ.)',{exact:true}).fill('2026');
  await page.locator('.crm-target-kpis article').first().getByText('1,200,000.01',{exact:true}).waitFor();
