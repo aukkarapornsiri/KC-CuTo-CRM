@@ -16,3 +16,7 @@ Balances: id, item_id, warehouse_id, quantity, serial_number. Join item_id and w
 Errors: 400 invalid query, 401 invalid/missing token, 403 no access, 405 unsupported method, 502 data unavailable. Responses are never cached.
 
 KC Account 360 direct catalog import, legacy export, and quotation push are disconnected. Existing CRM records and historical sync IDs remain intact. To integrate later, the receiving Account 360 application must implement this v1 contract and obtain an authorized CRM identity. End-to-end synchronization with Account 360 is not enabled or claimed by this release.
+
+## Sales Order stock workflow
+
+Stock movements are driven by the existing authenticated `kc-dw-sales-sync` POST feed, not this read-only API. See [SO stock contract](SO-STOCK-WORKFLOW.md) for explicit quantities, warehouse/serial fields, activation prerequisites, exactly-once posting, and cancellation reversal. The downstream inventory consumer and its authorized identity still need to be configured before external synchronization can be accepted end to end.
