@@ -39,7 +39,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Start static development site
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 --directory .. > /tmp/kuto-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory . > /tmp/kuto-http.log 2>&1 &
           echo $! > /tmp/kuto-http.pid
           sleep 2
       - name: Run desktop and mobile smoke tests
@@ -50,7 +50,7 @@ jobs:
           task_status=0
           for suite in $SMOKE_SUITES; do
             # Default login is tested without demo; existing demo suites opt in explicitly.
-            SITE_URL='http://127.0.0.1:4173/kc-kuto-crm/?demo=1' node tests/$suite.mjs > test-artifacts/$suite.log 2>&1 || task_status=1
+            SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/$suite.mjs > test-artifacts/$suite.log 2>&1 || task_status=1
             cat test-artifacts/$suite.log
           done
           exit "$task_status"
