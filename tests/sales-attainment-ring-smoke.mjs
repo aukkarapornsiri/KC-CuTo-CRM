@@ -5,8 +5,9 @@ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH
 try{for(const width of [1440,390]){
  const page=await browser.newPage({viewport:{width,height:1000}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- // Replace only the data-reader boundary; exercise the shipped dashboard and animation.
- await page.route('**/app-C2ITSffc.js*',async route=>{const response=await route.fetch();let body=await response.text();body=body.replace('readTargets:(...args)=>KCTargets.readTargets(...args)','readTargets:async()=>{if(window.ringFail)throw Error("offline");return window.ringData}');await route.fulfill({response,body});});
+ // Supply snapshots at the subscriber boundary; exercise the shipped dashboard and animation.
+ // Request sharing, freshness and retry backoff are exercised by read-coordinator.test.mjs.
+ await page.route('**/app-C2ITSffc.js*',async route=>{const response=await route.fetch();let body=await response.text();assert.ok(body.includes('readTargets:KCTargets.readTargets'),'Dashboard data boundary is present');body=body.replace('readTargets:KCTargets.readTargets','readTargets:{subscribe:(_year,_demo,_profile,_full,listener)=>{const refresh=()=>listener(window.ringFail?{data:null,error:Error("offline")}:{data:structuredClone(window.ringData),error:null});refresh();window.addEventListener("crm-sales-targets-changed",refresh);window.addEventListener("focus",refresh);return()=>{window.removeEventListener("crm-sales-targets-changed",refresh);window.removeEventListener("focus",refresh);};}}');await route.fulfill({response,body});});
  await page.addInitScript(()=>{window.ringData={scope:'company',plan:{plan_year:2026},people:[{id:'s1',name:'Sales One',active:true,department_group:'Sales'},{id:'s2',name:'Sales Two',active:true,department_group:'Sales'},{id:'a1',name:'Accounting One',active:true,department_group:'Accounting'},{id:'sx',name:'Inactive Sales',active:false,department_group:'Sales'}],months:[{month:'2026-10-01',company_target:200,company_actual:75,employees:[{profile_id:'s1',target:100,actual:50},{profile_id:'s2',target:100,actual:25},{profile_id:'a1',target:100,actual:999},{profile_id:'sx',target:100,actual:777}]}]};});
  await page.goto(process.env.SITE_URL||'http://127.0.0.1:4179/kc-kuto-crm/');
  await page.getByRole('button',{name:'เข้าใช้งานโหมดทดลอง',exact:true}).click();
