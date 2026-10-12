@@ -1,28 +1,41 @@
 export const quotationHeaderCSS=`
 /* Shared quotation header for preview, print and Save as PDF. */
-:is(.kc-quotation-preview,.kc-print-root) .kc-print-header,.kc-quotation-preview>header{display:grid;grid-template-columns:1.22fr 1fr;gap:10mm;align-items:start;padding-bottom:4mm}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company{gap:1mm;color:#233b55;font-size:var(--document-size,10pt);line-height:1.4}
-:is(.kc-quotation-preview,.kc-print-root) .kc-company-logo{width:90px;height:32px;margin:0 0 2mm;object-position:left center}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company strong{font-size:13pt;font-weight:400;color:#233b55}
-.kc-company-name-th{font-size:11pt;margin-bottom:1mm}.kc-company-contact{display:flex;align-items:flex-start;gap:2mm}.kc-company-contact svg{width:14px;height:14px;flex:none;color:var(--document-accent,#0aada9)}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon{height:34px;min-height:34px;margin:0 0 1mm;padding:2px 10px}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon img.kc-quote-ribbon-logo{height:29px;width:calc(var(--document-logo-size,140px) * .55)}
+:is(.kc-quotation-preview,.kc-print-root) .kc-print-header,.kc-quotation-preview>header{display:grid;grid-template-columns:1.2fr 1fr;gap:6mm;align-items:start;padding-bottom:2mm}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company{gap:1px;color:#0b203b;font-size:10px;line-height:1.3}
+:is(.kc-quotation-preview,.kc-print-root) .kc-company-logo{width:30mm;height:11mm;margin:0;object-position:left center}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company strong{font-size:15px;font-weight:400;color:#233b55}
+.kc-company-name-th{font-size:12px;margin:0}.kc-company-contact{display:flex;align-items:flex-start;gap:5px}.kc-company-contact svg{width:12px;height:12px;flex:none;color:var(--document-accent,#0aada9)}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon{height:12mm;min-height:12mm;margin:0;padding:0 2mm}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon img.kc-quote-ribbon-logo{height:12mm;width:32mm}
 .kc-quote-title-row{display:flex;align-items:center;justify-content:space-between;gap:2mm}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id h2{margin:0;padding:0;border:0;color:#11263f;font-size:20pt;font-weight:600;text-align:left!important}
-.kc-quote-print-status{background:var(--document-accent,#0aada9);color:white;border-radius:30px;padding:1.5mm 3mm;font-size:9pt}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl{display:grid;grid-template-columns:1fr 1fr;gap:1mm;margin:1mm 0 0}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div{display:flex;flex-direction:column;gap:1mm;padding:2mm;border:1px solid #e1e9ec;border-radius:7px;font-size:9pt;min-width:0}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div:first-child{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.6fr;background:#ecf5f7;border:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id h2{margin:0;padding:0;border:0;color:#11263f;font-size:23px;font-weight:600;text-align:left!important}
+.kc-quote-print-status{background:var(--document-accent,#0aada9);color:white;border-radius:30px;padding:3px 9px;font-size:9px}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:4px 0 0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div{display:flex;flex-direction:column;gap:2px;padding:3px 7px;border:1px solid #e1e9ec;border-radius:7px;font-size:9px;min-width:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div:first-child{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.7fr;align-items:center;gap:8px;background:#edf5f8;border:0;padding:4px 7px;font-size:10px}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dt{color:#4d647a}.kc-quote-preview-id dd{overflow-wrap:anywhere}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dd{font-weight:400;text-align:left}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party{display:grid;grid-template-columns:1.15fr 1fr;gap:3mm;padding:2mm 0 0;margin-bottom:1mm}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section{border:1px solid #d7e5e8;border-radius:6px;padding:3mm;display:flex;flex-direction:column;gap:1mm;font-size:9pt;min-width:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party{display:grid;grid-template-columns:1.15fr 1fr;gap:3mm;padding:0;margin:4mm 0 1mm}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section{border:1px solid #d7e5e8;border-radius:6px;padding:3mm;display:flex;flex-direction:column;gap:1mm;font-size:9px;min-width:0}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:nth-child(2){background:linear-gradient(120deg,#f4fdfd,white)}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party h3{font-size:11pt;font-weight:400;color:var(--document-accent,#0aada9);margin:0 0 2mm}
-.kc-quote-customer-fields,.kc-quote-prepared-fields{margin:0}.kc-quote-customer-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5mm 2mm;padding-top:2mm}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party h3{font-size:12px;font-weight:400;color:var(--document-accent,#0aada9);margin:0 0 3px;padding-bottom:3px}
+.kc-quote-customer-fields,.kc-quote-prepared-fields{margin:0}.kc-quote-customer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 8px;padding-top:3px}
 .kc-quote-customer-fields dt{color:var(--document-accent,#0aada9)}.kc-quote-customer-fields dd,.kc-quote-prepared-fields dd{margin:1mm 0 0;overflow-wrap:anywhere}
-.kc-quote-prepared-fields{border-top:1px solid #a4e0df;padding-top:1mm}.kc-quote-prepared-fields>div{display:grid;grid-template-columns:1fr 1.3fr;gap:2mm;padding:1mm 0;font-size:8pt}.kc-quote-prepared-fields dt{color:#738796}.kc-quote-prepared-fields dd{margin:0}
+.kc-quote-prepared-fields{border-top:1px solid #a4e0df;padding-top:1mm}.kc-quote-prepared-fields>div{display:grid;grid-template-columns:1fr 1.35fr;gap:4px;padding:1px 0;font-size:10px;line-height:1.5}.kc-quote-prepared-fields dt{color:#738796}.kc-quote-prepared-fields dd{margin:0}
 :is(.kc-quotation-preview,.kc-print-root)[data-design-prepared=false] .kc-quote-preview-party{grid-template-columns:1fr}
+
+/* Account 360 quotation geometry; keep the divider and four customer fields. */
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div:first-child dd{border-left:1px solid #adc8d1;padding-left:8px;font-size:12px}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company>small{font-size:9px}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-customer-fields>div{min-width:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-customer-fields dt,:is(.kc-quotation-preview,.kc-print-root) .kc-quote-customer-fields dd{font-size:10px;font-weight:400}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:first-child>strong{font-size:11px;font-weight:400}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:nth-child(2) h3{border-bottom:1px solid #a4e0df;padding-bottom:5px}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields{border-top:0;display:grid;gap:3px;padding-top:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields dt,:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields dd{font-size:10px;font-weight:400}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon{background:linear-gradient(135deg,transparent 22%,#e2f5f4 22% 30%,#fff 30% 34%,#5ec4c2 34% 48%,#d3f0ee 48% 54%,#edf9f8 54%)}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-stripe{background:none}
+:is(.kc-quotation-preview,.kc-print-root)[data-design-header=line] .kc-quote-brand-ribbon,:is(.kc-quotation-preview,.kc-print-root)[data-design-header=plain] .kc-quote-brand-ribbon{background:transparent}
 `;
 /** Isolated A4 print document: no dialog clipping or mobile layout rules. */
 export const quotationPrintCSS=`
