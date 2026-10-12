@@ -42,3 +42,9 @@ A cost increase creates a linked notification for each affected quotation owner 
 Requested sender schedule: 08:30 and 14:00 Asia/Bangkok daily (UTC cron `30 1 * * *` and `0 7 * * *`). These schedules are documented, NOT activated. Configure the sender after Netcube supports an authorized export/API and an integration identity is assigned. Log failures and retry the same batch. Never report a failed run as synced.
 
 Validation: tests/netcube-ingest.sql executes in a rollback transaction. Verified creation, idempotent retries, cost-rise notices, quote snapshot preservation, stale rejection, decreases without alerts, and unauthenticated denial. No production product/quotation test data persists.
+
+## Manual Sync in CRM
+
+Products & Inventory → Sync Netcube (requires inventory import and edit). Open Netcube in a separate tab, authenticate with Microsoft, clear filters and Export Excel. Select the freshly exported .xlsx file, confirm it is current and uses cost excluding VAT, then Sync. The result shows created/updated/unchanged products and alerts. No scheduled sync is enabled.
+
+The Excel path assigns source_id `excel:<UPPERCASE PART NUMBER>` because the export contains no stable internal product ID. A changed Part Number cannot be safely inferred: reconcile it before import. Retrying within the open dialog reuses the same batch ID. New file selection creates a new batch. The browser reads the workbook locally and only transmits validated product fields.
