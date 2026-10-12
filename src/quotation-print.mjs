@@ -24,6 +24,7 @@ export const quotationHeaderCSS=`
 .kc-quote-prepared-fields{border-top:1px solid #a4e0df;padding-top:1mm}.kc-quote-prepared-fields>div{display:grid;grid-template-columns:1fr 1.35fr;gap:4px;padding:1px 0;font-size:10px;line-height:1.5}.kc-quote-prepared-fields dt{color:#738796}.kc-quote-prepared-fields dd{margin:0}
 :is(.kc-quotation-preview,.kc-print-root)[data-design-prepared=false] .kc-quote-preview-party{grid-template-columns:1fr}
 
+.kc-quote-brand-ribbon img.kc-quote-ribbon-logo{position:relative;z-index:1}
 /* Account 360 quotation geometry; keep the divider and four customer fields. */
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div:first-child dd{border-left:1px solid #adc8d1;padding-left:8px;font-size:12px}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company>small{font-size:9px}
@@ -34,7 +35,7 @@ export const quotationHeaderCSS=`
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields{border-top:0;display:grid;gap:3px;padding-top:0}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields dt,:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields dd{font-size:10px;font-weight:400}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon{background:linear-gradient(135deg,transparent 22%,#e2f5f4 22% 30%,#fff 30% 34%,#5ec4c2 34% 48%,#d3f0ee 48% 54%,#edf9f8 54%)}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-stripe{background:none}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-stripe{background:none;width:100%;height:100%;position:absolute;inset:0;z-index:0;pointer-events:none}
 :is(.kc-quotation-preview,.kc-print-root)[data-design-header=line] .kc-quote-brand-ribbon,:is(.kc-quotation-preview,.kc-print-root)[data-design-header=plain] .kc-quote-brand-ribbon{background:transparent}
 `;
 /** Isolated A4 print document: no dialog clipping or mobile layout rules. */
