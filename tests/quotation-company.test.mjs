@@ -5,3 +5,6 @@ const company={logo_url:'company.png',company_name:'Company',company_details:{sa
 const next=applyCompanyQuotationDefaults(template,company);
 assert.equal(next.company_logo_url,'company.png');assert.equal(next.logo_url,'ribbon.png');assert.equal(next.sales_name,'Sales Team');assert.equal(next.company_phone,'021234567');assert.equal(next.company_email,'sales@example.com');assert.equal(next.sales_line,'@kaicom');assert.equal(template.company_phone,'old');assert.equal(JSON.parse(JSON.stringify(next)).sales_line,'@kaicom');
 console.log('PASS company branding, sales contact and immutable quotation snapshot');
+const stored=applyCompanyQuotationDefaults({...template,id:'saved',company_name_th:'Saved Name',company_phone:'Saved Phone',company_email:''},company);
+assert.equal(stored.company_name_th,'Saved Name');assert.equal(stored.company_phone,'Saved Phone');assert.equal(stored.company_email,'');assert.equal(stored.company_logo_url,'company.png');
+console.log('PASS saved quotation company fields and deliberate blanks override central defaults');

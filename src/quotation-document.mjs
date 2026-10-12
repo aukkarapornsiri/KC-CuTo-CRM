@@ -1,3 +1,4 @@
+import {saveQuotationTemplate,QUOTATION_TEMPLATE_CHANGED} from './quotation-template-save.mjs';
 import {quotationPreparedRows} from './quotation-prepared.mjs';
 import {documentProfile,createDocumentProfileFields} from './profile-document-defaults.mjs?v=20261007-profile';
 import {quotationHeaderCSS,printQuotation} from './quotation-print.mjs?v=20261007-a4';
@@ -48,7 +49,7 @@ export function createQuotationDocumentComponents({React,client,useApp}){
   const textarea=(props={})=>h('textarea',props);
   const select=(props,children)=>h('select',props,children);
   const templateLabel=(template,key,lang)=>template[key+'_'+(lang==='th'?'th':'en')]||template[key+'_th']||template[key+'_en']||'';
-  const brandRibbon=(logo,accent)=>h('div',{className:'kc-quote-brand-ribbon',style:{'--quote-brand-accent':accent||'#0AADA9'}},h('svg',{'aria-hidden':true,className:'kc-quote-brand-stripe',viewBox:'0 0 600 78',preserveAspectRatio:'none'},h('polygon',{points:'90,0 600,0 600,78 12,78',fill:'#edf9f8'}),h('polygon',{points:'90,0 132,0 54,78 12,78',fill:'#e2f5f4'}),h('polygon',{points:'132,0 156,0 78,78 54,78',fill:'#ffffff'}),h('polygon',{points:'156,0 240,0 162,78 78,78',fill:accent||'#0AADA9',fillOpacity:.66}),h('polygon',{points:'240,0 276,0 198,78 162,78',fill:'#d3f0ee'})),logo&&h('img',{src:logo,alt:'Company logo',className:'kc-quote-ribbon-logo'}));
+  const brandRibbon=(logo,accent)=>h('div',{className:'kc-quote-brand-ribbon',style:{'--quote-brand-accent':accent||'#0AADA9'}},h('svg',{'aria-hidden':true,className:'kc-quote-brand-stripe',viewBox:'0 0 600 78',preserveAspectRatio:'none'},h('polygon',{points:'90,0 600,0 600,78 12,78',fill:accent||'#0AADA9',fillOpacity:.07}),h('polygon',{points:'90,0 132,0 54,78 12,78',fill:accent||'#0AADA9',fillOpacity:.12}),h('polygon',{points:'132,0 156,0 78,78 54,78',fill:'#ffffff'}),h('polygon',{points:'156,0 240,0 162,78 78,78',fill:accent||'#0AADA9',fillOpacity:.66}),h('polygon',{points:'240,0 276,0 198,78 162,78',fill:accent||'#0AADA9',fillOpacity:.18})),logo&&h('img',{src:logo,alt:'Company logo',className:'kc-quote-ribbon-logo'}));
   function useTemplateImages(value){
     const [images,setImages]=React.useState({logo:'',signature:'',error:'',loading:false});
     React.useEffect(()=>{let live=true;setImages({logo:'',signature:'',error:'',loading:true});(async()=>{try{
@@ -61,14 +62,15 @@ export function createQuotationDocumentComponents({React,client,useApp}){
   function useTemplate(open,existingSnapshot){
     const {demoMode}=useApp();
     const [template,setTemplate]=React.useState(()=>existingSnapshot&&Object.keys(existingSnapshot).length?{...DEFAULT_QUOTATION_TEMPLATE,...existingSnapshot}:copy(DEFAULT_QUOTATION_TEMPLATE));
-    const [ready,setReady]=React.useState(false);
+    const [ready,setReady]=React.useState(false),[revision,setRevision]=React.useState(0);
+    React.useEffect(()=>{const refresh=()=>setRevision(v=>v+1);window.addEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);return()=>window.removeEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);},[]);
     React.useEffect(()=>{if(!open){setReady(false);return;}let live=true;setReady(false);(async()=>{try{
       if(existingSnapshot&&Object.keys(existingSnapshot).length){let resolved=existingSnapshot;if(!existingSnapshot.logo_storage_key&&!existingSnapshot.logo_url){try{const current=demoMode?demoTemplate:await unwrap(client.from('crm_quotation_templates').select('logo_storage_key,logo_url').eq('is_default',true).eq('status','active').maybeSingle());resolved=withMissingQuotationLogo(existingSnapshot,current);}catch{ /* Preserve the saved document if current branding is unavailable. */ }}if(live)setTemplate({...DEFAULT_QUOTATION_TEMPLATE,...resolved});return;}
       if(demoMode){if(live)setTemplate(applyCompanyQuotationDefaults(copy(demoTemplate),demoCompanyStore.value));return;}
       const row=await unwrap(client.from('crm_quotation_templates').select('*').eq('is_default',true).eq('status','active').maybeSingle());
       const company=await unwrap(client.from('company_settings').select('company_name,company_name_en,logo_url,phone,email,tax_id,company_details').eq('id',1).single());
       if(live)setTemplate(applyCompanyQuotationDefaults({...DEFAULT_QUOTATION_TEMPLATE,...(row||{})},company));
-    }catch{if(live)setTemplate(copy(DEFAULT_QUOTATION_TEMPLATE));}finally{if(live)setReady(true);}})();return()=>{live=false;};},[open,demoMode,JSON.stringify(existingSnapshot||{})]);
+    }catch{if(live)setTemplate(copy(DEFAULT_QUOTATION_TEMPLATE));}finally{if(live)setReady(true);}})();return()=>{live=false;};},[open,demoMode,revision,JSON.stringify(existingSnapshot||{})]);
     return [template,setTemplate,!ready];
   }
 
@@ -99,10 +101,10 @@ export function createQuotationDocumentComponents({React,client,useApp}){
     React.useEffect(()=>{const d=ref.current;if(open&&d&&!d.open)d.showModal();if(!open&&d?.open)d.close();},[open]);
     React.useEffect(()=>{if(!open)return;let live=true;(async()=>{setBusy(true);setError('');try{
       const row=demoMode?copy(demoTemplate):await unwrap(client.from('crm_quotation_templates').select('*').eq('is_default',true).maybeSingle());
-      const companyRow=demoMode?(demoCompanyStore.value||{id:1,logo_url:''}):await unwrap(client.from('company_settings').select('id,logo_url,updated_at').eq('id',1).single());if(live){setCompany(companyRow);setCompanyLogo(companyRow.logo_url||'');}
-      const next={...DEFAULT_QUOTATION_TEMPLATE,...(row||{})};if(live){setValue(next);setSaved(copy(next));}
+      const companyRow=demoMode?(demoCompanyStore.value||{id:1,logo_url:''}):await unwrap(client.from('company_settings').select('id,logo_url,updated_at,company_name,company_name_en,phone,email,tax_id,company_details').eq('id',1).single());if(live){setCompany(companyRow);setCompanyLogo(companyRow.logo_url||'');}
+      const next=row?{...DEFAULT_QUOTATION_TEMPLATE,...row}:applyCompanyQuotationDefaults(copy(DEFAULT_QUOTATION_TEMPLATE),companyRow);if(live){setValue(next);setSaved(copy(next));}
     }catch(e){if(live)setError(e.message||String(e));}finally{if(live)setBusy(false);}})();return()=>{live=false;};},[open,demoMode]);
-    const saveCompanyLogo=async()=>{if(busy||!company)return;setBusy(true);setError('');setMessage('');try{let row;if(demoMode){row={...company,logo_url:companyLogo};demoCompanyStore.value={...(demoCompanyStore.value||{}),...row};}else{let query=client.from('company_settings').update({logo_url:companyLogo,updated_at:new Date().toISOString()}).eq('id',1);query=company.updated_at?query.eq('updated_at',company.updated_at):query.is('updated_at',null);row=await unwrap(query.select('id,logo_url,updated_at').maybeSingle());if(!row)throw Error(tr('ข้อมูลบริษัทเปลี่ยนแล้ว กรุณาปิดและเปิดการตั้งค่าใหม่','Company settings changed; reopen settings'));}setCompany(row);setMessage(tr('บันทึกโลโก้บริษัทซ้ายบนแล้ว','Top-left company logo saved'));}catch(e){setError(e.message||String(e));}finally{setBusy(false);}};
+    const saveCompanyLogo=async()=>{if(busy||!company)return;setBusy(true);setError('');setMessage('');try{let row;if(demoMode){row={...company,logo_url:companyLogo};demoCompanyStore.value={...(demoCompanyStore.value||{}),...row};}else{let query=client.from('company_settings').update({logo_url:companyLogo,updated_at:new Date().toISOString()}).eq('id',1);query=company.updated_at?query.eq('updated_at',company.updated_at):query.is('updated_at',null);row=await unwrap(query.select('id,logo_url,updated_at').maybeSingle());if(!row)throw Error(tr('ข้อมูลบริษัทเปลี่ยนแล้ว กรุณาปิดและเปิดการตั้งค่าใหม่','Company settings changed; reopen settings'));}setCompany(row);window.dispatchEvent(new Event(QUOTATION_TEMPLATE_CHANGED));setMessage(tr('บันทึกโลโก้บริษัทซ้ายบนแล้ว','Top-left company logo saved'));}catch(e){setError(e.message||String(e));}finally{setBusy(false);}};
     const update=(key,next)=>setValue(old=>({...old,[key]:next}));
     const chooseImage=async(kind,event)=>{const file=event.target.files?.[0];event.target.value='';if(!file||busy)return;setBusy(true);setError('');setMessage('');try{
       const url=await readQuotationImage(file),key=demoMode?'':await uploadQuotationAsset(client,file,profile?.id,kind);
@@ -114,14 +116,16 @@ export function createQuotationDocumentComponents({React,client,useApp}){
       if(!String(value.name||'').trim())throw Error(tr('กรุณาระบุชื่อแม่แบบ','Template name is required'));
       if(!colorOk(value.accent_color))throw Error(tr('สีหลักต้องเป็นรหัส HEX 6 หลัก','Accent color must be a 6-digit HEX value'));
       const term=resolvePaymentTerm(value.default_payment_term_code,value.default_payment_terms);
-      const patch={...value,design_options:normalizeDesign(value.design_options),name:String(value.name).trim(),accent_color:String(value.accent_color).toUpperCase(),
+      const patch={...Object.fromEntries(Object.entries(value).filter(([key])=>Object.hasOwn(DEFAULT_QUOTATION_TEMPLATE,key)||['created_at','updated_at','updated_by'].includes(key))),design_options:normalizeDesign(value.design_options),name:String(value.name).trim(),accent_color:String(value.accent_color).toUpperCase(),
         default_payment_terms:term.days,default_payment_term_code:term.code,default_tax_rate:Number(value.default_tax_rate||0),default_wht_rate:Number(value.default_wht_rate||0),
         updated_at:new Date().toISOString(),updated_by:profile?.id||null};
-      if(demoMode){demoTemplate=copy(patch);setValue(copy(patch));setSaved(copy(patch));setMessage(tr('บันทึกแม่แบบในโหมดทดลองแล้ว','Demo template saved'));return;}
-      let row;
-      if(value.id)row=await unwrap(client.from('crm_quotation_templates').update(patch).eq('id',value.id).eq('updated_at',saved.updated_at).select().maybeSingle());
-      else{const {id,created_at,...createPatch}=patch;row=await unwrap(client.from('crm_quotation_templates').insert({...createPatch,is_default:true,status:'active'}).select().single());}
-      if(!row)throw Error(tr('แม่แบบถูกแก้ไขโดยผู้อื่น กรุณาโหลดใหม่','Template changed; reload'));
+      if(company&&companyLogo!==(company.logo_url||'')){
+        if(demoMode){const nextCompany={...company,logo_url:companyLogo};demoCompanyStore.value={...(demoCompanyStore.value||{}),...nextCompany};setCompany(nextCompany);}
+        else{let query=client.from('company_settings').update({logo_url:companyLogo,updated_at:new Date().toISOString()}).eq('id',1);query=company.updated_at?query.eq('updated_at',company.updated_at):query.is('updated_at',null);const companySaved=await unwrap(query.select('id,logo_url,updated_at').maybeSingle());if(!companySaved)throw Error(tr('ข้อมูลบริษัทเปลี่ยนแล้ว กรุณาปิดและเปิดการตั้งค่าใหม่','Company settings changed; reopen settings'));setCompany(companySaved);}
+      }
+      if(demoMode){demoTemplate={...copy(patch),id:patch.id||'demo-template'};setValue(copy(demoTemplate));setSaved(copy(demoTemplate));window.dispatchEvent(new Event(QUOTATION_TEMPLATE_CHANGED));setMessage(tr('บันทึกแม่แบบในโหมดทดลองแล้ว','Demo template saved'));return;}
+      const row=await saveQuotationTemplate(client,patch,saved);
+      window.dispatchEvent(new Event(QUOTATION_TEMPLATE_CHANGED));
       setValue({...DEFAULT_QUOTATION_TEMPLATE,...row});setSaved(copy({...DEFAULT_QUOTATION_TEMPLATE,...row}));setMessage(tr('บันทึกแม่แบบใบเสนอราคาแล้ว','Quotation template saved'));
     }catch(e){setError(e.message||String(e));}finally{setBusy(false);}};
     const textField=(key,th,en,type='text')=>field(tr(th,en),input({type,'aria-label':tr(th,en),value:value[key]??'',disabled:busy,onChange:e=>update(key,type==='number'?e.target.value:e.target.value)}));
@@ -137,26 +141,26 @@ export function createQuotationDocumentComponents({React,client,useApp}){
           h('section',null,h('h3',null,tr('ข้อมูลที่แสดง','Visible fields')),h('div',{className:'kc-quote-checks'},check('show_item_code','แสดงรหัสสินค้า','Show item code'),check('show_item_discount','แสดงส่วนลด','Show discount'),check('show_gp','แสดง GP','Show GP'),check('show_margin','แสดง Margin','Show margin'),check('show_wht','แสดงหัก ณ ที่จ่าย','Show withholding tax'))),
           h('section',null,h('h3',null,tr('ลายเซ็นและท้ายเอกสาร','Signatures & footer')),h('div',{className:'kc-quote-template-grid'},imageField('seller-signature','เลือกไฟล์ลายเซ็นผู้ขาย','Browse seller signature'),textField('signature_prepared_label_th','ชื่อช่องผู้ขาย (TH)','Seller label (TH)'),textField('signature_prepared_label_en','ชื่อช่องผู้ขาย (EN)','Seller label (EN)'),textField('signature_reviewed_label_th','ผู้ตรวจสอบ (TH)','Reviewed label (TH)'),textField('signature_approved_label_th','ผู้อนุมัติ (TH)','Approved label (TH)'),field(tr('ข้อความท้ายเอกสารภาษาไทย','Thai footer'),textarea({'aria-label':tr('ข้อความท้ายเอกสารภาษาไทย','Thai footer'),value:value.footer_text_th||'',disabled:busy,onChange:e=>update('footer_text_th',e.target.value),rows:2}),true)))
         ),h('aside',{className:'qd-preview-pane'},h('div',{className:'qd-preview-caption'},tr('ตัวอย่างเอกสาร · ข้อมูลสมมติ','Live preview · Sample data')),renderQuotationPreview({template:{...value,company_logo_url:companyLogo},images,preview:false,docLang:lang,editing:{code:'SQ-SAMPLE',issue_date:isoDate(),valid_until:addDays(isoDate(),30),customer_name:tr('บริษัทลูกค้าตัวอย่าง จำกัด','Sample Customer Co., Ltd.'),counterparty_address:tr('ที่อยู่ลูกค้าตัวอย่าง กรุงเทพมหานคร','Sample address, Bangkok'),prepared_by:tr('ชื่อพนักงานขาย','Sales representative'),tax_rate:value.default_tax_rate,wht_rate:0,payment_term_code:value.default_payment_term_code,note:tr('ขอบคุณที่ไว้วางใจเรา','Thank you for your business'),payment_instructions:value.default_payment_instructions,currency:value.default_currency},totals:{items:[{name:tr('สินค้า / บริการตัวอย่าง','Sample product / service'),code:'ITEM-001',qty:2,unit:'Unit',price:1500,total:3000}],subtotal:3000,discount:0,vat:3000*Number(value.default_tax_rate)/100,net_total:3000*(1+Number(value.default_tax_rate)/100)}}))),
-        h('footer',{className:'kc-quote-dialog-footer'},button(tr('ยกเลิก','Cancel'),onClose,busy),h('button',{type:'submit',className:'crm-save',disabled:busy},tr('บันทึกการตั้งค่า','Save settings')))
+        h('footer',{className:'kc-quote-dialog-footer',style:{flexWrap:'wrap'}},h('span',{style:{flex:'1 1 100%',color:error?'#b42318':'#087f7c'}},error||message||''),button(tr('ยกเลิก','Cancel'),onClose,busy),h('button',{type:'submit',className:'crm-save',disabled:busy},busy?tr('กำลังบันทึก…','Saving…'):tr('บันทึกการตั้งค่า','Save settings')))
       )
     );
   }
 
   function QuotationDialog({lang='th',editing,setEditing,busy=false,error='',lookup={},masters=[],onSave,onClose,onOpenTemplateSettings,initialPreview=false,canViewFinancials=false,onCreateCustomer,onCreatePrice}){
     const {demoMode,profile}=useApp(),tr=(th,en)=>lang==='th'?th:en,ref=React.useRef(null),[preview,setPreview]=React.useState(!!initialPreview),[printError,setPrintError]=React.useState(''),[validationError,setValidationError]=React.useState('');
-    const snapshot=editing?.template_snapshot&&typeof editing.template_snapshot==='object'&&!Array.isArray(editing.template_snapshot)?editing.template_snapshot:null;
+    const snapshot=editing?.id&&editing?.template_snapshot&&typeof editing.template_snapshot==='object'&&!Array.isArray(editing.template_snapshot)?editing.template_snapshot:null;
     const [template,,templateLoading]=useTemplate(!!editing,snapshot);
     const images=useTemplateImages(template);
     React.useEffect(()=>{const d=ref.current;if(editing&&d&&!d.open)d.showModal();return()=>{if(d?.open)d.close();};},[!!editing]);
     React.useEffect(()=>{if(editing)setPreview(!!initialPreview);},[editing?.id,initialPreview]);
-    React.useEffect(()=>{if(!editing||templateLoading)return;setEditing(old=>{if(!old)return old;const seller=(lookup.profiles||[]).find(p=>p.id===old.owner_id)||profile;const person=old.document_profile||documentProfile(seller);const isNew=!old.id,issue=old.issue_date||isoDate(),term=resolvePaymentTerm(isNew?template.default_payment_term_code:old.payment_term_code,isNew?template.default_payment_terms:old.payment_terms);const next={...old,
+    React.useEffect(()=>{if(!editing||templateLoading)return;setEditing(old=>{if(!old)return old;if(!old.id&&old.template_snapshot&&Object.keys(old.template_snapshot).length)return {...old,template_id:template.id||null,template_snapshot:templateSnapshot(template)};const seller=(lookup.profiles||[]).find(p=>p.id===old.owner_id)||profile;const person=old.document_profile||documentProfile(seller);const isNew=!old.id,issue=old.issue_date||isoDate(),term=resolvePaymentTerm(isNew?template.default_payment_term_code:old.payment_term_code,isNew?template.default_payment_terms:old.payment_terms);const next={...old,
       issue_date:issue,payment_terms:term.days,payment_term_code:term.code,tax_rate:isNew?Number(template.default_tax_rate??7):Number(old.tax_rate??template.default_tax_rate??7),wht_rate:isNew?Number(template.default_wht_rate??0):Number(old.wht_rate??template.default_wht_rate??0),
       document_discount:Number(old.document_discount??0),currency:isNew?(template.default_currency||'THB'):(old.currency||template.default_currency||'THB'),document_language:old.document_language||lang,
       payment_instructions:old.payment_instructions||template.default_payment_instructions||'',document_profile:isNew?{...person,line_id:person.line_id||template.sales_line||''}:old.document_profile,prepared_by:old.prepared_by||(isNew?(person.name||template.sales_name||''):''),
       prepared_by_email:old.prepared_by_email||(isNew?(person.email||template.sales_email||''):''),prepared_by_phone:old.prepared_by_phone||(isNew?(person.phone||template.sales_phone||template.company_phone||''):''),valid_until:old.valid_until||addDays(issue,term.days),
       items:Array.isArray(old.items)&&old.items.length?old.items.map(normalizeQuotationItem):[normalizeQuotationItem()],
-      template_id:old.template_id||template.id||null,template_snapshot:old.template_snapshot&&Object.keys(old.template_snapshot).length?old.template_snapshot:templateSnapshot(template)
-    };return JSON.stringify(next)===JSON.stringify(old)?old:next;});},[templateLoading,template?.id,!!editing]);
+      template_id:old.template_id||template.id||null,template_snapshot:!isNew&&old.template_snapshot&&Object.keys(old.template_snapshot).length?old.template_snapshot:templateSnapshot(template)
+    };return JSON.stringify(next)===JSON.stringify(old)?old:next;});},[templateLoading,template?.id,template?.updated_at,!!editing]);
     if(!editing)return null;
     const docLang=editing.document_language||lang,docTr=(th,en)=>docLang==='th'?th:en;
     const set=(key,value)=>setEditing(old=>({...old,[key]:value}));
