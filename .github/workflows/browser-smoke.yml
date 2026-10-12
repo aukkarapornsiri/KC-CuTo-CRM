@@ -22,7 +22,7 @@ jobs:
           - group: regression
             suites: internal-workspace-smoke opportunity-dialog-smoke settings-workspace-smoke
           - group: customer-sales
-            suites: login-layout-smoke quick-create-smoke customer360-smoke customer360-create-smoke header-ai-chat-smoke quotation-layout-smoke quotation-details-smoke
+            suites: login-layout-smoke quick-create-smoke customer360-smoke customer360-create-smoke header-ai-chat-smoke quotation-layout-smoke quotation-details-smoke quotation-print-smoke
           - group: navigation-settings
             suites: sales-targets-smoke sales-attainment-ring-smoke dashboard-layout-smoke navigation-smoke smoke settings-cards-smoke settings-smoke master-data-smoke
           - group: operations
@@ -37,6 +37,9 @@ jobs:
           npm init -y
           npm install --save-dev playwright
           npx playwright install --with-deps chromium
+      - name: Install PDF text verification
+        if: matrix.group == 'customer-sales'
+        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
       - name: Start static development site
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory . > /tmp/kuto-http.log 2>&1 &
