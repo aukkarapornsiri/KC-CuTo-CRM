@@ -1,0 +1,45 @@
+begin;
+select set_config('request.jwt.claim.sub',(select id::text from public.profiles where is_super_admin and private.crm_active_user(id) limit 1),true);
+do $test$
+declare wid uuid; mid uuid; lid uuid; iid uuid; r jsonb; cat text; actor uuid:=gen_random_uuid(); supervisor uuid:=auth.uid();
+begin
+ insert into public.crm_warehouses(code,name) values('DELETE-TEST-ROLLBACK','Test') returning id into wid;
+ select to_jsonb(w) into r from public.crm_warehouses w where id=wid;
+ begin perform public.crm_inventory_delete_record('warehouse',wid,r||'{"name":"stale"}');raise exception 'stale accepted';exception when raise_exception then if sqlerrm='stale accepted' then raise;end if;end;
+ update public.crm_inventory_settings set default_warehouse_id=wid where id;
+ begin perform public.crm_inventory_delete_record('warehouse',wid,r);raise exception 'referenced warehouse accepted';exception when foreign_key_violation then null;end;
+ update public.crm_inventory_settings set default_warehouse_id=null where id;
+ perform public.crm_inventory_delete_record('warehouse',wid,r);
+ if exists(select 1 from public.crm_warehouses where id=wid) then raise exception 'warehouse not removed';end if;
+ foreach cat in array array['product_type','product_kind','product_category','unit','asset_brand'] loop
+ insert into public.master_data_items(category,code,name_th,name_en,sort_order,status) values(cat,'DELETE-TEST-ROLLBACK','Delete test unused','Delete test unused',0,'active') returning id into mid;
+ select to_jsonb(m) into r from public.master_data_items m where id=mid;
+ perform public.crm_inventory_delete_record('master',mid,r);
+ if exists(select 1 from public.master_data_items where id=mid) then raise exception 'master not removed';end if;
+ end loop;
+ insert into public.crm_warehouses(code,name) values('DELETE-TEST-ROLLBACK','Test') returning id into wid;
+ insert into public.crm_price_items(code,name,unit,price,cost) values('DELETE-TEST-ROLLBACK','Test','DELETE TEST UNIT',1,1) returning id into iid;
+ insert into public.crm_stock_levels(warehouse_id,item_id,reorder_point) values(wid,iid,2) returning id into lid;
+ select to_jsonb(l) into r from public.crm_stock_levels l where id=lid;
+ perform public.crm_inventory_delete_record('level',lid,r);
+ if exists(select 1 from public.crm_stock_levels where id=lid) then raise exception 'level not removed';end if;
+ insert into public.master_data_items(category,code,name_th,name_en,sort_order,status) values('unit','DELETE-TEST-ROLLBACK','DELETE TEST UNIT','Delete test',0,'active') returning id into mid;
+ select to_jsonb(m) into r from public.master_data_items m where id=mid;
+ begin perform public.crm_inventory_delete_record('master',mid,r);raise exception 'used unit accepted';exception when raise_exception then if sqlerrm='used unit accepted' then raise;end if;end;
+ insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data) values(actor,'authenticated','authenticated','qa-delete-'||actor||'@example.invalid','{"provider":"email","providers":["email"]}','{}');
+ insert into public.profiles(id,email,role,is_active,is_super_admin) values(actor,'qa-delete@example.invalid','sales_user',true,false);
+ insert into public.role_permissions(role_key,module,can_view,can_delete) values('sales_user','inventory',true,false) on conflict(role_key,module) do update set can_view=true,can_delete=false;
+ select to_jsonb(w) into r from public.crm_warehouses w where id=wid;
+ perform set_config('request.jwt.claim.sub',actor::text,true);execute 'set local role authenticated';
+ begin perform public.crm_inventory_delete_record('warehouse',wid,r);raise exception 'no-delete user accepted';exception when insufficient_privilege then null;end;
+ execute 'reset role';perform set_config('request.jwt.claim.sub',supervisor::text,true);
+ update public.role_permissions set can_delete=true where role_key='sales_user' and module='inventory';
+ perform set_config('request.jwt.claim.sub',actor::text,true);execute 'set local role authenticated';
+ perform public.crm_inventory_delete_record('warehouse',wid,r);
+ execute 'reset role';perform set_config('request.jwt.claim.sub',supervisor::text,true);
+ if exists(select 1 from public.crm_warehouses where id=wid) then raise exception 'sales delete failed';end if;
+ perform set_config('request.jwt.claim.sub','',true);
+ begin perform public.crm_inventory_delete_record('master',mid,r);raise exception 'anonymous accepted';exception when insufficient_privilege then null;end;
+end $test$;
+rollback;
+select 'PASS: warehouse, five master categories, reorder point, stale rejection, referenced records blocked, anonymous denied; rolled back' as result;
