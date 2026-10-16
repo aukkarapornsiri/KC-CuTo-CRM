@@ -2,7 +2,7 @@ import {saveQuotationTemplate,QUOTATION_TEMPLATE_CHANGED} from './quotation-temp
 import {quotationPreparedRows} from './quotation-prepared.mjs';
 import {documentProfile,createDocumentProfileFields} from './profile-document-defaults.mjs?v=20261007-profile';
 import {quotationHeaderCSS,printQuotation} from './quotation-print.mjs?v=20261007-a4';
-import {applyCompanyQuotationDefaults,demoCompanyStore} from './quotation-company.mjs?v=20261004';
+import {applyCompanyQuotationDefaults,applyQuotationBranding,demoCompanyStore} from './quotation-company.mjs?v=20261004';
 import {createQuotationCustomerPicker,recentQuotationCustomers} from './quotation-customer-picker.mjs?v=20261005-company';
 import {DESIGN_DEFAULTS,normalizeDesign,designAttributes,createDesignControls} from './quotation-designer.mjs?v=20261004';
 import {createQuotationProductPicker} from './quotation-product-picker.mjs?v=20261004-expanded';
@@ -65,7 +65,15 @@ export function createQuotationDocumentComponents({React,client,useApp}){
     const [ready,setReady]=React.useState(false),[revision,setRevision]=React.useState(0);
     React.useEffect(()=>{const refresh=()=>setRevision(v=>v+1);window.addEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);return()=>window.removeEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);},[]);
     React.useEffect(()=>{if(!open){setReady(false);return;}let live=true;setReady(false);(async()=>{try{
-      if(existingSnapshot&&Object.keys(existingSnapshot).length){let resolved=existingSnapshot;if(!existingSnapshot.logo_storage_key&&!existingSnapshot.logo_url){try{const current=demoMode?demoTemplate:await unwrap(client.from('crm_quotation_templates').select('logo_storage_key,logo_url').eq('is_default',true).eq('status','active').maybeSingle());resolved=withMissingQuotationLogo(existingSnapshot,current);}catch{ /* Preserve the saved document if current branding is unavailable. */ }}if(live)setTemplate({...DEFAULT_QUOTATION_TEMPLATE,...resolved});return;}
+      if(existingSnapshot&&Object.keys(existingSnapshot).length){
+       let resolved=existingSnapshot;
+       try{const [company,current]=demoMode?[demoCompanyStore.value,demoTemplate]:await Promise.all([
+        unwrap(client.from('company_settings').select('logo_url').eq('id',1).single()),
+        unwrap(client.from('crm_quotation_templates').select('logo_storage_key,logo_url').eq('is_default',true).eq('status','active').maybeSingle())]);
+        resolved=applyQuotationBranding(existingSnapshot,company,current);
+       }catch{ /* Retain saved branding when central settings are unavailable. */ }
+       if(live)setTemplate({...DEFAULT_QUOTATION_TEMPLATE,...resolved});return;
+      }
       if(demoMode){if(live)setTemplate(applyCompanyQuotationDefaults(copy(demoTemplate),demoCompanyStore.value));return;}
       const row=await unwrap(client.from('crm_quotation_templates').select('*').eq('is_default',true).eq('status','active').maybeSingle());
       const company=await unwrap(client.from('company_settings').select('company_name,company_name_en,logo_url,phone,email,tax_id,company_details').eq('id',1).single());

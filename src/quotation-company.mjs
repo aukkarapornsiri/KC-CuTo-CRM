@@ -7,3 +7,10 @@ export function applyCompanyQuotationDefaults(template,company){
  return {...template,...companyValues};
 }
 export const demoCompanyStore={value:null};
+
+// Shared branding applies to every quotation; saved business text stays intact.
+export function applyQuotationBranding(template,company,current){
+ return {...template,company_logo_url:company?.logo_url||template.company_logo_url||'',
+  logo_url:current?.logo_url||(!current?.logo_storage_key?template.logo_url:'')||'',
+  logo_storage_key:current?.logo_storage_key||(!current?.logo_url?template.logo_storage_key:'')||''};
+}
