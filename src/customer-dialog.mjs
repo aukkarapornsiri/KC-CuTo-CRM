@@ -1,9 +1,9 @@
 import {OPTIONS} from './internal-options.mjs';
-import {ENTITIES,LABELS,MASTER_FIELDS,RELATIONS,fieldsFor} from './internal-model.mjs';
-import {PROFILE_LABELS,CUSTOMER_LABELS,parentCustomerOptions,reportingOptions} from './record-profile.mjs';
+import {ENTITIES,fieldLabel,MASTER_FIELDS,RELATIONS,fieldsFor} from './internal-model.mjs';
+import {parentCustomerOptions,reportingOptions} from './record-profile.mjs';
 export function createCustomerDialog(React){const h=React.createElement;return function CustomerDialog({lang,editing,setEditing:Edit,lookup={},masters=[],busy=false,error='',onSave:save}){
-const entity='customers',profileEntity=false,def=ENTITIES.customers,t=(a,b)=>lang==='th'?a:b;
-const label=k=>entity==='activities'&&({subject:t('หัวข้อกิจกรรม','Subject'),type:t('ประเภทกิจกรรม','Activity Type'),status:t('สถานะ','Status'),priority:t('ความสำคัญ','Priority'),customer_id:t('ลูกค้า','Account'),contact_id:t('ผู้ติดต่อ','Contact'),owner_id:t('ผู้รับผิดชอบ','Owner'),scheduled_at:t('วันเวลานัดหมาย','Scheduled at'),reminder_at:t('วันเวลาเตือน','Reminder at'),meeting_url:t('ลิงก์ประชุม','Meeting URL'),next_action:t('งานถัดไป','Next Action')}[k])||entity==='customers'&&({name:t('ชื่อลูกค้า','Account Name'),billing_city:t('เมืองสำหรับเรียกเก็บเงิน','Billing City'),province:t('รัฐ/จังหวัดสำหรับเรียกเก็บเงิน','Billing State / Province'),owner_id:t('ผู้รับผิดชอบลูกค้า','Account Owner')}[k])||(entity==='customers'&&CUSTOMER_LABELS[k]?.[lang==='th'?0:1])||PROFILE_LABELS[k]?.[lang==='th'?0:1]||(profileEntity&&k==='customer_id'?t('บัญชีลูกค้า','Account'):profileEntity&&k==='owner_id'?t(entity==='contacts'?'เจ้าของผู้ติดต่อ':'เจ้าของลีด',entity==='contacts'?'Contact Owner':'Lead Owner'):lang==='th'?(LABELS[k]||k):k.replaceAll('_',' '));
+const entity='customers',def=ENTITIES.customers,t=(a,b)=>lang==='th'?a:b;
+const label=k=>fieldLabel(entity,k,lang);
 const btn=(text,onClick,disabled=false,props={})=>h('button',{type:'button',onClick,disabled,...props},text);
 const profileDialogRef=React.useRef(null);
 React.useEffect(()=>{const d=profileDialogRef.current;d.showModal();return()=>{if(d.open)d.close();};},[]);

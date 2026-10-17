@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {validateRecord,quoteTotals,duplicateIds,filterRows,summarizePipeline} from '../src/internal-model.mjs';
+import {fieldLabel,validateRecord,quoteTotals,duplicateIds,filterRows,summarizePipeline} from '../src/internal-model.mjs';
 test('activities require schedule and preserve timezone, reminder and links',()=>{
  assert.throws(()=>validateRecord('activities',{subject:'Call'}),/Required: scheduled_at/);
  assert.throws(()=>validateRecord('activities',{subject:'Call',scheduled_at:'invalid'}),/Invalid date/);
@@ -14,3 +14,23 @@ test('quotation totals support document discount, WHT, GP and Margin',()=>{const
 test('pipeline weighted values and closed deals use different measures',()=>{const rows=[{status:'open',amount:100,probability:30},{status:'won',amount:200},{status:'lost',amount:500}];assert.deepEqual(summarizePipeline(rows),{count:3,won:200,pipeline:100,weighted:30,winRate:50,averageDeal:200});});
 test('record validation strips privileged fields, aligns won/lost, rejects invalid dates and contact emails',()=>{const r=validateRecord('opportunities',{name:'Deal',customer_id:'customer',owner_id:'owner',close_date:'2026-10-31',forecast_category:'Pipeline',amount:100,probability:20,status:'won',stage:'Lead',approval_status:'approved'});assert.equal(r.stage,'Won');assert.equal(r.weighted_amount,100);assert.equal(r.approval_status,undefined);assert.throws(()=>validateRecord('contacts',{name:'C',customer_id:'id',email:'bad'}));assert.throws(()=>validateRecord('contracts',{name:'C',start_date:'2027-02-01',end_date:'2027-01-01'}));assert.throws(()=>validateRecord('opportunities',{name:'Lost',status:'lost'}));});
 test('duplicate detection ignores blanks and does not modify records; filters and date boundaries agree',()=>{const rows=[{id:'a',email:' A@EXAMPLE.COM ',phone:'',status:'new',owner_id:'1',created_at:'2026-09-01'},{id:'b',email:'a@example.com',phone:'',status:'new',owner_id:'2',created_at:'2026-09-02'},{id:'c',email:'',phone:'',status:'converted',owner_id:'1',created_at:'2026-08-01'}];const before=JSON.stringify(rows);assert.deepEqual([...duplicateIds(rows,'leads')].sort(),['a','b']);assert.equal(filterRows(rows,{mine:true,ownerId:'1',from:'2026-09-01',to:'2026-09-01'}).length,1);assert.equal(JSON.stringify(rows),before);});
+
+test('field labels preserve entity overrides, profile labels and fallback language',()=>{
+ for(const [entity,key,th,en] of [
+  ['activities','subject','หัวข้อกิจกรรม','Subject'],
+  ['activities','owner_id','ผู้รับผิดชอบ','Owner'],
+  ['customers','name','ชื่อลูกค้า','Account Name'],
+  ['customers','owner_id','ผู้รับผิดชอบลูกค้า','Account Owner'],
+  ['customers','parent_customer_id','ลูกค้าบริษัทแม่','Parent Account'],
+  ['contacts','owner_id','เจ้าของผู้ติดต่อ','Contact Owner'],
+  ['leads','owner_id','เจ้าของลีด','Lead Owner'],
+  ['contacts','customer_id','บัญชีลูกค้า','Account'],
+  ['leads','first_name','ชื่อ','First Name'],
+  ['quotations','tax_rate','VAT (%)','tax rate'],
+  ['customers','unknown_field','unknown_field','unknown field'],
+ ]){
+  assert.equal(fieldLabel(entity,key,'th'),th);
+  assert.equal(fieldLabel(entity,key,'en'),en);
+  assert.equal(fieldLabel(entity,key,undefined),en);
+ }
+});

@@ -1,6 +1,6 @@
 import {resolvePaymentTerm} from './quotation-payment-terms.mjs';
 import {OPTIONS} from './internal-options.mjs';
-import {fullPersonName} from './record-profile.mjs?v=20260930-accounts';
+import {fullPersonName,PROFILE_LABELS,CUSTOMER_LABELS} from './record-profile.mjs?v=20260930-accounts';
 export const ENTITIES={
  branches:{table:'crm_branches',module:'customers',title:['สาขาลูกค้า','Customer branches'],name:'name',fields:'name*,code,customer_id@,address~,phone,status',statuses:['active','inactive']},
  prices:{table:'crm_price_items',module:'inventory',title:['รายการสินค้าและราคา','Products and prices'],name:'name',fields:'name*,code*,category,unit,price#,cost#,description~,status',statuses:['active','inactive']},
@@ -38,3 +38,8 @@ export function filterRows(rows,{query='',status='',mine=false,ownerId,duplicate
 
 
 export function quotationStoredTotals(totals){const {line_discount,net_before_tax,cost_total,...stored}=totals;return stored;}
+
+export function fieldLabel(entity,k,lang){
+ const t=(th,en)=>lang==='th'?th:en,profileEntity=['leads','contacts'].includes(entity);
+ return entity==='activities'&&({subject:t('หัวข้อกิจกรรม','Subject'),type:t('ประเภทกิจกรรม','Activity Type'),status:t('สถานะ','Status'),priority:t('ความสำคัญ','Priority'),customer_id:t('ลูกค้า','Account'),contact_id:t('ผู้ติดต่อ','Contact'),owner_id:t('ผู้รับผิดชอบ','Owner'),scheduled_at:t('วันเวลานัดหมาย','Scheduled at'),reminder_at:t('วันเวลาเตือน','Reminder at'),meeting_url:t('ลิงก์ประชุม','Meeting URL'),next_action:t('งานถัดไป','Next Action')}[k])||entity==='customers'&&({name:t('ชื่อลูกค้า','Account Name'),billing_city:t('เมืองสำหรับเรียกเก็บเงิน','Billing City'),province:t('รัฐ/จังหวัดสำหรับเรียกเก็บเงิน','Billing State / Province'),owner_id:t('ผู้รับผิดชอบลูกค้า','Account Owner')}[k])||(entity==='customers'&&CUSTOMER_LABELS[k]?.[lang==='th'?0:1])||PROFILE_LABELS[k]?.[lang==='th'?0:1]||(profileEntity&&k==='customer_id'?t('บัญชีลูกค้า','Account'):profileEntity&&k==='owner_id'?t(entity==='contacts'?'เจ้าของผู้ติดต่อ':'เจ้าของลีด',entity==='contacts'?'Contact Owner':'Lead Owner'):lang==='th'?(LABELS[k]||k):k.replaceAll('_',' '));
+}
