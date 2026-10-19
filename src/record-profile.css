@@ -39,3 +39,10 @@
 .crm-lead-dialog :is(.crm-profile-header,.crm-profile-footer){flex-shrink:0}
 .crm-lead-dialog .crm-profile-body{min-height:0}
 @media(max-width:600px){.crm-lead-dialog .crm-profile-name{grid-template-columns:minmax(0,1fr)}.crm-lead-dialog .crm-profile-name>.crm-field:first-child{width:88px}}
+
+.crm-profile-dialog .crm-lead-type{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;margin:0 0 14px;min-width:0}
+.crm-profile-dialog .crm-lead-type legend{margin-bottom:6px;font-size:12px}
+.crm-profile-dialog .crm-lead-type-option{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:152px;height:34px;margin:0;padding:4px 8px;border:1px solid var(--crm-border,#cbd5e1);border-radius:6px;font-size:12px;line-height:1.2;cursor:pointer}
+.crm-profile-dialog .crm-lead-type-option input[type=radio]{appearance:auto;box-sizing:border-box;width:16px;height:16px;min-width:16px;min-height:16px;max-width:16px;max-height:16px;flex:0 0 16px;margin:0;padding:0;accent-color:var(--kc-section-action,#8050b3)}
+.crm-profile-dialog .crm-lead-type-option:has(input:checked){border-color:var(--kc-section-action,#8050b3)}
+.crm-profile-dialog .crm-lead-type-option:focus-within{outline:2px solid var(--kc-section-action,#8050b3);outline-offset:2px}
