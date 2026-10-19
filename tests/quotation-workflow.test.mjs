@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-test('quotation financial fields are approval-gated and contract handoff stays wired',async()=>{
+test('quotation financial fields are permission-gated and contract handoff stays wired',async()=>{
   const [workspace,quotation]=await Promise.all([
     readFile(new URL('../src/internal-workspace.mjs',import.meta.url),'utf8'),
     readFile(new URL('../src/quotation-document.mjs',import.meta.url),'utf8')
@@ -22,7 +22,8 @@ test('quotation financial fields are approval-gated and contract handoff stays w
   assert.match(workspace,/module','contracts'/);
   assert.match(workspace,/existingQuoteContract/);
   assert.match(workspace,/renewal_owner_id:profile\?\.id/);
-  assert.match(workspace,/canViewFinancials:can\('approve'\)/);
+  assert.match(workspace,/canViewFinancials:can\('view'\)&&/);
+  assert.match(workspace,/sales_user.*sales_coordinator.*sales_manager.*sales_director/);
   assert.match(workspace,/server\/account360\/quotation/);
   assert.match(workspace,/quotation_id:selected\.id/);
   assert.match(workspace,/ส่งไป KC Account 360/);
