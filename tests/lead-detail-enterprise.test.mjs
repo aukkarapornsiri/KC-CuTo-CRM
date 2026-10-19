@@ -38,3 +38,5 @@ test('Lead Assign requires its own grant and linked-account navigation is retain
  assert.ok(allowed.some(n=>n.type==='button'&&n.props.className?.includes('assign')));
  allowed.find(n=>n.type==='button'&&n.children.includes('Open Account')).props.onClick();assert.equal(opened,true);
 });
+
+test('eligible assignee selector is visible immediately and saving an unloaded person is disabled',()=>{const View=createLeadDetailEnterprise({React});const nodes=walk(View({record:{id:'lead',owner_id:'owner'},canAssign:true}));assert.ok(nodes.some(n=>n.type==='select'&&n.props['aria-label']==='เลือกผู้รับมอบหมายลีด'));assert.equal(nodes.find(n=>n.type==='button'&&n.children.includes('บันทึก Assign')).props.disabled,true);const denied=walk(View({record:{id:'lead'},canAssign:false}));assert.ok(!denied.some(n=>n.type==='select'));});

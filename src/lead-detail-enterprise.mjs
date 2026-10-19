@@ -4,16 +4,16 @@ export function createLeadDetailEnterprise({React}){
  const initials=name=>String(name||'SA').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'SA';
  return function LeadDetailEnterprise({record,lang='th',busy=false,canEdit=false,canAssign=false,canConvert=false,onAccount,onClose,onEdit,onConvert,loadOwners,onAssign,onActivity,onOpportunity}){
   const t=(th,en)=>lang==='th'?th:en;
-  const [assignOpen,setAssignOpen]=React.useState(false);
+  const [ownersLoading,setOwnersLoading]=React.useState(false);
   const [owners,setOwners]=React.useState([]);
   const [ownerId,setOwnerId]=React.useState(record?.owner_id||'');
   const [assignBusy,setAssignBusy]=React.useState(false);
   const [assignError,setAssignError]=React.useState('');
-  React.useEffect(()=>{setOwnerId(record?.owner_id||'');setAssignOpen(false);setAssignError('');},[record?.id,record?.owner_id]);
+  React.useEffect(()=>{setOwnerId(record?.owner_id||'');setAssignError('');},[record?.id,record?.owner_id]);
+  React.useEffect(()=>{let active=true;setOwners([]);if(!record||!canAssign)return;setOwnersLoading(true);setAssignError('');Promise.resolve().then(()=>loadOwners?.()||[]).then(list=>{if(active)setOwners(list.filter(x=>x&&x.is_active!==false));}).catch(e=>{if(active)setAssignError(e.message||String(e));}).finally(()=>{if(active)setOwnersLoading(false);});return()=>{active=false;};},[record?.id,canAssign]);
   if(!record)return null;
   const ownerName=clean(record.owner_name&&record.owner_name!=='-'?record.owner_name:t('ยังไม่ได้มอบหมาย','Unassigned'));
-  const openAssign=async()=>{setAssignError('');setAssignOpen(v=>!v);if(assignOpen||owners.length)return;try{const list=await loadOwners?.()||[];setOwners(list.filter(x=>x&&x.is_active!==false));}catch(e){setAssignError(e.message||String(e));}};
-  const confirmAssign=async()=>{const person=owners.find(x=>x.id===ownerId);if(!person)return;setAssignBusy(true);setAssignError('');try{await onAssign?.(person);setAssignOpen(false);}catch(e){setAssignError(e.message||String(e));}finally{setAssignBusy(false);}};
+  const confirmAssign=async()=>{const person=owners.find(x=>x.id===ownerId);if(!person)return;setAssignBusy(true);setAssignError('');try{await onAssign?.(person);}catch(e){setAssignError(e.message||String(e));}finally{setAssignBusy(false);}};
   const fields=[
    [t('ประเภทลีด','Lead type'),record.lead_type==='Individual'?t('บุคคลธรรมดา','Individual'):t('นิติบุคคล','Juristic person')],[record.lead_type==='Individual'?t('เลขบัตรประชาชน','National ID'):t('เลขผู้เสียภาษี','Tax ID'),record.tax_id],[t('ชื่อบริษัท','Company'),record.company_name],[t('คำนำหน้า','Salutation'),record.salutation],[t('ชื่อ','First Name'),record.first_name],[t('นามสกุล','Last Name'),record.last_name],
    [t('ชื่อผู้ติดต่อ','Contact'),record.contact_name],[t('ตำแหน่ง','Position'),record.position],[t('โทรศัพท์','Phone'),record.phone],[t('โทรศัพท์มือถือ','Mobile'),record.mobile||record.phone],
@@ -36,17 +36,19 @@ export function createLeadDetailEnterprise({React}){
       h('span',{className:'kc-lead-chip'},t('แหล่งที่มา: ','Source: ')+clean(record.source)),
       h('span',{className:'kc-lead-owner-chip'},h('span',{className:'kc-lead-owner-avatar'},initials(ownerName)),h('span',{className:'kc-lead-owner-meta'},h('span',null,t('ผู้รับผิดชอบ','Assignee')),h('strong',null,ownerName))),
       h('span',{className:'kc-lead-detail-actions-spacer'}),
-      canAssign&&h('button',{type:'button',className:'kc-lead-action-btn assign',onClick:openAssign},h('span',{'aria-hidden':true},'＋'),t('Assign Lead','Assign Lead')),
+      
       onAccount&&h('button',{type:'button',className:'kc-lead-action-btn',onClick:onAccount},t('เปิดลูกค้า','Open Account')),
       canEdit&&h('button',{type:'button',className:'kc-lead-action-btn',onClick:onEdit},t('แก้ไข','Edit')),
       canConvert&&h('button',{type:'button',className:'kc-lead-action-btn primary',onClick:onConvert,disabled:busy},t('แปลงเป็นลูกค้า','Convert to Customer')),
       h('button',{type:'button',className:'kc-lead-action-btn',onClick:onClose},t('ปิดรายละเอียด','Close Detail'))
      ),
-     assignOpen&&h('div',{className:'kc-lead-assign-panel'},
-      h('label',null,t('เลือกผู้รับมอบหมายที่มีสิทธิ์','Select eligible assignee'),h('select',{value:ownerId,onChange:e=>setOwnerId(e.target.value),disabled:assignBusy},h('option',{value:''},t('เลือกผู้รับผิดชอบ','Choose assignee')),owners.map(x=>h('option',{key:x.id,value:x.id},x.display_name||x.name||x.email)))),
-      h('button',{type:'button',className:'kc-lead-action-btn primary',onClick:confirmAssign,disabled:assignBusy||!ownerId},assignBusy?t('กำลังบันทึก...','Saving...'):t('ยืนยัน Assign','Assign')),
+     canAssign&&h('div',{className:'kc-lead-assign-panel'},
+      h('label',null,t('เลือกผู้รับมอบหมายที่มีสิทธิ์','Select eligible assignee'),h('select',{value:ownerId,onChange:e=>setOwnerId(e.target.value),disabled:busy||assignBusy||ownersLoading,'aria-label':t('เลือกผู้รับมอบหมายลีด','Choose lead assignee')},h('option',{value:''},ownersLoading?t('กำลังโหลดรายชื่อ…','Loading people…'):t('เลือกผู้รับผิดชอบ','Choose assignee')),owners.map(x=>h('option',{key:x.id,value:x.id},x.display_name||x.name||x.email)))),
+      h('button',{type:'button',className:'kc-lead-action-btn primary assign',onClick:confirmAssign,disabled:busy||assignBusy||ownersLoading||!owners.some(x=>x.id===ownerId)||ownerId===record.owner_id},assignBusy?t('กำลังบันทึก...','Saving...'):t('บันทึก Assign','Save assignment')),
+      !ownersLoading&&!assignError&&!owners.length&&h('div',{role:'status'},t('ไม่พบผู้รับมอบหมายที่มีสิทธิ์','No eligible assignees found')),
       assignError&&h('div',{className:'kc-lead-assign-error',role:'alert'},assignError)
-     )
+     ),
+     !canAssign&&h('p',{className:'kc-lead-assign-help'},t('การมอบหมายลีดต้องมีสิทธิ์แก้ไขและมอบหมายในตารางบทบาทและสิทธิ์','Lead assignment requires Edit and Assign permissions in Roles & Permissions'))
     ),
     h('div',{className:'kc-lead-detail-body'},
      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลลีด','Lead Information')),h('span',null,t('ข้อมูลทั่วไปแสดงแบบ Compact เพื่อให้เห็นบริบทได้เร็ว','Compact information for fast context'))),
