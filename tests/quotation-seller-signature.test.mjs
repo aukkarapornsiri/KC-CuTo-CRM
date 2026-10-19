@@ -15,3 +15,13 @@ function harness(record){let editing=record,calls=0;const effects=[];const React
 test('new own quotations load only own default',async()=>{const {editing,calls}=await harness({owner_id:'me',template_snapshot:{logo_url:'logo'}}).run();assert.equal(calls,1);assert.equal(editing.template_snapshot.seller_signature_storage_key,'me/seller-signature-default.png');assert.equal(editing.template_snapshot.logo_url,'logo');});
 test('saved quotations retain their signature without querying defaults',async()=>{const {editing,calls}=await harness({id:'saved',owner_id:'me',template_snapshot:{seller_signature_storage_key:'old'}}).run();assert.equal(calls,0);assert.equal(editing.template_snapshot.seller_signature_storage_key,'old');});
 test('another salesperson never receives current user default',async()=>{const {editing,calls}=await harness({owner_id:'other',template_snapshot:{seller_signature_storage_key:'global'}}).run();assert.equal(calls,0);assert.equal(editing.template_snapshot.seller_signature_storage_key,'');});
+test('checkbox omits and restores signature without changing saved default or branding',async()=>{
+ let editing={id:'saved',owner_id:'me',template_snapshot:{logo_url:'logo',seller_signature_storage_key:'me/sign.png',seller_signature_owner_id:'me'}};
+ const React={createElement:(type,props,...children)=>({type,props,children}),useState:x=>[x,()=>{}],useRef:x=>({current:x}),useEffect:()=>{}};
+ const hook=createSellerSignatureHook({React,client:{from:()=>{throw Error('Default must not be modified');}}});
+ const {control}=hook({editing,setEditing:f=>editing=f(editing),profile:{id:'me'},ready:true,lang:'en',busy:false});
+ function find(n){if(n?.props?.type==='checkbox')return n;for(const c of n?.children||[]){const x=find(c);if(x)return x;}}
+ const checkbox=find(control);assert.equal(checkbox.props.checked,true);
+ checkbox.props.onChange({target:{checked:false}});assert.equal(editing.template_snapshot.seller_signature_storage_key,'');assert.equal(editing.template_snapshot.logo_url,'logo');
+ checkbox.props.onChange({target:{checked:true}});await new Promise(r=>setTimeout(r,0));assert.equal(editing.template_snapshot.seller_signature_storage_key,'me/sign.png');
+});
