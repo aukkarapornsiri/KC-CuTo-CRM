@@ -37,7 +37,7 @@ export function createRoleAccess({React,client,useApp}){
   React.useEffect(()=>{
    if(demoMode){setState({profile:appProfile,rows:[],dashboards:[],loading:false,error:''});return;}
    setState(empty);if(!session?.user?.id)return;
-   const stop=observeRead(client,{key:'role-access',userId:session.user.id,interval:30_000,load:async signal=>{
+   const stop=observeRead(client,{key:'role-access',userId:session.user.id,interval:60_000,load:async signal=>{
     const {data:profile,error}=await client.from('profiles').select('*').eq('id',session.user.id).single().abortSignal(signal);if(error)throw error;
     const {data:context,error:contextError}=await client.rpc('crm_access_context').abortSignal(signal);if(contextError)throw contextError;profile.access_active=context?.active===true;
     const role=effectiveRole(profile);if(!role)throw Error('บัญชีไม่มีสิทธิ์ใช้งาน / Account access is disabled');
