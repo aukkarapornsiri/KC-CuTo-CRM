@@ -14,3 +14,9 @@ test('companies still require company and identifiers reject malformed values',(
  assert.equal(validateRecord('leads',{last_name:'Person',company_name:'Existing'}).lead_type,'Company');
  assert.throws(()=>validateRecord('leads',{lead_type:'Individual',last_name:'Person',tax_id:'123'}),/13/);
 });
+test('lead coordinator is saved separately from its owner and can be cleared',()=>{
+ const data={lead_type:'Individual',last_name:'Person',owner_id:'creator',lead_assigner_id:'coordinator'};
+ const row=validateRecord('leads',data);
+ assert.equal(row.owner_id,'creator');assert.equal(row.lead_assigner_id,'coordinator');
+ assert.equal(validateRecord('leads',{...data,lead_assigner_id:''}).lead_assigner_id,null);
+});

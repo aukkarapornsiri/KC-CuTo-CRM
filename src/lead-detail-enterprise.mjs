@@ -20,7 +20,7 @@ export function createLeadDetailEnterprise({React}){
    [t('อีเมล','Email'),record.email],[t('เว็บไซต์','Website'),record.website],['LINE ID',record.line_id],[t('แหล่งที่มา','Source'),record.source],
    [t('สินค้าที่สนใจ','Product Interest'),record.product_interest],[t('งบประมาณ','Budget'),record.budget],[t('คะแนน','Score'),record.score],[t('สถานะ','Status'),record.status],
    [t('ความสำคัญ','Priority'),record.priority],[t('ประเทศ','Country'),record.mailing_country],[t('ถนน / เลขที่ / อาคาร','Street / Building'),record.mailing_street],[t('เมือง / เขต / อำเภอ','City / District'),record.mailing_city],
-   [t('รัฐ / จังหวัด','State / Province'),record.mailing_state],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),record.owner_name]
+   [t('รัฐ / จังหวัด','State / Province'),record.mailing_state],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),record.owner_name],[t('ผู้ทำหน้าที่ Assign Lead','Lead assigner'),record.lead_assigner_name]
   ];
   return h('div',{className:'kc-lead-detail-overlay',role:'presentation',onMouseDown:e=>{if(e.target===e.currentTarget)onClose?.();}},
    h('section',{className:'kc-lead-detail-modal',role:'dialog','aria-modal':true,'aria-label':t('รายละเอียดลีด','Lead Detail')},
