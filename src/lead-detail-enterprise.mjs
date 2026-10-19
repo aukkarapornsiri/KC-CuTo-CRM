@@ -12,7 +12,7 @@ export function createLeadDetailEnterprise({React}){
   React.useEffect(()=>{setOwnerId(record?.owner_id||'');setAssignOpen(false);setAssignError('');},[record?.id,record?.owner_id]);
   if(!record)return null;
   const ownerName=clean(record.owner_name&&record.owner_name!=='-'?record.owner_name:t('ยังไม่ได้มอบหมาย','Unassigned'));
-  const openAssign=async()=>{setAssignError('');setAssignOpen(v=>!v);if(assignOpen||owners.length)return;try{const list=await loadOwners?.()||[];setOwners(list.filter(x=>x&&x.is_active!==false&&String(x.department_group||'').trim().toLowerCase()==='sales'));}catch(e){setAssignError(e.message||String(e));}};
+  const openAssign=async()=>{setAssignError('');setAssignOpen(v=>!v);if(assignOpen||owners.length)return;try{const list=await loadOwners?.()||[];setOwners(list.filter(x=>x&&x.is_active!==false));}catch(e){setAssignError(e.message||String(e));}};
   const confirmAssign=async()=>{const person=owners.find(x=>x.id===ownerId);if(!person)return;setAssignBusy(true);setAssignError('');try{await onAssign?.(person);setAssignOpen(false);}catch(e){setAssignError(e.message||String(e));}finally{setAssignBusy(false);}};
   const fields=[
    [t('ประเภทลีด','Lead type'),record.lead_type==='Individual'?t('บุคคลธรรมดา','Individual'):t('นิติบุคคล','Juristic person')],[record.lead_type==='Individual'?t('เลขบัตรประชาชน','National ID'):t('เลขผู้เสียภาษี','Tax ID'),record.tax_id],[t('ชื่อบริษัท','Company'),record.company_name],[t('คำนำหน้า','Salutation'),record.salutation],[t('ชื่อ','First Name'),record.first_name],[t('นามสกุล','Last Name'),record.last_name],
@@ -43,7 +43,7 @@ export function createLeadDetailEnterprise({React}){
       h('button',{type:'button',className:'kc-lead-action-btn',onClick:onClose},t('ปิดรายละเอียด','Close Detail'))
      ),
      assignOpen&&h('div',{className:'kc-lead-assign-panel'},
-      h('label',null,t('เลือกพนักงานฝ่ายขาย','Select Sales employee'),h('select',{value:ownerId,onChange:e=>setOwnerId(e.target.value),disabled:assignBusy},h('option',{value:''},t('เลือกผู้รับผิดชอบ','Choose assignee')),owners.map(x=>h('option',{key:x.id,value:x.id},x.display_name||x.name||x.email)))),
+      h('label',null,t('เลือกผู้รับมอบหมายที่มีสิทธิ์','Select eligible assignee'),h('select',{value:ownerId,onChange:e=>setOwnerId(e.target.value),disabled:assignBusy},h('option',{value:''},t('เลือกผู้รับผิดชอบ','Choose assignee')),owners.map(x=>h('option',{key:x.id,value:x.id},x.display_name||x.name||x.email)))),
       h('button',{type:'button',className:'kc-lead-action-btn primary',onClick:confirmAssign,disabled:assignBusy||!ownerId},assignBusy?t('กำลังบันทึก...','Saving...'):t('ยืนยัน Assign','Assign')),
       assignError&&h('div',{className:'kc-lead-assign-error',role:'alert'},assignError)
      )

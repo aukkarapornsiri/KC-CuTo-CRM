@@ -1,3 +1,4 @@
+import {notificationRecordUrl} from '../_shared/assignment-link.mjs';
 import {createClient} from 'npm:@supabase/supabase-js@2';
 import sanitize from 'npm:sanitize-html@2.17.0';
 import {MICROSOFT_SENDER,microsoftMailToken,sendMicrosoftMail} from '../_shared/microsoft-mail.mjs';
@@ -71,7 +72,7 @@ async function notificationWorker(){
    const allowed=await value(db.rpc('crm_notification_email_allowed',{p_id:r.id}));
    const to=email(identity?.user?.email);
    if(error||!identity?.user?.email_confirmed_at||!allowed||!to.endsWith('@kai-com.com')){await value(db.from('crm_notification_email_queue').update({status:'skipped',error:'Recipient inactive, unverified, or access removed'}).eq('id',r.id));continue;}
-   const result=await sendMicrosoftMail({token,to,subject:'[CuTo CRM] '+r.subject,text:r.body+'\n\nเปิด CuTo CRM: https://kc-cuto.kaicomhub.com/',reference:'notification/'+r.id});
+   const result=await sendMicrosoftMail({token,to,subject:'[CuTo CRM] '+r.subject,text:r.body+'\n\nเปิดงานที่ได้รับมอบหมาย: '+notificationRecordUrl(r.related_module,r.related_id),reference:'notification/'+r.id});
    const patch=result.accepted?{status:'sent',sent_at:new Date().toISOString(),provider_id:result.requestId,error:null}:result.status===429&&r.attempts<4?{status:'pending',next_attempt_at:new Date(Date.now()+result.retryAfter*1000).toISOString(),error:'Microsoft rate limit'}:{status:'failed',error:`Microsoft rejected or outcome unknown (${result.status}) ${result.error}; check Sent Items before resending`};
    await value(db.from('crm_notification_email_queue').update(patch).eq('id',r.id));
   }catch{await value(db.from('crm_notification_email_queue').update({status:'failed',error:'Delivery outcome unknown; inspect Sent Items before retry'}).eq('id',r.id));}
