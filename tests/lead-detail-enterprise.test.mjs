@@ -13,7 +13,7 @@ const walk=node=>{
  visit(node);return out;
 };
 
-test('Figma lead detail renders enterprise popup, 24 compact fields, notes and assignment controls',()=>{
+test('Figma lead detail renders enterprise popup, 26 compact fields, notes and assignment controls',()=>{
  const LeadDetail=createLeadDetailEnterprise({React});
  const tree=LeadDetail({
   record:{id:'1',code:'LD-2541',company_name:'บริษัท ทดสอบ',contact_name:'คุณ ทดสอบ',status:'new',priority:'medium',source:'Line',owner_name:'Sales Owner',note:'Long sales context',updated_at:'2026-10-07T10:00:00Z'},
@@ -25,7 +25,7 @@ test('Figma lead detail renders enterprise popup, 24 compact fields, notes and a
  assert.ok(classes.includes('kc-lead-detail-modal'));
  assert.ok(classes.includes('kc-lead-owner-chip'));
  assert.ok(classes.includes('kc-lead-note-panel'));
- assert.equal(classes.filter(x=>x==='kc-lead-info-field').length,24);
+ assert.equal(classes.filter(x=>x==='kc-lead-info-field').length,26);
  assert.ok(nodes.some(n=>n.type==='button'&&String(n.props?.className||'').includes('assign')));
  assert.ok(nodes.some(n=>n.type==='button'&&n.children.includes('แปลงเป็นลูกค้า')));
 });

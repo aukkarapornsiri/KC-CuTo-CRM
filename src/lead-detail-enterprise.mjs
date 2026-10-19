@@ -15,7 +15,7 @@ export function createLeadDetailEnterprise({React}){
   const openAssign=async()=>{setAssignError('');setAssignOpen(v=>!v);if(assignOpen||owners.length)return;try{const list=await loadOwners?.()||[];setOwners(list.filter(x=>x&&x.is_active!==false&&String(x.department_group||'').trim().toLowerCase()==='sales'));}catch(e){setAssignError(e.message||String(e));}};
   const confirmAssign=async()=>{const person=owners.find(x=>x.id===ownerId);if(!person)return;setAssignBusy(true);setAssignError('');try{await onAssign?.(person);setAssignOpen(false);}catch(e){setAssignError(e.message||String(e));}finally{setAssignBusy(false);}};
   const fields=[
-   [t('ชื่อบริษัท','Company'),record.company_name],[t('คำนำหน้า','Salutation'),record.salutation],[t('ชื่อ','First Name'),record.first_name],[t('นามสกุล','Last Name'),record.last_name],
+   [t('ประเภทลีด','Lead type'),record.lead_type==='Individual'?t('บุคคลธรรมดา','Individual'):t('นิติบุคคล','Juristic person')],[record.lead_type==='Individual'?t('เลขบัตรประชาชน','National ID'):t('เลขผู้เสียภาษี','Tax ID'),record.tax_id],[t('ชื่อบริษัท','Company'),record.company_name],[t('คำนำหน้า','Salutation'),record.salutation],[t('ชื่อ','First Name'),record.first_name],[t('นามสกุล','Last Name'),record.last_name],
    [t('ชื่อผู้ติดต่อ','Contact'),record.contact_name],[t('ตำแหน่ง','Position'),record.position],[t('โทรศัพท์','Phone'),record.phone],[t('โทรศัพท์มือถือ','Mobile'),record.mobile||record.phone],
    [t('อีเมล','Email'),record.email],[t('เว็บไซต์','Website'),record.website],['LINE ID',record.line_id],[t('แหล่งที่มา','Source'),record.source],
    [t('สินค้าที่สนใจ','Product Interest'),record.product_interest],[t('งบประมาณ','Budget'),record.budget],[t('คะแนน','Score'),record.score],[t('สถานะ','Status'),record.status],
@@ -27,7 +27,7 @@ export function createLeadDetailEnterprise({React}){
     h('header',{className:'kc-lead-detail-header'},
      h('div',{className:'kc-lead-detail-title-row'},
       h('div',{className:'kc-lead-detail-mark','aria-hidden':true},'LD'),
-      h('div',{className:'kc-lead-detail-heading'},h('div',{className:'kc-lead-detail-code'},clean(record.code)),h('h2',null,clean(record.company_name)),h('div',{className:'kc-lead-detail-sub'},t('Lead Detail · ข้อมูลล่าสุดใน CRM','Lead Detail · Latest CRM information'))),
+      h('div',{className:'kc-lead-detail-heading'},h('div',{className:'kc-lead-detail-code'},clean(record.code)),h('h2',null,clean(record.lead_type==='Individual'?record.contact_name:record.company_name)),h('div',{className:'kc-lead-detail-sub'},t('Lead Detail · ข้อมูลล่าสุดใน CRM','Lead Detail · Latest CRM information'))),
       h('button',{type:'button',className:'kc-lead-detail-close','aria-label':t('ปิดรายละเอียด','Close detail'),onClick:onClose},'×')
      ),
      h('div',{className:'kc-lead-detail-actions'},
