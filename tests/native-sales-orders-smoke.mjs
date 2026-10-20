@@ -37,7 +37,7 @@ try{
   await fromQuote('QA-DRAFT');await popup.getByText('The quotation must be approved before creating an SO',{exact:true}).waitFor();assert.equal(await popup.getByRole('button',{name:'Confirm Sales Order',exact:true}).count(),0);
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
   await page.getByRole('button',{name:'Switch to Thai',exact:true}).click();
-  await page.getByRole('button',{name:'ใบสั่งขาย (SO)',exact:true}).click();await page.getByRole('dialog',{name:'ใบสั่งขาย (Sales Orders)',exact:true}).getByText('ยกเลิก',{exact:true}).first().waitFor();
+  await page.getByRole('button',{name:'ใบสั่งขาย (SO)',exact:true}).click();await page.getByRole('dialog',{name:'ใบสั่งขาย (Sales Orders)',exact:true}).locator('[data-status=cancelled]').waitFor();
   assert.deepEqual(errors,[]);await page.close();console.log(`PASS native SO ${width}px: approved conversion, PO upload, idempotent reopen, delivery, completion, cancellation, newest first, draft gate, TH/EN and viewport`);
  }
 }finally{await browser.close();}

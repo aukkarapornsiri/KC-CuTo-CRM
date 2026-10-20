@@ -14,4 +14,4 @@ Permissions reuse the quotation matrix: view reads SOs and linked PO attachments
 
 Inventory uses the existing SO stock trigger and current settings. This release does not enable stock control. If enabled later, the product codes must be mapped, the default warehouse configured and stock available. Serial-tracked items require one unit per quotation line and a serial supplied at conversion. Stock failure rolls back SO + sales fact atomically. Cancellation reverses an existing automatic issue once.
 
-Validation: `tests/native-sales-orders.sql` (rollback-only database fixtures), `tests/native-sales-orders.test.mjs`, `tests/native-sales-orders-smoke.mjs` (desktop/mobile demo, no production writes). Number sequences can have gaps after rollback; numbers are never reused.
+Validation: `tests/native-sales-orders.sql` (rollback-only database fixtures), `tests/native-sales-orders.test.mjs`, `tests/native-sales-order-stock.sql` (native SO stock issue/retry/shortage/reversal, rollback-only), `tests/native-sales-orders-smoke.mjs` (desktop/mobile demo, no production writes). Number sequences can have gaps after rollback; numbers are never reused.
