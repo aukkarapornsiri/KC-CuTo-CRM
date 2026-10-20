@@ -75,7 +75,7 @@ export function buildQuotationPrint(source,doc){
  const table=doc.createElement('table');table.className='kc-print-document';
  for(const a of source.attributes)if(a.name.startsWith('data-')||a.name==='style')table.setAttribute(a.name,a.value);
  const rows=[...source.querySelectorAll('.kc-quote-preview-line')];const hasCode=rows[0]?.children.length===7;
- table.style.setProperty('--print-columns',hasCode?'6mm 19mm minmax(0,1fr) 12mm 12mm 24mm 27mm':'6mm minmax(0,1fr) 12mm 12mm 24mm 27mm');
+ table.style.setProperty('--print-columns',source.querySelector('[data-recurring="true"]')?'6mm minmax(0,1fr) 14mm 23mm 20mm 14mm 25mm':hasCode?'6mm 19mm minmax(0,1fr) 12mm 12mm 24mm 27mm':'6mm minmax(0,1fr) 12mm 12mm 24mm 27mm');
  const add=(section,node,long=false)=>{if(!node)return;const row=section.insertRow();if(long)row.className='long-content';row.insertCell().append(node);};
  const clone=selector=>source.querySelector(selector)?.cloneNode(true);
  const head=doc.createElement('div'),header=clone(':scope > header');head.className='kc-print-fixed-header';if(header){header.className='kc-print-header';head.append(header);}const party=clone('.kc-quote-preview-party');if(party)head.append(party);if(rows[0])head.append(rows[0].cloneNode(true));
