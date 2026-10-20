@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: native-sales-orders
+            suites: native-sales-orders-smoke
           - group: regression
             suites: internal-workspace-smoke opportunity-dialog-smoke settings-workspace-smoke
           - group: customer-sales
