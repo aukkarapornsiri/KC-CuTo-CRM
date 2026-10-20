@@ -23,3 +23,8 @@ export function leadLinkPatch(entity,record){
  if(entity==='opportunities'&&record.lead_id)return {lead_id:record.lead_id};
  return {};
 }
+
+export function formatLeadDate(value){
+ if(!value||!Number.isFinite(Date.parse(value)))return '—';
+ return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Asia/Bangkok'}).format(new Date(value));
+}

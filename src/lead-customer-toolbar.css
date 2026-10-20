@@ -108,3 +108,13 @@
  .crm-internal[data-entity="leads"] .crm-master-table tbody td{padding:0!important;min-height:0!important;height:auto!important}
  .crm-internal[data-entity="leads"] .crm-master-table tbody td[data-field="actions"]{padding-top:8px!important}
 }
+
+.crm-internal[data-entity="leads"] .crm-master-table td[data-field="created_at"]{white-space:nowrap}
+.crm-internal[data-entity="leads"] .crm-master-table td[data-field="actions"] button.crm-lead-delete{color:#b42318;background:#fff1f0;border:1px solid #f3c3be;margin-left:8px}
+@media(max-width:760px){
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="created_at"]{grid-column:1;grid-row:1;font-size:13px;color:#64748b}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="code"]{grid-row:2}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="company_name"]{grid-row:3}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="actions"]{display:flex;flex-wrap:wrap;gap:8px}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="actions"] button{flex:1;width:auto;margin:0;min-width:110px}
+}
