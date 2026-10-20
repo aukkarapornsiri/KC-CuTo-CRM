@@ -1,0 +1,22 @@
+/* Screen density shared by CRM pages; printed documents keep their own typography. */
+@media screen {
+  .kc-app {font-size:min(var(--crm-font-size,14px),14px);line-height:1.5}
+  .kc-app .text-sm {font-size:13px}
+  .kc-app .text-xs {font-size:12px}
+  .kc-app :is(.crm-settings,.crm-internal) {font-size:13px}
+  .kc-app :is(.crm-table-scroll,.crm-account-table-wrap) {max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) {font-size:13px;line-height:1.5}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) :is(th,td) {font-size:13px!important;line-height:1.5;vertical-align:top;padding:10px 12px}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) th {white-space:nowrap}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) td :is(button,a,span,p) {font-size:inherit}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) :is(th,td):is([data-field=total],[data-field=amount],[data-field=value],[data-field=price],[data-field=cost],[data-field=budget],[data-field=probability],[data-field=quantity]) {text-align:right;white-space:nowrap;overflow-wrap:normal;word-break:normal;font-variant-numeric:tabular-nums;min-width:90px}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) :is(th,td):is([data-field=code],[data-field=status],[data-field=approval_status],[data-field=stage],[data-field=close_date],[data-field=created_at],[data-field=updated_at],[data-field=end_date],[data-field=scheduled_at],[data-field=warranty_end],[data-field=actions]) {white-space:nowrap;overflow-wrap:normal;word-break:normal}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) td:is([data-field=name],[data-field=subject],[data-field=customer_name],[data-field=company]) {min-width:180px;max-width:320px;white-space:normal;overflow-wrap:anywhere}
+  .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) td[data-field=owner_name] {min-width:140px;max-width:220px}
+  .kc-app .crm-master-table td[data-field=actions]>button {min-height:32px;margin-block:0}
+  @media(max-width:640px) {
+    .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) :is(th,td) {padding:10px}
+    .kc-app table:not(:where(.kc-quotation-preview *,.kc-print-root *)) button,.kc-app .crm-master-table td[data-field=actions]>button {min-height:44px}
+    .kc-app :is(input,select,textarea) {font-size:16px}
+  }
+}
