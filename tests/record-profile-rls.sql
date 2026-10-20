@@ -33,7 +33,7 @@ BEGIN
  IF (SELECT count(*) FROM public.contacts)<>before_count THEN RAISE EXCEPTION 'Repeated conversion created another contact'; END IF;
  INSERT INTO public.leads(company_name,first_name,last_name,status,website,mailing_street,mailing_city,mailing_state,mailing_postal_code,mailing_country) VALUES('CRM profile new account','New','Person','new','https://example.test','2 Test Street','Test District','Bangkok','10200','Thailand') RETURNING id INTO new_lead;
  converted_id:=public.crm_convert_lead(new_lead);
- IF NOT EXISTS(SELECT 1 FROM public.customers WHERE id=converted_id AND website='https://example.test' AND address LIKE '%10200%' AND province='Bangkok') THEN RAISE EXCEPTION 'New account address/website transfer failed'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.customers WHERE id=converted_id AND website='https://example.test' AND address='2 Test Street' AND billing_postal_code='10200' AND billing_country='Thailand' AND province='Bangkok') THEN RAISE EXCEPTION 'New account address/website transfer failed'; END IF;
 END $$;
 RESET ROLE;
 SET LOCAL ROLE anon;
