@@ -28,7 +28,8 @@ export function createRestReadPolicy(nativeFetch, {origin, now = Date.now, rando
     if (url.origin !== origin || !url.pathname.startsWith('/rest/v1/')) return nativeFetch(input,init);
     if (!['GET','HEAD'].includes(request.method)) {
       invalidate();
-      try {return await nativeFetch(input,init);} finally {invalidate();}
+      let succeeded=false;
+      try {const response=await nativeFetch(input,init);succeeded=response.ok;return response;} finally {invalidate();if(succeeded&&/^\/rest\/v1\/(leads|activities|opportunities|quotations|contracts|tickets|notifications|rpc\/crm_(approval_transition|convert_lead))(?:$|\/)/.test(url.pathname))win?.dispatchEvent?.(new Event('crm-work-changed'));}
     }
     if(request.signal.aborted) throw request.signal.reason || new DOMException('Aborted','AbortError');
     const key = JSON.stringify([revision,request.method,request.url,[...request.headers]]);

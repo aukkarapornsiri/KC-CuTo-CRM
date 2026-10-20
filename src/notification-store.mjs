@@ -47,8 +47,8 @@ export function createNotificationStore(client, {
     request.promise = (async () => {
       try {
         const {data, error, status} = await client.from('notifications')
-          .select('id').eq('user_id', userId).eq('is_read', false)
-          .order('created_at', {ascending: false}).limit(20)
+          .select('id').eq('user_id', userId).eq('is_read', false).is('resolved_at', null)
+          .order('created_at', {ascending: false}).order('id', {ascending: false}).limit(20)
           .abortSignal(request.controller.signal);
         if (error) throw Object.assign(new Error(error.message), {status});
         if (request.generation !== generation) return [];
@@ -74,6 +74,7 @@ export function createNotificationStore(client, {
     return request.promise;
   }
   const wake = () => schedule();
+  const changed = () => { void refresh({force:true}); };
   function start() {
     const epoch = ++lifecycle, revision = authRevision;
     auth = client.auth.onAuthStateChange((_event, session) => {
@@ -89,6 +90,7 @@ export function createNotificationStore(client, {
     win?.addEventListener('focus', wake);
     win?.addEventListener('online', wake);
     win?.addEventListener('offline', wake);
+    win?.addEventListener('crm-work-changed', changed);
   }
   function stop() {
     lifecycle++;
@@ -105,6 +107,7 @@ export function createNotificationStore(client, {
     win?.removeEventListener('focus', wake);
     win?.removeEventListener('online', wake);
     win?.removeEventListener('offline', wake);
+    win?.removeEventListener('crm-work-changed', changed);
   }
   function subscribe(listener, {enabled = true} = {}) {
     if (!enabled) { listener([]); return () => {}; }

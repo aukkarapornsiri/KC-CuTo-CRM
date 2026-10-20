@@ -19,6 +19,7 @@ function harness({session = {user: {id: 'alice'}}, hidden = false} = {}) {
       const query = {
         select(columns) { request.columns = columns; return query; },
         eq(...filter) { request.filters.push(filter); return query; },
+        is(...filter) { request.filters.push(filter); return query; },
         order() { return query; }, limit() { return query; },
         abortSignal(signal) { request.signal = signal; return query; },
         then(resolve, reject) { requests.push(request); return (pending || Promise.resolve(result)).then(resolve, reject); },
@@ -59,6 +60,7 @@ test('two consumers share one request initially and one poll per minute', async 
   assert.equal(h.requests.length, 1);
   assert.equal(provider.at(-1), 1); assert.equal(header.at(-1), 1);
   assert.equal(h.requests[0].columns, 'id');
+  assert.ok(h.requests[0].filters.some(([key,value])=>key==='resolved_at'&&value===null));
   assert.ok(h.requests[0].filters.some(([key, value]) => key === 'user_id' && value === 'alice'));
   await h.advance(60_000); assert.equal(h.requests.length, 2);
   off1(); await h.advance(60_000); assert.equal(h.requests.length, 3);
