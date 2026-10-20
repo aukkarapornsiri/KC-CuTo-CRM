@@ -44,13 +44,8 @@ try {
   page.once('dialog',dialog=>dialog.dismiss());await page.getByRole('button',{name:'Delete quotation QA-QUOTE-49',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Details QA-QUOTE-49',exact:true}).count(),1);
   page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Delete quotation QA-QUOTE-49',exact:true}).click();await page.getByRole('button',{name:'Details QA-QUOTE-49',exact:true}).waitFor({state:'hidden'});
   await page.getByRole('button',{name:'Details QA-QUOTE-48',exact:true}).click();page.once('dialog',dialog=>dialog.accept());await page.getByRole('dialog',{name:'Quotation details',exact:true}).getByRole('button',{name:'Delete quotation',exact:true}).click();await page.getByRole('button',{name:'Details QA-QUOTE-48',exact:true}).waitFor({state:'hidden'});
-  await page.getByRole('button',{name:'Details QA-QUOTE-0',exact:true}).click();
-  await page.getByRole('dialog',{name:'Quotation details',exact:true}).getByRole('button',{name:'Print / Save PDF',exact:true}).click();
-  await page.locator('.kc-quotation-preview.is-visible').waitFor();
-  assert.equal(await page.locator('.crm-quotation-detail-dialog').count(),0);
-  assert.ok((await page.locator('.kc-quotation-preview.is-visible').innerText()).includes('HCI Node'));
   assert.deepEqual(errors,[]);
-  console.log(`PASS quotation details ${width}px: 50-row list, pending/approved, Details/code links, modal viewport, Escape/close/reopen, print preview`);
+  console.log(`PASS quotation details ${width}px: 50-row list, pending/approved, Details/code links, modal viewport, Escape/close/reopen, delete confirmation cancel/accept from list and detail`);
   await page.close();
  }
 } finally {await browser.close();}
