@@ -29,7 +29,7 @@ export function createRestReadPolicy(nativeFetch, {origin, now = Date.now, rando
     if (!['GET','HEAD'].includes(request.method)) {
       invalidate();
       let succeeded=false;
-      try {const response=await nativeFetch(input,init);succeeded=response.ok;return response;} finally {invalidate();if(succeeded&&/^\/rest\/v1\/(leads|activities|opportunities|quotations|contracts|tickets|notifications|rpc\/crm_(approval_transition|convert_lead|create_sales_order|transition_sales_order))(?:$|\/)/.test(url.pathname))win?.dispatchEvent?.(new Event('crm-work-changed'));}
+      try {const response=await nativeFetch(input,init);succeeded=response.ok;return response;} finally {invalidate();if(succeeded&&/^\/rest\/v1\/(leads|activities|opportunities|quotations|contracts|tickets|notifications|rpc\/crm_(approval_transition|convert_lead|create_sales_order(?:_with_details)?|transition_sales_order))(?:$|\/)/.test(url.pathname))win?.dispatchEvent?.(new Event('crm-work-changed'));}
     }
     if(request.signal.aborted) throw request.signal.reason || new DOMException('Aborted','AbortError');
     const key = JSON.stringify([revision,request.method,request.url,[...request.headers]]);
