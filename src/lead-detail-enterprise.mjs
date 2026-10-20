@@ -1,3 +1,4 @@
+import {leadStatusLabel} from './lead-workflow.mjs';
 export function createLeadDetailEnterprise({React}){
  const h=React.createElement;
  const clean=v=>v==null||v===''?'-':String(v);
@@ -18,7 +19,7 @@ export function createLeadDetailEnterprise({React}){
    [t('ประเภทลีด','Lead type'),record.lead_type==='Individual'?t('บุคคลธรรมดา','Individual'):t('นิติบุคคล','Juristic person')],[record.lead_type==='Individual'?t('เลขบัตรประชาชน','National ID'):t('เลขผู้เสียภาษี','Tax ID'),record.tax_id],[t('ชื่อบริษัท','Company'),record.company_name],[t('คำนำหน้า','Salutation'),record.salutation],[t('ชื่อ','First Name'),record.first_name],[t('นามสกุล','Last Name'),record.last_name],
    [t('ชื่อผู้ติดต่อ','Contact'),record.contact_name],[t('ตำแหน่ง','Position'),record.position],[t('โทรศัพท์','Phone'),record.phone],[t('โทรศัพท์มือถือ','Mobile'),record.mobile||record.phone],
    [t('อีเมล','Email'),record.email],[t('เว็บไซต์','Website'),record.website],['LINE ID',record.line_id],[t('แหล่งที่มา','Source'),record.source],
-   [t('สินค้าที่สนใจ','Product Interest'),record.product_interest],[t('งบประมาณ','Budget'),record.budget],[t('คะแนน','Score'),record.score],[t('สถานะ','Status'),record.status],
+   [t('สินค้าที่สนใจ','Product Interest'),record.product_interest],[t('งบประมาณ','Budget'),record.budget],[t('คะแนน','Score'),record.score],[t('สถานะ','Status'),leadStatusLabel(record.status,lang)],
    [t('ความสำคัญ','Priority'),record.priority],[t('ประเทศ','Country'),record.mailing_country],[t('ถนน / เลขที่ / อาคาร','Street / Building'),record.mailing_street],[t('เมือง / เขต / อำเภอ','City / District'),record.mailing_city],
    [t('รัฐ / จังหวัด','State / Province'),record.mailing_state],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),record.owner_name],[t('ผู้ทำหน้าที่ Assign Lead','Lead assigner'),record.lead_assigner_name]
   ];
@@ -31,7 +32,7 @@ export function createLeadDetailEnterprise({React}){
       h('button',{type:'button',className:'kc-lead-detail-close','aria-label':t('ปิดรายละเอียด','Close detail'),onClick:onClose},'×')
      ),
      h('div',{className:'kc-lead-detail-actions'},
-      h('span',{className:'kc-lead-chip is-primary'},t('สถานะ: ','Status: ')+clean(record.status)),
+      h('span',{className:'kc-lead-chip is-primary'},t('สถานะ: ','Status: ')+leadStatusLabel(record.status,lang)),
       h('span',{className:'kc-lead-chip is-accent'},t('ความสำคัญ: ','Priority: ')+clean(record.priority)),
       h('span',{className:'kc-lead-chip'},t('แหล่งที่มา: ','Source: ')+clean(record.source)),
       h('span',{className:'kc-lead-owner-chip'},h('span',{className:'kc-lead-owner-avatar'},initials(ownerName)),h('span',{className:'kc-lead-owner-meta'},h('span',null,t('ผู้รับผิดชอบ','Assignee')),h('strong',null,ownerName))),

@@ -4,6 +4,7 @@ export function createRestReadPolicy(nativeFetch, {origin, now = Date.now, rando
   let active = 0, revision = 0, blockedUntil = 0, failures = 0, probe = false;
   const invalidate = () => { revision++; cache.clear(); flights.clear(); };
   win?.addEventListener('crm-access-changed', invalidate);
+  win?.addEventListener('crm-records-refresh', invalidate);
   win?.addEventListener('storage', invalidate);
   const unavailable = () => new Response(JSON.stringify({code:'CRM_READ_BACKOFF', message:'ระบบเชื่อมต่อขัดข้อง กรุณาลองใหม่ภายหลัง'}), {status:522,headers:{'Content-Type':'application/json','Retry-After':String(Math.max(1,Math.ceil((blockedUntil-now())/1000)))}});
   function pump() {

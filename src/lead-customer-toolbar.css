@@ -71,3 +71,40 @@
     min-height:42px;
   }
 }
+
+.crm-internal[data-entity="leads"] .crm-lead-status{display:inline-flex;padding:5px 10px;border-radius:999px;background:#e8eef8;color:#244b7a;font-weight:600;white-space:normal;font-size:13px}
+.crm-internal[data-entity="leads"] .crm-lead-status[data-status="follow"]{background:#fff0d8;color:#88520a}
+.crm-internal[data-entity="leads"] .crm-lead-status[data-status="contacted"]{background:#e0efff;color:#185c9a}
+.crm-internal[data-entity="leads"] .crm-lead-status:is([data-status="qualified"],[data-status="converted"]){background:#dcf5e8;color:#166344}
+.crm-internal[data-entity="leads"] .crm-lead-status[data-status="disqualified"]{background:#fce7e7;color:#9c3030}
+@media(max-width:760px){
+ .crm-internal[data-entity="leads"]{min-width:0;padding:12px}
+ .crm-internal[data-entity="leads"] :is(.crm-contact-header,.crm-contact-toolbar){flex-wrap:wrap;gap:12px;align-items:center}
+ .crm-internal[data-entity="leads"] .crm-contact-primary-actions{display:flex;flex-wrap:wrap;width:100%;gap:8px}
+ .crm-internal[data-entity="leads"] .crm-contact-primary-actions .crm-save{flex:1}
+ .crm-internal[data-entity="leads"] .crm-contact-tools{display:flex;flex-wrap:wrap;width:100%;min-width:0;margin:0;gap:8px}
+ .crm-internal[data-entity="leads"] .crm-contact-search{flex:1 0 100%;width:100%;max-width:none;min-width:0;box-sizing:border-box}
+ .crm-internal[data-entity="leads"] .crm-contact-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .crm-internal[data-entity="leads"] .crm-contact-filters :is(label,select,button){min-width:0;width:100%;box-sizing:border-box}
+ .crm-internal[data-entity="leads"] :is(button,select,input){min-height:44px}
+ .crm-internal[data-entity="leads"] :is(select,input){font-size:16px}
+ .crm-internal[data-entity="leads"] .crm-table-scroll{overflow:visible;border:0;background:transparent}
+ .crm-internal[data-entity="leads"] .crm-master-table{display:block;width:100%;min-width:0!important;border:0;background:transparent}
+ .crm-internal[data-entity="leads"] .crm-master-table thead{display:none}
+ .crm-internal[data-entity="leads"] .crm-master-table tbody{display:grid;gap:12px}
+ .crm-internal[data-entity="leads"] .crm-master-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;padding:16px;border:1px solid #dce4ef;border-radius:16px;background:var(--surface,#fff);box-shadow:0 2px 6px #18395a06}
+ .crm-internal[data-entity="leads"] .crm-master-table td{display:block;min-width:0;padding:0;border:0;white-space:normal;overflow-wrap:anywhere}
+ .crm-internal[data-entity="leads"] .crm-master-table td::before{content:attr(data-label);display:block;font-size:12px;color:#64748b;margin-bottom:4px}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="code"]{grid-column:1;grid-row:1;color:#64748b;font-size:13px}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="status"]{grid-column:2;grid-row:1;text-align:right}
+ .crm-internal[data-entity="leads"] .crm-master-table td:is([data-field="code"],[data-field="status"],[data-field="actions"],[data-field="company_name"])::before{display:none}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="company_name"]{grid-column:1/-1;grid-row:2;font-size:17px;font-weight:600;line-height:1.5}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="contact_name"]{grid-column:1/-1}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="actions"]{grid-column:1/-1;border-top:1px solid #e5eaf2;padding-top:8px}
+ .crm-internal[data-entity="leads"] .crm-master-table td[data-field="actions"] button{width:100%;background:#fff4e5;border-radius:10px;color:#8f510a}
+ .crm-internal[data-entity="leads"] .crm-board{grid-template-columns:minmax(0,1fr);overflow:visible}
+}
+@media(max-width:760px){
+ .crm-internal[data-entity="leads"] .crm-master-table tbody td{padding:0!important;min-height:0!important;height:auto!important}
+ .crm-internal[data-entity="leads"] .crm-master-table tbody td[data-field="actions"]{padding-top:8px!important}
+}

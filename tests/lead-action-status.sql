@@ -1,0 +1,31 @@
+begin;
+do $$
+declare lid uuid; aid uuid; got text;
+begin
+ insert into public.leads(company_name,last_name,status) values ('QA rollback only','QA','new') returning id into lid;
+ insert into public.activities(subject,type,status,scheduled_at,related_module,related_id) values ('QA rollback only','Call','planned',now(),'leads',lid) returning id into aid;
+ select status into got from public.leads where id=lid;
+ if got<>'follow' then raise exception 'planned activity did not advance: %',got;end if;
+ update public.leads set status='new' where id=lid;
+ update public.activities set status='completed' where id=aid;
+ select status into got from public.leads where id=lid;
+ if got<>'contacted' then raise exception 'completed activity did not advance';end if;
+ update public.leads set status='converted' where id=lid;
+ update public.activities set status='planned' where id=aid;
+ select status into got from public.leads where id=lid;
+ if got<>'converted' then raise exception 'converted lead reopened';end if;
+ update public.leads set status='disqualified' where id=lid;
+ update public.activities set status='completed' where id=aid;
+ select status into got from public.leads where id=lid;
+ if got<>'disqualified' then raise exception 'disqualified lead reopened';end if;
+ update public.leads set status='new' where id=lid;
+ update public.activities set status='cancelled' where id=aid;
+ select status into got from public.leads where id=lid;
+ if got<>'new' then raise exception 'cancelled activity advanced lead';end if;
+ insert into public.opportunities(name,lead_id,stage,status) values ('QA rollback only',lid,'Qualified','open');
+ select status into got from public.leads where id=lid;
+ if got<>'qualified' then raise exception 'opportunity did not advance';end if;
+ if (select prosecdef from pg_proc where oid='private.crm_lead_action_status()'::regprocedure) then raise exception 'must use invoker rights';end if;
+end $$;
+select 'PASS: activity transitions, terminal protection, cancellation, opportunity, invoker security; all fixtures rolled back' result;
+rollback;
