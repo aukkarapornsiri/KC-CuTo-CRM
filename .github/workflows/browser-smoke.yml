@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: quotation-delete
+            suites: quotation-delete-smoke
           - group: quotation-contact
             suites: quotation-contact-smoke
           - group: native-sales-orders
