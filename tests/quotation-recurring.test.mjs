@@ -14,3 +14,9 @@ test('Discount is once per service line and document',()=>{const t=quoteTotals([
  assert.equal(draft.items[0].total,500);assert.equal(draft.subtotal,500);assert.equal(draft.vat,35);assert.equal(draft.net_total,535);
  assert.throws(()=>quoteTotals(items),/Invalid quotation item/);
  });
+
+test('Totals sum rounded lines, costs and discounts consistently',()=>{
+ const t=quoteTotals([{name:'A',qty:0.33,price:1.01,cost:0.5},{name:'B',qty:0.33,price:1.01,cost:0.5}],{taxRate:7});
+ assert.deepEqual(t.items.map(x=>x.total),[0.33,0.33]);assert.equal(t.subtotal,0.66);assert.equal(t.cost_total,0.34);assert.equal(t.gp_amount,0.32);assert.equal(t.total,0.71);
+ const d=quoteTotals([{name:'A',qty:0.33,price:1.01,discount:0.005}],{taxRate:0});assert.equal(d.items[0].total,0.32);assert.equal(d.net_total,0.32);
+});

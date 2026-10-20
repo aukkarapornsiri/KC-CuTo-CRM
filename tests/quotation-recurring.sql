@@ -24,5 +24,9 @@ begin
  exception when others then if sqlerrm='TEST accepted zero cycles' then raise;end if;end;
  update public.quotations set quotation_kind='standard',items='[{"name":"Standard","qty":2,"price":100,"cost":60}]' where id=q.id returning * into q;
  if q.total<>214 or q.recurring<>'{}' then raise exception 'Standard regression';end if;
+ update public.quotations set tax_rate=7,items='[{"name":"A","qty":0.33,"price":1.01,"cost":0.5},{"name":"B","qty":0.33,"price":1.01,"cost":0.5}]' where id=q.id returning * into q;
+ if q.subtotal<>0.66 or q.total<>0.71 or (q.items->0->>'total')::numeric<>0.33 then raise exception 'Rounded line totals do not reconcile';end if;
+ select * into f from public.crm_quotation_financials where quotation_id=q.id;
+ if f.cost_total<>0.34 or f.gp_amount<>0.32 then raise exception 'Rounded costs/GP do not reconcile';end if;
 end $$;
 rollback;

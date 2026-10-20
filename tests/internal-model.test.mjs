@@ -26,8 +26,8 @@ test('field labels preserve entity overrides, profile labels and fallback langua
   ['leads','owner_id','เจ้าของลีด','Lead Owner'],
   ['contacts','customer_id','บัญชีลูกค้า','Account'],
   ['leads','first_name','ชื่อ','First Name'],
-  ['quotations','tax_rate','VAT (%)','tax rate'],
-  ['customers','unknown_field','unknown_field','unknown field'],
+  ['quotations','tax_rate','VAT (%)','Tax rate'],
+  ['customers','unknown_field','unknown_field','Unknown field'],
  ]){
   assert.equal(fieldLabel(entity,key,'th'),th);
   assert.equal(fieldLabel(entity,key,'en'),en);
