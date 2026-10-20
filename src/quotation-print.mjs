@@ -44,6 +44,8 @@ export const quotationHeaderCSS=`
 `;
 /** Isolated A4 print document: no dialog clipping or mobile layout rules. */
 export const quotationPrintCSS=`
+.kc-recurring-summary{background:#eff9f9;padding:3mm;margin-bottom:3mm;border-radius:2mm;break-inside:avoid}.kc-recurring-summary small{display:block;font-size:8pt}.kc-recurring-line-summary{color:#008e91}
+
 @page{size:A4 portrait;margin:10mm 10mm 10mm}
 *{box-sizing:border-box}html,body{width:190mm;margin:0;padding:0;background:white;color:#182b3b;font-family:Tahoma,Arial,sans-serif;font-size:10pt;line-height:1.4;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 .kc-print-document{font-family:var(--document-font,Tahoma,Arial,sans-serif);width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tfoot{display:table-footer-group}tbody{display:table-row-group}td{padding:0;vertical-align:top}tr{break-inside:avoid}tr.long-content{break-inside:auto}
