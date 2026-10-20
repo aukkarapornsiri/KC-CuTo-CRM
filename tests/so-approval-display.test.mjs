@@ -11,7 +11,7 @@ function render(lang,status){
  return text(Component({lang}));
 }
 test('SO list approval labels follow TH/EN without exposing raw status',()=>{
- for(const [status,th,en] of [['pending','รออนุมัติ','Pending'],['approved','อนุมัติแล้ว','Approved'],['rejected','ไม่อนุมัติ','Rejected']]){
+ for(const [status,th,en] of [['pending','รออนุมัติ','Pending'],['approved','อนุมัติแล้ว','Approved'],['rejected','ไม่อนุมัติ','Rejected'],['','ยังไม่ส่งอนุมัติ','Not submitted'],['unknown','ยังไม่ส่งอนุมัติ','Not submitted']]){
  assert.ok(render('th',status).includes('อนุมัติ SO: '+th));assert.ok(render('en',status).includes('SO approval: '+en));
  }
 });
