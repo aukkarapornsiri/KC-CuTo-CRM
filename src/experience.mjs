@@ -1,5 +1,5 @@
 import {permitsPage} from './role-access.mjs';
-import {createWorkspaceTheme,WORKSPACE_SHADOWS} from './workspace-theme.mjs?v=20261001-five-themes';
+import {createWorkspaceTheme,validateWorkspace,WORKSPACE_SHADOWS} from './workspace-theme.mjs?v=20261001-five-themes';
 // Editable source for the Settings extension. The original frontend is distributed as a bundle.
 export const DEFAULT_DESIGN = Object.freeze({primary:'#0AADA9',sidebar:'#172033',background:'#F7FAFA',font:'IBM Plex Sans Thai',fontSize:'14',radius:'12',density:'comfortable'});
 export const FONTS = ['IBM Plex Sans Thai','Anuphan','Inter','system'];
@@ -32,7 +32,21 @@ export function createExperience({React,client,useApp,useAccess,palette}) {
   const eventName='kc-crm-design-saved';
   let demoDesign=null;
   let demoScope={};
-  let companyDesign=null,personalDesign=null;
+  let companyDesign=null,personalDesign=null,themeOwner=null;
+  const cacheKey=owner=>'kc_crm_theme_v1:'+owner;
+  function rememberTheme(){
+    if(!themeOwner)return;
+    try{localStorage.setItem(cacheKey(themeOwner),JSON.stringify({company:companyDesign,personal:personalDesign}));}catch{}
+  }
+  function restoreTheme(owner){
+    companyDesign=null;personalDesign=null;
+    if(owner)try{
+      const cached=JSON.parse(localStorage.getItem(cacheKey(owner))||'null');
+      if(cached?.company)companyDesign=validateDesign(cached.company);
+      if(cached?.personal)personalDesign=validateWorkspace(cached.personal);
+    }catch{}
+    themeOwner=owner;repaint();
+  }
   function applyDesign(input) {
     const root=document.documentElement;
     if(!input) {
@@ -70,21 +84,26 @@ export function createExperience({React,client,useApp,useAccess,palette}) {
     }
     window.dispatchEvent(new Event(eventName));
   }
-  function publish(value) {companyDesign=value;repaint();}
-  const {read:readWorkspace,PersonalWorkspace,WorkspaceLauncher}=createWorkspaceTheme({React,client,useApp,readableInk,onChange:value=>{personalDesign=value;repaint();}});
+  function publish(value) {companyDesign=value==null?null:validateDesign(value);rememberTheme();repaint();}
+  const {read:readWorkspace,PersonalWorkspace,WorkspaceLauncher}=createWorkspaceTheme({React,client,useApp,readableInk,onChange:value=>{personalDesign=validateWorkspace(value);rememberTheme();repaint();}});
   function ExperienceSync() {
     const {demoMode,profile,setLang}=useApp();
-    React.useEffect(()=>{
+    React.useLayoutEffect(()=>{
       let active=true;
-      personalDesign=null;publish(null);
-      if(!demoMode&&!profile?.id)return;
-      Promise.all([demoMode?Promise.resolve({data:{ui_design:demoDesign}}):client.functions.invoke('crm-experience',{method:'GET'}),readWorkspace(profile,demoMode).catch(()=>null)]).then(([{data,error},personal])=>{
+      const owner=demoMode?'demo':profile?.id?`user:${profile.id}`:null;
+      if(owner!==themeOwner)restoreTheme(owner);
+      if(!owner)return;
+      // Restore before paint; refresh each source independently without erasing cached values on errors.
+      Promise.resolve().then(()=>demoMode?{data:{ui_design:demoDesign}}:client.functions.invoke('crm-experience',{method:'GET'})).then(({data,error})=>{
+        if(!active||error)return;
+        publish(data?.ui_design??null);
+        if(data?.default_language){try{if(!localStorage.getItem('kc_language'))setLang(data.default_language);}catch{}}
+      }).catch(()=>{});
+      Promise.resolve().then(()=>readWorkspace(profile,demoMode)).then(personal=>{
         if(!active)return;
-        personalDesign=personal?.value??null;
-        try{publish(!error?data?.ui_design:null);}catch{publish(null);}
-        if(!error&&data?.default_language){try{if(!localStorage.getItem('kc_language'))setLang(data.default_language);}catch{}}
-      }).catch(()=>{if(active)publish(null);});
-      return()=>{active=false;personalDesign=null;publish(null);};
+        personalDesign=validateWorkspace(personal.value);rememberTheme();repaint();
+      }).catch(()=>{});
+      return()=>{active=false;};
     },[demoMode,profile?.id]);
     return null;
   }

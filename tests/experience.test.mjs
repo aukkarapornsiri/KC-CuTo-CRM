@@ -19,3 +19,27 @@ test('Account scope requires paired valid IDs and valid branch codes',()=>{
 test('preview foreground is readable on black and white',()=>{
  assert.equal(readableInk('#FFFFFF'),'#172033');assert.equal(readableInk('#000000'),'#FFFFFF');
 });
+
+test('theme survives remount and failed refresh without leaking between users',async()=>{
+ const {createExperience}=await import('../src/experience.mjs');
+ const values=new Map(),cache=new Map();let effect,cleanup;
+ const previous={document:globalThis.document,window:globalThis.window,localStorage:globalThis.localStorage};
+ globalThis.document={documentElement:{style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)},dataset:{}},getElementById:()=>null};
+ globalThis.window={dispatchEvent:()=>{}};
+ globalThis.localStorage={getItem:k=>cache.get(k)??null,setItem:(k,v)=>cache.set(k,v)};
+ let profile={id:'user-a'},fail=false;
+ const client={functions:{invoke:async()=>fail?{error:Error('offline')}:{data:{ui_design:{...DEFAULT_DESIGN,primary:'#123456'}}}},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:null})})})})};
+ const React={createElement:()=>{},useEffect:fn=>{effect=fn;},useLayoutEffect:fn=>{effect=fn;}};
+ const make=()=>createExperience({React,client,useApp:()=>({profile,setLang:()=>{}}),useAccess:()=>({}),palette:{}});
+ try{
+  let app=make();app.ExperienceSync();cleanup=effect();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(values.get('--crm-primary'),'#123456');
+  cleanup();assert.equal(values.get('--crm-primary'),'#123456','cleanup must not reset theme');
+  fail=true;app=make();app.ExperienceSync();cleanup=effect();
+  assert.equal(values.get('--crm-primary'),'#123456','cache restored synchronously');
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(values.get('--crm-primary'),'#123456');
+  cleanup();profile={id:'user-b'};app.ExperienceSync();cleanup=effect();
+  assert.equal(values.has('--crm-primary'),false,'different user must not inherit theme');
+  await new Promise(resolve=>setImmediate(resolve));
+ }finally{cleanup?.();Object.assign(globalThis,previous);}
+});
