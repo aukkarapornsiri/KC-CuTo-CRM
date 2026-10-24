@@ -15,3 +15,17 @@ test('workflow page retains dashboard access gate',()=>{
  const access={profile:{is_active:true,role:'sales'},can:()=>false,dashboards:[]};assert.equal(permitsPage(access,'dashboard','workflow-map'),false);access.can=m=>m==='dashboard';assert.equal(permitsPage(access,'dashboard','workflow-map'),true);
  assert.equal(WORKFLOW_LANES.flatMap(x=>x.cards).length,9);
 });
+
+test('connector endpoints follow source to destination and route lane changes outside cards',async()=>{
+ const {workflowPath}=await import('../src/workflow-map.mjs');
+ const a={x:24,y:30,width:200,height:126},b={x:272,y:30,width:200,height:126};
+ assert.equal(workflowPath(a,b,720),'M 224 93 L 267 93');
+ const c={x:24,y:250,width:200,height:126};
+ assert.equal(workflowPath(b,c,720,false,200),'M 472 93 L 715 93 L 715 200 L 5 200 L 5 313 L 19 313');
+ assert.equal(workflowPath(a,c,300,true),'M 124 156 L 124 245');
+ assert.equal(workflowPath(a,c,300,true,0,true),'M 124 156 L 124 170 L 295 170 L 295 235 L 124 235 L 124 245');
+});
+test('every workflow link has a valid source and destination',async()=>{
+ const {WORKFLOW_LINKS}=await import('../src/workflow-map.mjs');const ids=new Set(WORKFLOW_LANES.flatMap(x=>x.cards.map(c=>c[0])));
+ assert.equal(WORKFLOW_LINKS.length,8);for(const [a,b] of WORKFLOW_LINKS){assert.ok(ids.has(a)&&ids.has(b));assert.notEqual(a,b);}
+});
