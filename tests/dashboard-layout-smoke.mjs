@@ -16,7 +16,7 @@ try{
   const heading=await page.locator('.dash-hero h1').evaluate(el=>getComputedStyle(el).fontSize);
   await page.getByRole('button',{name:'หยุดการเคลื่อนไหว',exact:true}).click();
   for(const [index,role] of roles.entries()){
-   await page.getByRole('button',{name:'แดชบอร์ด'+(role==='AI'?' ':'')+role,exact:true}).click();
+   await page.getByRole('button',{name:role==='AI'?'แดชบอร์ดปัญญาประดิษฐ์':'แดชบอร์ด'+role,exact:true}).click();
    const root=page.locator('.kc-role-dashboard');await page.locator('.dash-hero h1').waitFor();
    assert.equal(await page.locator('.kc-dashboard-studio').getAttribute('data-motion'),'off');
    assert.equal(await page.locator(role==='AI'?'.dash-mascot-robot':'.dash-growth-spark').first().evaluate(el=>getComputedStyle(el).animationName),'none');
