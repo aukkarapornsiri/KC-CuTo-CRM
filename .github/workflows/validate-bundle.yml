@@ -63,7 +63,7 @@ jobs:
           node --check src/internal-workspace.mjs
           node --check src/lead-detail-enterprise.mjs
           node --test tests/lead-detail-enterprise.test.mjs
-          node --test tests/thai-address.test.mjs
+          node --test tests/thai-address.test.mjs tests/bilingual-address.test.mjs
           node --check src/quotation-document.mjs
           node --check src/number-format.mjs
           node --test tests/number-format.test.mjs

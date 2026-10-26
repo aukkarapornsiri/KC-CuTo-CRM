@@ -1,3 +1,5 @@
+import {streetValue,localizeAddressText} from './customer-address.mjs';
+import {recordOptionLabel} from './record-display.mjs';
 export function createContactDetailEnterprise({React}){
  const h=React.createElement;
  const clean=v=>v==null||v===''?'-':String(v);
@@ -32,10 +34,10 @@ export function createContactDetailEnterprise({React}){
    [t('ระดับอำนาจตัดสินใจ','Influence Level'),record.influence_level],
    [t('สถานะ','Status'),record.status],
    [t('รายงานถึง','Reports To'),record.reports_to_name],
-   [t('ประเทศ','Country'),record.mailing_country],
-   [t('ถนน / เลขที่ / อาคาร','Street / Building'),record.mailing_street],
-   [t('เมือง / เขต / อำเภอ','City / District'),record.mailing_city],
-   [t('รัฐ / จังหวัด','State / Province'),record.mailing_state],
+   [t('ประเทศ','Country'),localizeAddressText(record.mailing_country,lang)],
+   [t('ถนน / เลขที่ / อาคาร','Street / Building'),streetValue(record,'mailing_street',lang)],
+   [t('เมือง / เขต / อำเภอ','City / District'),localizeAddressText(record.mailing_city,lang)],
+   [t('รัฐ / จังหวัด','State / Province'),localizeAddressText(record.mailing_state,lang)],
    [t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],
    [t('เจ้าของผู้ติดต่อ','Contact Owner'),record.owner_name],
    [t('ผู้ติดต่อหลัก','Primary Contact'),record.is_primary?t('ใช่','Yes'):t('ไม่ใช่','No')]
@@ -45,12 +47,12 @@ export function createContactDetailEnterprise({React}){
     h('header',{className:'kc-lead-detail-header',style:{position:'sticky',top:0,zIndex:2,background:'#fff'}},
      h('div',{className:'kc-lead-detail-title-row',style:{paddingRight:'42px'}},
       h('div',{className:'kc-lead-detail-mark','aria-hidden':true},'CT'),
-      h('div',{className:'kc-lead-detail-heading'},h('div',{className:'kc-lead-detail-code'},clean(record.code)),h('h2',null,clean(record.name)),h('div',{className:'kc-lead-detail-sub'},t('Contact Detail · ข้อมูลล่าสุดใน CRM','Contact Detail · Latest CRM information'))),
+      h('div',{className:'kc-lead-detail-heading'},h('div',{className:'kc-lead-detail-code'},clean(record.code)),h('h2',null,clean(record.name)),h('div',{className:'kc-lead-detail-sub'},t('รายละเอียดผู้ติดต่อ · ข้อมูลล่าสุดในระบบ','Contact Detail · Latest CRM information'))),
       h('button',{type:'button',className:'kc-lead-detail-close',style:{position:'absolute',top:'14px',right:'14px'},'aria-label':t('ปิดรายละเอียด','Close detail'),onClick:onClose},'×')
      ),
      h('div',{className:'kc-lead-detail-actions'},
-      h('span',{className:'kc-lead-chip is-primary'},t('สถานะ: ','Status: ')+clean(record.status)),
-      h('span',{className:'kc-lead-chip is-accent'},t('บทบาท: ','Role: ')+clean(record.role)),
+      h('span',{className:'kc-lead-chip is-primary'},t('สถานะ: ','Status: ')+clean(recordOptionLabel('contacts','status',record.status,lang))),
+      h('span',{className:'kc-lead-chip is-accent'},t('บทบาท: ','Role: ')+clean(recordOptionLabel('contacts','role',record.role,lang))),
       h('span',{className:'kc-lead-chip'},clean(record.company)),
       h('span',{className:'kc-lead-owner-chip'},h('span',{className:'kc-lead-owner-avatar'},initials(ownerName)),h('span',{className:'kc-lead-owner-meta'},h('span',null,t('ผู้รับผิดชอบ','Assignee')),h('strong',null,ownerName))),
       h('span',{className:'kc-lead-detail-actions-spacer'}),
@@ -62,7 +64,7 @@ export function createContactDetailEnterprise({React}){
      h('div',{className:'kc-lead-info-grid'},fields.map(([label,value])=>h('div',{className:'kc-lead-info-field',key:label},h('div',{className:'kc-lead-info-label'},label),h('div',{className:'kc-lead-info-value'},clean(value))))),
      h('section',{className:'kc-lead-note-wrap'},
       h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('หมายเหตุสำคัญ','Important Notes')),h('span',null,t('พื้นที่หลักสำหรับบริบทการขายและความต้องการของลูกค้า · Auto Height ตามข้อมูล','Primary sales context · Auto height'))),
-      h('div',{className:'kc-lead-note-panel'},h('div',{className:'kc-lead-note-head'},h('span',{'aria-hidden':true},'▤'),t('หมายเหตุ / Sales Context','Notes / Sales Context')),h('div',{className:'kc-lead-note-body'},clean(record.description||record.note)))
+      h('div',{className:'kc-lead-note-panel'},h('div',{className:'kc-lead-note-head'},h('span',{'aria-hidden':true},'▤'),t('หมายเหตุ / ข้อมูลการขาย','Notes / Sales Context')),h('div',{className:'kc-lead-note-body'},clean(record.description||record.note)))
      ),
      children,
      h('footer',{className:'kc-lead-detail-footer'},
