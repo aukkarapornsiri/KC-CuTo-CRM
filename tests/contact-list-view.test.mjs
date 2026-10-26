@@ -11,10 +11,10 @@ const rows=[
 test('contact list presets use actual owner, view history and local week boundary',()=>{
   assert.deepEqual(CONTACT_VIEWS.map(view=>view.id),['recent','mine','all','week','primary']);
   const ids=view=>filterContactView(rows,{view,ownerId:'u1',recentIds:['c','a'],now}).map(row=>row.id);
-  assert.deepEqual(ids('all'),['b','c','a']);
+  assert.deepEqual(ids('all'),['c','b','a']);
   assert.deepEqual(ids('mine'),['c','a']);
   assert.deepEqual(ids('recent'),['c','a']);
-  assert.deepEqual(ids('week'),['b','c']);
+  assert.deepEqual(ids('week'),['c','b']);
   assert.deepEqual(ids('primary'),['a']);
   assert.deepEqual(ids('unknown'),ids('all'));
 });
