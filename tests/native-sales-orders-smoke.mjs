@@ -29,6 +29,8 @@ try{
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
   await fromQuote('QA-APPROVED');
   assert.equal(await popup.getByRole('button',{name:'Confirm Sales Order',exact:true}).count(),0,'Existing SO opens instead of duplicate conversion');
+  assert.equal(await popup.getByRole('button',{name:'Record full delivery',exact:true}).count(),0,'Delivery is blocked before SO approval');
+  await popup.getByRole('button',{name:'Approve SO',exact:true}).click();
   await popup.getByRole('button',{name:'Record full delivery',exact:true}).click();await popup.getByLabel('Delivery reference / evidence',{exact:true}).fill('DEL-001');await popup.getByRole('button',{name:'Confirm',exact:true}).click();
   await popup.getByRole('button',{name:'Complete order',exact:true}).click();await popup.getByRole('button',{name:'Confirm',exact:true}).click();await popup.getByRole('heading',{name:/Completed/}).waitFor();
   await popup.getByRole('button',{name:'Close form',exact:true}).click();

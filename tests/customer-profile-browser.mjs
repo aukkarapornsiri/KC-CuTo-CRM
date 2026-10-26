@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 
 const billing = {
-  'Billing Country': 'Thailand', 'Billing Street': '11 Billing Street',
+  'Billing Country': 'Thailand', 'Billing Street (Thai)': '11 ถนนเรียกเก็บเงิน', 'Billing Street (English)': '11 Billing Street',
   'Billing City': 'Bangrak', 'Billing State / Province': 'Bangkok',
   'Billing Postal Code': '10500',
 };
 const shipping = {
-  'Shipping Country': 'Japan', 'Shipping Street': '22 Shipping Street',
+  'Shipping Country': 'Japan', 'Shipping Street (Thai)': '22 ถนนจัดส่ง', 'Shipping Street (English)': '22 Shipping Street',
   'Shipping City': 'Chiyoda', 'Shipping State / Province': 'Tokyo',
   'Shipping Postal Code': '1000001',
 };
-const contact = {website:'https://example.test', Description:'Independent address regression',phone:'020000000',email:'qa@example.test'};
+const contact = {Website:'https://example.test', Description:'Independent address regression',Phone:'020000000',Email:'qa@example.test'};
 const field = (form, name) => form.getByLabel(name, {exact:true});
 async function checkValues(form, values) {
   for (const [name, value] of Object.entries(values)) assert.equal(await field(form,name).inputValue(),value,name);
@@ -55,12 +55,12 @@ export async function checkCustomerWorkflow(page,open,width) {
   const form=accounts.getByRole('form',{name:'Customer form'});
   await field(form,'Account Name').fill('QA batch child');
   await field(form,'Parent Account').selectOption({label:'QA customers updated'});
-  await field(form,'Billing Street').fill('Batch billing');
+  await field(form,'Billing Street (English)').fill('Batch billing');
   await form.getByRole('button',{name:'Copy billing to shipping',exact:true}).click();
   const owner=await field(form,'Account Owner').inputValue();
   await form.getByRole('button',{name:'Save & New',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('form[aria-label="Customer form"] input[aria-label="Account Name"]')?.value==='');
-  await checkValues(form,{'Account Name':'','Billing Street':'','Shipping Street':'','Parent Account':'','Account Owner':owner});
+  await checkValues(form,{'Account Name':'','Billing Street (English)':'','Shipping Street (English)':'','Parent Account':'','Account Owner':owner});
   await form.getByRole('button',{name:'Cancel',exact:true}).click();
   await accounts.getByRole('status').filter({hasText:/^2 records/}).waitFor();
   await accounts.getByRole('button',{name:'Create Account',exact:true}).click();

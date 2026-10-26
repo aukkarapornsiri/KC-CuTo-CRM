@@ -13,6 +13,7 @@ try {
    const source=await(await fetch([...document.scripts].find(s=>s.src.includes('app-C2ITSffc')).src)).text();
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
+   // Intentionally omit customer_id: historical quotations must still open and preview.
    DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
