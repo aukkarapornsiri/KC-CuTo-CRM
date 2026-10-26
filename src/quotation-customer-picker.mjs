@@ -1,8 +1,10 @@
+import {sortRecordsNewest} from './record-order.mjs';
 export function recentQuotationCustomers(customers,quotes,limit=10){const byId=new Map(customers.map(c=>[c.id,c])),seen=new Set(),out=[];for(const q of [...quotes].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')))){if(byId.has(q.customer_id)&&!seen.has(q.customer_id)){seen.add(q.customer_id);out.push(byId.get(q.customer_id));if(out.length===limit)break;}}return out;}
 export function createQuotationCustomerPicker(React){const h=React.createElement;return function CustomerPicker({lang,customers,recent=[],value,onSelect,onCreate,disabled}){
 const t=(a,b)=>lang==='th'?a:b,[query,Q]=React.useState(''),[expanded,E]=React.useState(false),[all,All]=React.useState(false),[active,A]=React.useState(0),root=React.useRef(null),input=React.useRef(null),id=React.useId();
 React.useEffect(()=>{const fn=e=>{if(!root.current?.contains(e.target))E(false);};document.addEventListener('pointerdown',fn);return()=>document.removeEventListener('pointerdown',fn);},[]);
 React.useEffect(()=>{if(expanded)document.getElementById(id+'-'+active)?.scrollIntoView({block:'nearest'});},[active]);
+customers=sortRecordsNewest(customers);recent=sortRecordsNewest(recent);
 const selected=customers.find(c=>c.id===value),options=query.trim()?customers.filter(c=>[c.name,c.name_en,c.code,c.tax_id].some(v=>String(v||'').toLowerCase().includes(query.trim().toLowerCase()))):all?customers:recent;
 const choose=row=>{onSelect(row.id);Q('');E(false);},create=()=>{E(false);onCreate({name:query},row=>{onSelect(row.id,row);Q('');E(false);});};
 

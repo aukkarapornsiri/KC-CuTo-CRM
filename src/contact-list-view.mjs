@@ -1,3 +1,4 @@
+import {sortRecordsNewest} from './record-order.mjs';
 export const CONTACT_VIEWS=Object.freeze([
   {id:'recent',th:'ที่ดูล่าสุด',en:'Recently Viewed'},
   {id:'mine',th:'ผู้ติดต่อของฉัน',en:'My Contacts'},
@@ -16,8 +17,7 @@ export function filterContactView(rows,{view='all',ownerId,recentIds=[],now=new 
     if(view==='primary')return row.is_primary===true;
     return true;
   });
-  return result.sort(view==='recent'?(a,b)=>byRecent.get(a.id)-byRecent.get(b.id):
-    (a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+  return sortRecordsNewest(result);
 }
 
 export function addRecentContact(ids,id){return [id,...ids.filter(value=>value!==id)].slice(0,50);}

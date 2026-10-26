@@ -1,3 +1,4 @@
+import {compareRecordsNewest} from './record-order.mjs';
 export const SERVICE_VIEWS=Object.freeze([
   {id:'open',th:'เคสที่เปิดอยู่ทั้งหมด',en:'All Open Cases'},
   {id:'mine',th:'เคสของฉัน',en:'My Cases'},
@@ -16,8 +17,8 @@ export function filterServiceView(rows,{view='open',assigneeId}={}){
   });
 }
 
-export function sortServiceRows(rows,sort='case'){
+export function sortServiceRows(rows,sort='newest'){
   return [...rows].sort((a,b)=>sort==='newest'
-    ?String(b.created_at||'').localeCompare(String(a.created_at||''))
+    ?compareRecordsNewest(a,b)
     :String(a.code||a.id||'').localeCompare(String(b.code||b.id||''),undefined,{numeric:true}));
 }

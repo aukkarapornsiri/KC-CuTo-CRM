@@ -1,3 +1,4 @@
+import {sortRecordsNewest} from './record-order.mjs';
 import {formatCustomerAddress} from './customer-address.mjs';
 import {createCustomerFinance} from './customer360-finance.mjs?v=20261005';
 import {createCustomerReadiness} from './customer360-readiness.mjs?v=20261005-workflows';
@@ -8,7 +9,7 @@ const customerColumns='id,code,name,tax_id,email,phone,owner_id,owner_name,statu
 export function createCustomer360({React,client,useApp,records}){
  const h=React.createElement,Readiness=createCustomerReadiness({React,client,records}),Finance=createCustomerFinance({React,client,records});
  async function unwrap(q){const {data,error}=await q;if(error)throw error;return data;}
- async function pages(table,cols,configure=q=>q){let rows=[];for(let n=0;n<20000;n+=500){const batch=await unwrap(configure(client.from(table).select(cols)).order('id').range(n,n+499));rows.push(...batch);if(batch.length<500)return rows;}throw Error('รายการเกินขอบเขต 20,000 รายการ / More than 20,000 records');}
+ async function pages(table,cols,configure=q=>q){let rows=[];for(let n=0;n<20000;n+=500){const batch=await unwrap(configure(client.from(table).select(cols)).order('id').range(n,n+499));rows.push(...batch);if(batch.length<500)return sortRecordsNewest(rows);}throw Error('รายการเกินขอบเขต 20,000 รายการ / More than 20,000 records');}
  return function Customer360({record,lang='th'}){
   const {demoMode,profile,navigate}=useApp(),th=lang==='th',t=(a,b)=>th?a:b;
   const [state,State]=React.useState(null),[busy,Busy]=React.useState(false),[error,ErrorText]=React.useState(''),[tab,Tab]=React.useState('overview'),[detail,Detail]=React.useState(null),[filter,Filter]=React.useState(''),[search,Search]=React.useState(''),[review,Review]=React.useState(null),[reason,Reason]=React.useState(''),[confirmed,Confirmed]=React.useState(false),[reload,Reload]=React.useState(0);
@@ -23,7 +24,7 @@ export function createCustomer360({React,client,useApp,records}){
     const group=identityGroup(record.id,links),members=customers.filter(c=>group.ids.includes(c.id));
     if(!members.some(c=>c.id===record.id))throw Error(t('ไม่พบลูกค้าหรือไม่มีสิทธิ์','Customer unavailable'));
     const data={},issues=[];
-    await Promise.all(Object.keys(SOURCES).map(async key=>{const module=key==='branches'?'customers':key==='orders'?'quotations':key;if(!can(module)){data[key]=null;issues.push(key+': '+t('ไม่มีสิทธิ์','Access denied'));return;}try{data[key]=demoMode?(records[key==='orders'?'sales_orders':key]||[]).filter(r=>group.ids.includes(r.customer_id)):await pages(key==='branches'?'crm_branches':key==='orders'?'kc_dw_sales_order_facts':key,columns[key],q=>q.in('customer_id',group.ids));}catch(e){data[key]=null;issues.push(key+': '+e.message);}}));
+    await Promise.all(Object.keys(SOURCES).map(async key=>{const module=key==='branches'?'customers':key==='orders'?'quotations':key;if(!can(module)){data[key]=null;issues.push(key+': '+t('ไม่มีสิทธิ์','Access denied'));return;}try{data[key]=demoMode?(records[key==='orders'?'sales_orders':key]||[]).filter(r=>group.ids.includes(r.customer_id)):await pages(key==='branches'?'crm_branches':key==='orders'?'kc_dw_sales_order_facts':key,columns[key],q=>q.in('customer_id',group.ids));data[key]=sortRecordsNewest(data[key]);}catch(e){data[key]=null;issues.push(key+': '+e.message);}}));
     let events=[],history=[];try{events=demoMode?(records.customer360_events||[]).filter(e=>group.ids.includes(e.customer_id)):await pages('crm_customer360_events','id,module,record_id,customer_id,action,title,status,created_at',q=>q.in('customer_id',group.ids));history=demoMode?[]:await pages('crm_customer_identity_events','id,customer_id,canonical_id,action,reason,actor_id,created_at',q=>q.in('canonical_id',group.ids));}catch(e){issues.push(t('ประวัติ: ','History: ')+e.message);}
     let unmapped=null,emailDeliveries=null;
     if(can('quotations'))try{if(demoMode)unmapped=(records.sales_orders||[]).filter(r=>!r.customer_id).length;else{const result=await client.from('kc_dw_sales_order_facts').select('id',{count:'exact',head:true}).is('customer_id',null);if(result.error)throw result.error;unmapped=result.count;}}catch(e){issues.push('SO mapping: '+e.message);}

@@ -16,6 +16,6 @@ test('case list views and sort order reflect ticket fields',()=>{
  assert.deepEqual(ids('mine'),['a','c']);
  assert.deepEqual(ids('urgent'),['a']);
  assert.deepEqual(ids('resolved'),['c','d']);
- assert.deepEqual(sortServiceRows(rows).map(x=>x.id),['d','b','a','c']);
- assert.deepEqual(sortServiceRows(rows,'newest').map(x=>x.id),['a','b','c','d']);
+ assert.deepEqual(sortServiceRows(rows,'case').map(x=>x.id),['d','b','a','c']);
+ assert.deepEqual(sortServiceRows(rows).map(x=>x.id),['a','b','c','d']);
 });
