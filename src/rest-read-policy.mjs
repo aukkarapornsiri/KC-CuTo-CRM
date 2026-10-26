@@ -54,7 +54,8 @@ export function createRestReadPolicy(nativeFetch, {origin, now = Date.now, rando
         if(wasProbe && response.ok) {failures=0;blockedUntil=0;}
         if(response.ok && generation === revision) {
           const resource = url.pathname.slice('/rest/v1/'.length);
-          const ttl = resource === 'master_data_items' ? 300000 : 60000;
+          // Shared templates are read on dialog open, not polled. Keep cross-user edits fresh.
+          const ttl = resource === 'crm_quotation_templates' ? 0 : resource === 'master_data_items' ? 300000 : 60000;
           // Bound memory even when filters/search terms vary continually.
           if(cache.size >= 200) cache.delete(cache.keys().next().value);
           cache.set(key,{response:response.clone(),expires:now()+ttl});

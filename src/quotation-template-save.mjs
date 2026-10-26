@@ -16,3 +16,6 @@ export async function saveQuotationTemplate(client,patch,saved){
  return persisted;
 }
 export const QUOTATION_TEMPLATE_CHANGED='kc-quotation-template-changed';
+
+// Issued and approval-stage documents keep their saved template.
+export function followsSharedQuotationTemplate(quotation={}){return !quotation.id||quotation.status==='draft'&&!['pending','approved'].includes(quotation.approval_status);}
