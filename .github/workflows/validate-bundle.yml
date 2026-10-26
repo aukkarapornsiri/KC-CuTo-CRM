@@ -73,7 +73,7 @@ jobs:
           node --test tests/internal-model.test.mjs
           node --check src/opportunity-dialog.mjs
           node --test tests/opportunity-form.test.mjs
-          node --test tests/quotation-workflow.test.mjs tests/quotation-recurring.test.mjs tests/sales-order-cost-sheet.test.mjs
+          node --test tests/quotation-workflow.test.mjs tests/quotation-recurring.test.mjs tests/sales-order-cost-sheet.test.mjs tests/native-sales-orders.test.mjs tests/sales-order-excel.test.mjs
           node --test tests/quotation-template.test.mjs tests/quotation-designer.test.mjs tests/quotation-customer-picker.test.mjs tests/quotation-persistence.test.mjs tests/quotation-company.test.mjs
           node --test tests/account360-connector.test.mjs
           node --check src/experience.mjs
