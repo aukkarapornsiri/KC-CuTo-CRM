@@ -145,13 +145,18 @@ export async function prepareQuotationPrint(root,doc){
  newPage();for(const block of blocks)append(block);
  const pages=[...root.children];pages.forEach((page,index)=>{const label=page.querySelector('.kc-print-reference');label.textContent+=` · ${index+1} / ${pages.length}`;});
 }
-export async function printQuotation(source){
+export async function printQuotation(source,quotationNumber){
  if(!source)throw Error('ไม่พบใบเสนอราคาสำหรับพิมพ์');
  const frame=document.createElement('iframe');frame.title='Quotation A4 print';frame.style.cssText='position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0';document.body.append(frame);
+ let previousTitle,printTitle;let timer;
+ const cleanup=()=>{clearTimeout(timer);if(previousTitle!==undefined&&document.title===printTitle)document.title=previousTitle;frame.remove();};
  try{const doc=frame.contentDocument;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Quotation</title></head><body></body></html>');doc.close();
  for(const face of document.fonts)doc.fonts.add(face);
  const style=doc.createElement('style');style.textContent=quotationPrintCSS;doc.head.append(style);const root=buildQuotationPrint(source,doc);doc.body.append(root);await prepareQuotationPrint(root,doc);
  await new Promise(resolve=>frame.contentWindow.requestAnimationFrame(()=>frame.contentWindow.requestAnimationFrame(resolve)));
- const cleanup=()=>frame.remove();frame.contentWindow.addEventListener('afterprint',cleanup,{once:true});frame.contentWindow.focus();frame.contentWindow.print();setTimeout(cleanup,300000);
- }catch(error){frame.remove();throw error;}
+ // Chromium uses the parent document title for Save as PDF from an iframe.
+ printTitle=String(quotationNumber||'Quotation').trim().replace(/[<>:"/\\|?*\x00-\x1f]/g,'-')||'Quotation';
+ previousTitle=document.title;doc.title=printTitle;document.title=printTitle;
+ frame.contentWindow.addEventListener('afterprint',cleanup,{once:true});timer=setTimeout(cleanup,300000);frame.contentWindow.focus();frame.contentWindow.print();
+ }catch(error){cleanup();throw error;}
 }
