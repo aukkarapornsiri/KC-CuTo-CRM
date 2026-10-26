@@ -1,10 +1,17 @@
 /* Shared popup dismiss button. Preserve handlers, accessible names and busy state. */
 :is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]){
- display:inline-grid!important;place-items:center!important;position:relative;flex:0 0 30px!important;width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;border:2px solid #59c4c8!important;border-radius:7px!important;background:#fff!important;color:#4b5d75!important;box-shadow:none!important;font-size:0!important;line-height:1!important;cursor:pointer;vertical-align:middle;
+ display:inline-grid!important;place-items:center!important;position:relative;flex:0 0 30px!important;width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;border:2px solid transparent!important;border-radius:7px!important;background:#f00712!important;color:#fff!important;box-shadow:none!important;font-size:0!important;line-height:1!important;cursor:pointer;vertical-align:middle;
 }
-:is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"])::after{content:'×';font:300 23px/1 Arial,sans-serif;color:inherit}
+:is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"])::after{content:'';position:absolute;inset:0;background:url('./close-cross.svg') center/100% 100% no-repeat}
 :is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"])>*{display:none!important}
-:is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]):hover{background:#f5f8fc!important;border-color:#28aeb4!important}
+:is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]):hover{background:#d90610!important;border-color:transparent!important}
 :is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]):focus-visible{outline:2px solid #5d82ad!important;outline-offset:3px!important}
 :is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]):disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:600px){:is(button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]){width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important;flex-basis:30px!important;border-radius:7px!important}}
+
+/* Other X actions keep their existing icon and button dimensions and labels. */
+button svg.lucide-x{background:url('./close-cross.svg') center/100% 100% no-repeat!important;border-radius:22%;color:transparent!important;stroke:transparent!important}
+button svg.lucide-x>*{visibility:hidden}
+button.kc-quote-remove{background:#f00712 url('./close-cross.svg') center/contain no-repeat!important;color:transparent!important;border-color:transparent!important;border-radius:7px!important}
+button.kc-quote-remove:hover:not(:disabled){filter:brightness(.9)}
+button:has(svg.lucide-x):focus-visible,button.kc-quote-remove:focus-visible{outline:2px solid #5d82ad;outline-offset:3px}
