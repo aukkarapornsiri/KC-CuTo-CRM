@@ -85,6 +85,10 @@ jobs:
           node --test tests/settings-model.test.mjs tests/delete-user.test.mjs tests/profile-names.test.mjs tests/role-access.test.mjs tests/grouped-navigation.test.mjs tests/user-si-defaults.test.mjs
           node --check src/workspace-theme.mjs
           node --test tests/workspace-theme.test.mjs
+      - name: Test assignment email summaries in isolated Postgres
+        run: |
+          npm install --no-save --no-package-lock @electric-sql/pglite@0.3.14
+          node --test tests/assignment-email-summary.test.mjs
       - name: Parse Edge Function TypeScript
         run: |
           npx -y esbuild supabase/functions/crm-user-admin/index.ts --bundle --platform=neutral --format=esm --external:npm:* --outfile=/tmp/crm-user-admin.js
