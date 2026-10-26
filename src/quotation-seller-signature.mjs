@@ -1,5 +1,6 @@
 import {readQuotationImage,uploadQuotationAsset} from './quotation-assets.mjs';
-const demoDefaults=new Map();
+export const demoSignatureDefaults=new Map();
+const demoDefaults=demoSignatureDefaults;
 export function signatureFields(value={}){return {seller_signature_storage_key:value.seller_signature_storage_key||'',seller_signature_url:value.seller_signature_url||'',seller_signature_owner_id:value.seller_signature_owner_id||''};}
 export function applySellerSignature(record,value){return {...record,template_snapshot:{...(record.template_snapshot||{}),...signatureFields(value)}};}
 export function createSellerSignatureHook({React,client}){

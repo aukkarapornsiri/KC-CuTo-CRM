@@ -3,6 +3,9 @@ begin;
 select set_config('request.jwt.claim.sub',(select id::text from public.profiles where role='admin' and is_active and deleted_at is null limit 1),true);
 insert into storage.objects(bucket_id,name,owner_id,metadata)
 values('crm-sales-orders',auth.uid()::text||'/regression/po.pdf',auth.uid()::text,'{"mimetype":"application/pdf","size":100}');
+insert into storage.objects(bucket_id,name,owner_id,metadata)
+values('crm-quotation-assets',auth.uid()::text||'/seller-signature-native-test.png',auth.uid()::text,'{"mimetype":"image/png","size":100}');
+insert into public.crm_sales_signature_defaults(user_id,storage_key) values(auth.uid(),auth.uid()::text||'/seller-signature-native-test.png') on conflict(user_id) do update set storage_key=excluded.storage_key;
 set local role authenticated;
 do $$
 declare c uuid;q uuid;q2 uuid;qdraft uuid;s public.crm_sales_orders;r public.crm_sales_orders;before_facts bigint;key text:=auth.uid()::text||'/regression/po.pdf';

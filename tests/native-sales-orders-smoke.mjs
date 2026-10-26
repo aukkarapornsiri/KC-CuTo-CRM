@@ -9,6 +9,14 @@ try{
   await page.goto(process.env.SITE_URL||'http://127.0.0.1:4173/?demo=1');
   await page.getByRole('button',{name:'เข้าใช้งานโหมดทดลอง',exact:true}).click();
   await page.getByRole('button',{name:'เปลี่ยนเป็นภาษาอังกฤษ',exact:true}).click();
+  await page.getByRole('button',{name:'User profile',exact:true}).click();
+  await page.getByRole('button',{name:'Edit profile',exact:true}).click();
+  const profileDialog=page.getByRole('dialog',{name:'My profile',exact:true});
+  const signaturePNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a10sAAAAASUVORK5CYII=','base64');
+  await profileDialog.getByLabel('Upload Profile signature',{exact:true}).setInputFiles({name:'qa-signature.png',mimeType:'image/png',buffer:signaturePNG});
+  await profileDialog.getByRole('button',{name:'Save signature',exact:true}).click();
+  await profileDialog.getByText('Signature saved',{exact:true}).waitFor();
+  await profileDialog.getByRole('button',{name:'Cancel',exact:true}).click();
   await page.evaluate(async()=>{
    const source=await(await fetch([...document.scripts].find(s=>s.src.includes('app-C2ITSffc')).src)).text();
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
@@ -35,6 +43,10 @@ try{
   assert.equal(await popup.getByRole('button',{name:'Convert Sales Order',exact:true}).count(),0,'Existing SO opens instead of duplicate conversion');
   assert.equal(await popup.getByRole('button',{name:'Record full delivery',exact:true}).count(),0);
   await popup.getByRole('button',{name:'Approve SO',exact:true}).click();
+  const signedPromise=page.waitForEvent('popup');await popup.getByRole('button',{name:'Print Cost Sheet',exact:true}).click();
+  const signed=await signedPromise;await signed.getByAltText('Approver signature').waitFor();
+  assert.match(await signed.getByAltText('Approver signature').getAttribute('src'),/^data:image\/png;base64,/);
+  assert.ok((await signed.locator('.cs-signed').innerText()).trim());await signed.close();
   await popup.getByRole('button',{name:'Record full delivery',exact:true}).click();await popup.getByLabel('Delivery reference / evidence',{exact:true}).fill('DEL-001');await popup.getByRole('button',{name:'Confirm',exact:true}).click();
   await popup.getByRole('button',{name:'Complete order',exact:true}).click();await popup.getByRole('button',{name:'Confirm',exact:true}).click();await popup.getByRole('heading',{name:/Completed/}).waitFor();
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
