@@ -1,3 +1,4 @@
+import {shortSalesName} from './sales-name.mjs';
 import {streetValue,localizeAddressText} from './customer-address.mjs';
 import {recordOptionLabel} from './record-display.mjs';
 import {leadStatusLabel} from './lead-workflow.mjs';
@@ -15,7 +16,7 @@ export function createLeadDetailEnterprise({React}){
   React.useEffect(()=>{setOwnerId(record?.owner_id||'');setAssignError('');},[record?.id,record?.owner_id]);
   React.useEffect(()=>{let active=true;setOwners([]);if(!record||!canAssign)return;setOwnersLoading(true);setAssignError('');Promise.resolve().then(()=>loadOwners?.()||[]).then(list=>{if(active)setOwners(list.filter(x=>x&&x.is_active!==false));}).catch(e=>{if(active)setAssignError(e.message||String(e));}).finally(()=>{if(active)setOwnersLoading(false);});return()=>{active=false;};},[record?.id,canAssign]);
   if(!record)return null;
-  const ownerName=clean(record.owner_name&&record.owner_name!=='-'?record.owner_name:t('ยังไม่ได้มอบหมาย','Unassigned'));
+  const ownerName=clean(record.owner_name&&record.owner_name!=='-'?shortSalesName(record.owner_name):t('ยังไม่ได้มอบหมาย','Unassigned'));
   const confirmAssign=async()=>{const person=owners.find(x=>x.id===ownerId);if(!person)return;setAssignBusy(true);setAssignError('');try{await onAssign?.(person);}catch(e){setAssignError(e.message||String(e));}finally{setAssignBusy(false);}};
   const fields=[
    [t('ประเภทลีด','Lead type'),record.lead_type==='Individual'?t('บุคคลธรรมดา','Individual'):t('นิติบุคคล','Juristic person')],[record.lead_type==='Individual'?t('เลขบัตรประชาชน','National ID'):t('เลขผู้เสียภาษี','Tax ID'),record.tax_id],[t('ชื่อบริษัท','Company'),record.company_name],[t('คำนำหน้า','Salutation'),record.salutation],[t('ชื่อ','First Name'),record.first_name],[t('นามสกุล','Last Name'),record.last_name],
@@ -23,7 +24,7 @@ export function createLeadDetailEnterprise({React}){
    [t('อีเมล','Email'),record.email],[t('เว็บไซต์','Website'),record.website],['LINE ID',record.line_id],[t('แหล่งที่มา','Source'),record.source],
    [t('สินค้าที่สนใจ','Product Interest'),record.product_interest],[t('งบประมาณ','Budget'),record.budget],[t('คะแนน','Score'),record.score],[t('สถานะ','Status'),leadStatusLabel(record.status,lang)],
    [t('ความสำคัญ','Priority'),record.priority],[t('ประเทศ','Country'),localizeAddressText(record.mailing_country,lang)],[t('ถนน / เลขที่ / อาคาร','Street / Building'),streetValue(record,'mailing_street',lang)],[t('เมือง / เขต / อำเภอ','City / District'),localizeAddressText(record.mailing_city,lang)],
-   [t('รัฐ / จังหวัด','State / Province'),localizeAddressText(record.mailing_state,lang)],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),record.owner_name],[t('ผู้ทำหน้าที่ Assign Lead','Lead assigner'),record.lead_assigner_name]
+   [t('รัฐ / จังหวัด','State / Province'),localizeAddressText(record.mailing_state,lang)],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),shortSalesName(record.owner_name)],[t('ผู้ทำหน้าที่ Assign Lead','Lead assigner'),shortSalesName(record.lead_assigner_name)]
   ];
   return h('div',{className:'kc-lead-detail-overlay',role:'presentation',onMouseDown:e=>{if(e.target===e.currentTarget)onClose?.();}},
    h('section',{className:'kc-lead-detail-modal',role:'dialog','aria-modal':true,'aria-label':t('รายละเอียดลีด','Lead Detail')},

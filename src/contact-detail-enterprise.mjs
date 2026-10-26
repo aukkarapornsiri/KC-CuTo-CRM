@@ -1,3 +1,4 @@
+import {shortSalesName} from './sales-name.mjs';
 import {streetValue,localizeAddressText} from './customer-address.mjs';
 import {recordOptionLabel} from './record-display.mjs';
 export function createContactDetailEnterprise({React}){
@@ -16,7 +17,7 @@ export function createContactDetailEnterprise({React}){
    return()=>{document.body.style.overflow=overflow;document.removeEventListener('keydown',key);previous?.focus?.();};
   },[record?.id]);
   if(!record)return null;
-  const ownerName=clean(record.owner_name&&record.owner_name!=='-'?record.owner_name:t('ยังไม่ได้มอบหมาย','Unassigned'));
+  const ownerName=clean(record.owner_name&&record.owner_name!=='-'?shortSalesName(record.owner_name):t('ยังไม่ได้มอบหมาย','Unassigned'));
   const fields=[
    [t('ชื่อลูกค้า','Account'),record.company],
    [t('คำนำหน้า','Salutation'),record.salutation],
@@ -39,7 +40,7 @@ export function createContactDetailEnterprise({React}){
    [t('เมือง / เขต / อำเภอ','City / District'),localizeAddressText(record.mailing_city,lang)],
    [t('รัฐ / จังหวัด','State / Province'),localizeAddressText(record.mailing_state,lang)],
    [t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],
-   [t('เจ้าของผู้ติดต่อ','Contact Owner'),record.owner_name],
+   [t('เจ้าของผู้ติดต่อ','Contact Owner'),shortSalesName(record.owner_name)],
    [t('ผู้ติดต่อหลัก','Primary Contact'),record.is_primary?t('ใช่','Yes'):t('ไม่ใช่','No')]
   ];
   return h('div',{className:'kc-lead-detail-overlay',style:{alignItems:'center'},role:'presentation',onMouseDown:e=>{if(e.target===e.currentTarget)onClose?.();}},
