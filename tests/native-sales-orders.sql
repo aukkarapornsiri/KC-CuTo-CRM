@@ -11,26 +11,25 @@ begin
  insert into public.customers(name,status,address) values('QA Native SO','Active','1 Test Street') returning id into c;
  insert into public.quotations(customer_id,owner_id,status,currency,items,document_discount)
  values(c,auth.uid(),'draft','THB','[{"name":"QA A","qty":2,"price":100,"discount":0,"cost":50},{"name":"QA B","qty":1,"price":50,"cost":20}]',10) returning id into q;
- qdraft:=q;
- begin
-  perform public.crm_create_sales_order(q,'QA-PO',current_date,key,'po.pdf');
-  raise exception 'Draft converted unexpectedly';
- exception when others then if sqlerrm not like '%must be approved%' then raise; end if; end;
- perform set_config('crm.approval_transition','yes',true);
- update public.quotations set approval_status='approved',status='approved' where id=q;
- perform set_config('crm.approval_transition','',true);
  begin
   perform public.crm_create_sales_order(q,'QA-PO',current_date,'invalid/file','po.pdf');
   raise exception 'Invalid attachment accepted';
  exception when others then if sqlerrm not like '%Upload the customer PO%' then raise; end if; end;
  select count(*) into before_facts from public.kc_dw_sales_order_facts;
  s:=public.crm_create_sales_order(q,'QA-PO',current_date,key,'po.pdf',current_date+7,'QA');
+ if not exists(select 1 from public.crm_so_approvals where sales_order_id=s.id and status='pending' and revision=1) then raise exception 'Missing atomic approval'; end if;
  r:=public.crm_create_sales_order(q,'DIFFERENT-RETRY',current_date,key,'po.pdf');
  if s.id<>r.id or s.po_number<>r.po_number then raise exception 'Retry was not idempotent'; end if;
  if (select count(*) from public.kc_dw_sales_order_facts)<>before_facts+1 then raise exception 'Duplicate fact'; end if;
  if not exists(select 1 from public.kc_dw_sales_order_facts where id=s.id and source_system='KC CuTo CRM' and net_amount=240 and currency='THB' and status='converted') then raise exception 'Wrong sales fact'; end if;
  if (select sum((x->>'net_amount')::numeric) from public.kc_dw_sales_order_facts f,jsonb_array_elements(f.product_lines)x where f.id=s.id)<>240 then raise exception 'Discount allocation mismatch'; end if;
  if s.billing_address<>'1 Test Street' then raise exception 'Quote address snapshot missing'; end if;
+ if (select count(*) from public.crm_sales_order_events where sales_order_id=s.id and action='so_approval_request')<>1 then raise exception 'Duplicate approval request'; end if;
+ begin
+  perform public.crm_transition_sales_order(s.id,'delivered','DEL-001',s.updated_at);
+  raise exception 'Unapproved delivery allowed';
+ exception when others then if sqlerrm not ilike '%approv%' or sqlerrm='Unapproved delivery allowed' then raise; end if; end;
+ perform public.crm_so_approval_action(s.id,'approve','QA approved');
  begin
   update public.crm_sales_orders set total=1 where id=s.id;
   raise exception 'Direct money tampering allowed';
@@ -60,7 +59,7 @@ begin
  r:=public.crm_transition_sales_order(s.id,'cancelled','Repeat',s.updated_at);
  if s.id<>r.id or (select status from public.kc_dw_sales_order_facts where id=s.id)<>'cancelled' then raise exception 'Cancel/retry failed'; end if;
  if (select count(*) from public.crm_sales_order_events where sales_order_id=s.id and action='cancelled')<>1 then raise exception 'Duplicate cancellation event'; end if;
- if (select count(*) from public.crm_sales_order_events where sales_order_id=s.id)<>2 then raise exception 'Missing audit history'; end if;
+ if (select count(*) from public.crm_sales_order_events where sales_order_id=s.id)<>3 then raise exception 'Missing audit history'; end if;
 end $$;
 reset role;
 set local role anon;
@@ -76,4 +75,4 @@ do $$ begin
 end $$;
 reset role;
 rollback;
-select 'PASS: approval gate, attachment, conversion, idempotency, amounts, snapshots, direct-write denial, delivery, completion, cancellation, concurrency token and anonymous isolation; all fixtures rolled back' result;
+select 'PASS: draft conversion, atomic SO approval, duplicate request prevention, delivery approval gate, attachment, conversion, idempotency, amounts, snapshots, direct-write denial, delivery, completion, cancellation, concurrency token and anonymous isolation; all fixtures rolled back' result;
