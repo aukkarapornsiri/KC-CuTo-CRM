@@ -28,7 +28,7 @@ jobs:
           - group: quotation-contact
             suites: quotation-contact-smoke
           - group: native-sales-orders
-            suites: native-sales-orders-smoke
+            suites: native-sales-orders-smoke cost-sheet-print-smoke
           - group: regression
             suites: internal-workspace-smoke opportunity-dialog-smoke settings-workspace-smoke
           - group: customer-sales
@@ -48,7 +48,7 @@ jobs:
           npm install --save-dev playwright
           npx playwright install --with-deps chromium
       - name: Install PDF text verification
-        if: matrix.group == 'customer-sales'
+        if: matrix.group == 'customer-sales' || matrix.group == 'native-sales-orders'
         run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
       - name: Start static development site
         run: |

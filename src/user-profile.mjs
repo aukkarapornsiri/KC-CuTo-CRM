@@ -1,8 +1,10 @@
+import {createProfileSignature} from './profile-signature.mjs';
 import {validatePersonalProfile,PERSONAL_FIELDS} from './profile-document-defaults.mjs?v=20261007-profile';
 import {createRecordPopup} from './record-popup.mjs?v=20261004';
 import {profileNames,profileDisplayName} from './profile-names.mjs?v=20261002';
 export function validateProfilePhoto(file){if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('รองรับรูป PNG, JPG หรือ WebP เท่านั้น');if(file.size>5242880)throw Error('รูปต้องมีขนาดไม่เกิน 5 MB');}
 export function createUserProfile({React,client,useApp}){
+ const ProfileSignature=createProfileSignature({React,client});
  const h=React.createElement,Popup=createRecordPopup(React),bucket='crm-profile-photos';
  return function UserProfile({onSignOut}){
   const {profile,session,demoMode,enterDemoMode,syncProfile,lang}=useApp(),[menu,Menu]=React.useState(false),[edit,Edit]=React.useState(null),[photo,Photo]=React.useState(null),[preview,Preview]=React.useState(''),[avatar,Avatar]=React.useState(''),[busy,Busy]=React.useState(false),[error,ErrorText]=React.useState(''),[message,Message]=React.useState('');
@@ -28,6 +30,7 @@ export function createUserProfile({React,client,useApp}){
     h('p',{style:{color:'#71869d',fontSize:13,marginBottom:24}},tr('บันทึกข้อมูลพนักงานเพื่อใช้เป็นค่าเริ่มต้นในทุกแบบฟอร์ม ช่องข้อมูลในร่างที่บันทึกแล้วและเอกสารที่ส่งแล้วจะคงเดิม','Save your employee details as defaults for new documents. Saved drafts and submitted documents keep their original details.')),
     h('div',{style:{display:'flex',alignItems:'center',gap:20,marginBottom:24,flexWrap:'wrap'}},h('div',{className:'crm-personal-photo'},image(edit.remove_photo?'':preview||avatar,100)),
      h('div',null,h('label',{style:{display:'inline-block',border:'1px solid #0aada9',borderRadius:18,padding:'10px 16px',color:'#0aada9',cursor:'pointer'}},tr('เลือกรูปโปรไฟล์','Choose profile photo'),h('input',{type:'file',style:{display:'none'},accept:'image/png,image/jpeg,image/webp',onChange:choose,disabled:busy,'aria-label':tr('เพิ่มรูปโปรไฟล์','Upload profile photo')})),h('button',{type:'button',disabled:busy,onClick:()=>{Photo(null);Preview('');Edit({...edit,remove_photo:true});},style:{marginLeft:14,color:'#f43f5e',border:0,background:'transparent'}},tr('ลบรูป','Remove photo')),h('small',null,'JPG, PNG, WebP · '+tr('ไม่เกิน 5 MB','up to 5 MB')))),
+    h(ProfileSignature,{profile,demoMode,lang,onBusy:Busy}),
     h('div',{className:'crm-personal-profile-grid'},...PERSONAL_FIELDS.flatMap((key,i)=>[
      h('label',{key},tr(['ชื่อ','นามสกุล','บริษัท / องค์กร','เบอร์โทรศัพท์','ตำแหน่ง','แผนก','รหัสพนักงาน','อีเมลติดต่อ','LINE ID'][i],['First name','Last name','Company / Organization','Phone','Position','Department','Employee code','Contact email','LINE ID'][i]),
       key==='document_department'?h('select',{'aria-label':tr('แผนก','Department'),value:edit[key]||'',disabled:busy,onChange:e=>Edit({...edit,[key]:e.target.value})},h('option',{value:''},tr('เลือกแผนก','Select department')),[...new Set([edit[key],profile.department_group,'ฝ่ายบริหาร','ฝ่ายขาย','ฝ่ายการตลาด','ฝ่ายบัญชี','ฝ่ายการเงิน','ฝ่ายจัดซื้อ','ฝ่ายบริการ','ฝ่ายซอฟต์แวร์','ฝ่ายบุคคล','ฝ่ายคลังสินค้า'].filter(Boolean))].map(value=>h('option',{key:value,value},value))):

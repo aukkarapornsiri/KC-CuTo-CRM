@@ -25,3 +25,5 @@ export async function loadSharedQuotationTemplate(client){
  if(!data?.id)throw Error('ไม่พบแม่แบบกลาง กรุณาให้ Super Admin บันทึกแม่แบบใบเสนอราคา / No shared quotation template. Contact Super Admin.');
  return data;
 }
+
+export const demoSharedQuotationTemplate={current:null};

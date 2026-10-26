@@ -1,3 +1,6 @@
+import {loadSharedQuotationTemplate,demoSharedQuotationTemplate} from './quotation-template-save.mjs';
+import {loadProfileSignature} from './profile-signature.mjs';
+import {downloadQuotationAsset} from './quotation-assets.mjs';
 import {downloadSalesOrderExcel} from './sales-order-excel.mjs';
 import {shortSalesName} from './sales-name.mjs';
 import {printSalesOrder,printCostSheet} from './sales-order-print.mjs';
@@ -68,6 +71,13 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
    if(demoMode&&!row.so_approval)row.so_approval={sales_order_id:row.id,status:'pending',requested_by:profile.id,requested_at:new Date().toISOString(),revision:1};
    await readList();await openOrder(row.id);
   });}
+  async function costSheetContext(){
+   const template=demoMode?(demoSharedQuotationTemplate.current||{}):await loadSharedQuotationTemplate(client);
+   const currentApproval=demoMode?selected.so_approval:await unwrap(client.from('crm_so_approvals').select('*').eq('sales_order_id',selected.id).maybeSingle());
+   let signature='';
+   if(currentApproval?.status==='approved')signature=demoMode?(currentApproval.signature_url||''):(currentApproval.signature_storage_key?await downloadQuotationAsset(client,currentApproval.signature_storage_key):'');
+   return {template,approval:currentApproval,signature};
+  }
   async function changeApproval(kind){
    await run(async()=>{
     if(!selected||selected.status!=='confirmed')throw Error(t('SO นี้ไม่สามารถขออนุมัติได้','SO not eligible for approval'));
@@ -78,7 +88,9 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
     }
     if(demoMode){
       const a=selected.so_approval||{sales_order_id:selected.id,requested_by:profile.id,revision:0};
-      selected.so_approval={...a,status:kind==='request'?'pending':kind==='approve'?'approved':'rejected',revision:kind==='request'?a.revision+1:a.revision,review_note:note};
+      const signature=kind==='approve'?await loadProfileSignature(client,profile.id,true):{};
+      if(kind==='approve'&&!signature.seller_signature_url)throw Error(t('กรุณาบันทึกลายเซ็นใน Profile ก่อนอนุมัติ','Save your signature in Profile before approving'));
+      selected.so_approval={...a,reviewer_name:kind==='approve'?([profile.first_name,profile.last_name].filter(Boolean).join(' ')||profile.display_name):null,reviewed_by:kind==='request'?null:profile.id,reviewed_at:kind==='request'?null:new Date().toISOString(),signature_url:signature.seller_signature_url||'',status:kind==='request'?'pending':kind==='approve'?'approved':'rejected',revision:kind==='request'?a.revision+1:a.revision,review_note:note};
     }else await unwrap(client.rpc('crm_so_approval_action',{p_sales_order_id:selected.id,p_action:kind,p_note:note}));
     await openOrder(selected.id);await readList();
    });
@@ -99,7 +111,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
    h('label',{className:'crm-field'},h('span',null,t('เงื่อนไขพิเศษ / หมายเหตุ SO','Special conditions / SO notes')),h('textarea',{value:po.note,maxLength:5000,disabled:busy,onChange:e=>PO(v=>({...v,note:e.target.value}))})),
    h('details',null,h('summary',null,t('ระบุ Serial สำหรับสินค้าที่ควบคุมรายเครื่อง','Serial numbers for individually tracked stock')),(quotation.items||[]).map((item,i)=>h('label',{key:i,className:'crm-field'},h('span',null,item.name+' × '+item.qty),h('input',{value:serials[i]||'',maxLength:200,disabled:busy,onChange:e=>Serials(v=>({...v,[i]:e.target.value}))}))),h('small',null,t('ใช้คลังตั้งต้น สินค้าที่ควบคุม Serial ต้องแยกเป็นรายการจำนวน 1 ต่อเครื่อง','Uses the default warehouse. Serial-tracked items require a separate quantity-one line per unit.'))),
    h('div',{className:'crm-actions'},h('button',{type:'submit',className:'crm-save',disabled:busy||!po.po_file_key},t('Convert Sales Order','Convert Sales Order')),button(t('กลับรายการ SO','Back to orders'),()=>Create(false)))));
-  const detail=selected&&h('section',{'aria-label':t('รายละเอียด Sales Order','Sales Order details')},h('div',{className:'crm-actions'},button(t('กลับรายการ SO','Back to orders'),()=>{Selected(null);Action('');}),button(t('เปิดใบเสนอราคา','Open quotation'),()=>onQuotation(selected.quotation_id)),button(t('พิมพ์ SO / PDF','Print SO / PDF'),()=>run(()=>printSalesOrder(selected,lang))),can('export')&&button('Convert to Excel',()=>run(()=>{if(!can('view')||!can('export'))throw Error(t('ไม่มีสิทธิ์ส่งออก','Export permission required'));downloadSalesOrderExcel(selected,approval,lang);})),canFinancial&&button(t('พิมพ์ Cost Sheet','Print Cost Sheet'),()=>run(()=>printCostSheet(selected,()=>demoMode?Promise.resolve(selected.cost_sheet):unwrap(client.from('crm_sales_order_cost_sheets').select('*').eq('sales_order_id',selected.id).maybeSingle()),lang)))),h('h3',null,selected.code+' · '+statusLabel(selected.status)),
+  const detail=selected&&h('section',{'aria-label':t('รายละเอียด Sales Order','Sales Order details')},h('div',{className:'crm-actions'},button(t('กลับรายการ SO','Back to orders'),()=>{Selected(null);Action('');}),button(t('เปิดใบเสนอราคา','Open quotation'),()=>onQuotation(selected.quotation_id)),button(t('พิมพ์ SO / PDF','Print SO / PDF'),()=>run(()=>printSalesOrder(selected,lang))),can('export')&&button('Convert to Excel',()=>run(()=>{if(!can('view')||!can('export'))throw Error(t('ไม่มีสิทธิ์ส่งออก','Export permission required'));downloadSalesOrderExcel(selected,approval,lang);})),canFinancial&&button(t('พิมพ์ Cost Sheet','Print Cost Sheet'),()=>run(()=>printCostSheet(selected,()=>demoMode?Promise.resolve(selected.cost_sheet):unwrap(client.from('crm_sales_order_cost_sheets').select('*').eq('sales_order_id',selected.id).maybeSingle()),lang,costSheetContext)))),h('h3',null,selected.code+' · '+statusLabel(selected.status)),
    h('div',{className:'crm-so-approval',role:'group','aria-label':t('อนุมัติ Sales Order','Sales Order approval')},
      h('strong',null,t('อนุมัติ SO: ','SO approval: ')+(approval?.status==='approved'?t('อนุมัติแล้ว','Approved'):approval?.status==='pending'?t('รออนุมัติ','Pending'):approval?.status==='rejected'?t('ไม่อนุมัติ','Rejected'):t('ยังไม่ส่งอนุมัติ','Not submitted'))),
      approval?.review_note&&h('small',null,approval.review_note),
