@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {openDesktopMenu} from './menu-helper.mjs';
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}: {})});
 try{
  for(const width of [1440,390]){
   const page=await browser.newPage({viewport:{width,height:900}}),errors=[];
@@ -19,8 +19,8 @@ try{
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
   else{await page.locator('button.lg\\:hidden').first().click();const nav=page.locator('div.fixed.top-0.left-0.h-full.w-64.lg\\:hidden');await nav.getByRole('button',{name:'Sales',exact:true}).click();await nav.getByText('Quotations',{exact:true}).click();await nav.getByText('Quotation List',{exact:true}).click();}
   const popup=page.getByRole('dialog',{name:'Sales Orders',exact:true});
-  async function fromQuote(code){await page.getByRole('button',{name:'Details '+code,exact:true}).click();await page.getByRole('dialog',{name:'Quotation details',exact:true}).getByRole('button',{name:'Receive PO / Sales Order',exact:true}).click();await popup.waitFor();}
-  async function create(code){await fromQuote(code);await popup.getByLabel('Customer PO number',{exact:true}).fill('PO-'+code);await popup.getByLabel('PO date',{exact:true}).fill('2026-01-01');await popup.getByLabel('Order type',{exact:true}).fill('Runrate');await popup.getByLabel('Shipping address',{exact:true}).fill('QA Warehouse 2');await popup.getByLabel('Recipient name',{exact:true}).fill('QA Recipient');await popup.getByLabel('Recipient phone',{exact:true}).fill('0810000000');await popup.getByLabel('Installation required',{exact:true}).selectOption('no');await popup.locator('input[type=file]').setInputFiles({name:'customer-po.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nQA\n%%EOF')});await popup.getByLabel('Special conditions / SO notes',{exact:true}).fill('Free gift delivered later');await popup.getByRole('button',{name:'Confirm Sales Order',exact:true}).click();await popup.getByRole('heading',{name:/SO-DEMO/}).waitFor();}
+  async function fromQuote(code){await page.getByRole('button',{name:'Details '+code,exact:true}).click();await page.getByRole('dialog',{name:'Quotation details',exact:true}).getByRole('button',{name:'Convert Sales Order',exact:true}).click();await popup.waitFor();}
+  async function create(code){await fromQuote(code);await popup.getByLabel('Customer PO number',{exact:true}).fill('PO-'+code);await popup.getByLabel('PO date',{exact:true}).fill('2026-01-01');await popup.getByLabel('Order type',{exact:true}).fill('Runrate');await popup.getByLabel('Shipping address',{exact:true}).fill('QA Warehouse 2');await popup.getByLabel('Recipient name',{exact:true}).fill('QA Recipient');await popup.getByLabel('Recipient phone',{exact:true}).fill('0810000000');await popup.getByLabel('Installation required',{exact:true}).selectOption('no');await popup.locator('input[type=file]').setInputFiles({name:'customer-po.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nQA\n%%EOF')});await popup.getByLabel('Special conditions / SO notes',{exact:true}).fill('Free gift delivered later');await popup.getByRole('button',{name:'Convert Sales Order',exact:true}).click();await popup.getByRole('heading',{name:/SO-DEMO/}).waitFor();}
   await create('QA-APPROVED');
   const printedPromise=page.waitForEvent('popup');await popup.getByRole('button',{name:'Print Cost Sheet',exact:true}).click();const printed=await printedPromise;await printed.waitForLoadState();assert.match(await printed.locator('body').innerText(),/PN-123/);assert.match(await printed.locator('.so-header-details').innerText(),/QA Warehouse 2/);assert.match(await printed.locator('.so-header-details').innerText(),/QA Recipient/);assert.match(await printed.locator('.so-header-details').innerText(),/Runrate/);assert.match(await printed.locator('body').innerText(),/Specification QA/);assert.match(await printed.locator('body').innerText(),/Free gift delivered later/);assert.match(await printed.locator('body').innerText(),/120.00/);await printed.pdf({path:`test-artifacts/cost-sheet-${width}.pdf`,preferCSSPageSize:true});await printed.close();
   await popup.getByText('1 Example Road, Bangkok, 10160, Thailand',{exact:true}).waitFor();
@@ -28,17 +28,25 @@ try{
   assert.ok(await popup.locator('.crm-so').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'No horizontal page overflow');
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
   await fromQuote('QA-APPROVED');
-  assert.equal(await popup.getByRole('button',{name:'Confirm Sales Order',exact:true}).count(),0,'Existing SO opens instead of duplicate conversion');
+  assert.equal(await popup.getByRole('button',{name:'Convert Sales Order',exact:true}).count(),0,'Existing SO opens instead of duplicate conversion');
+  assert.equal(await popup.getByRole('button',{name:'Record full delivery',exact:true}).count(),0);
+  await popup.getByRole('button',{name:'Approve SO',exact:true}).click();
   await popup.getByRole('button',{name:'Record full delivery',exact:true}).click();await popup.getByLabel('Delivery reference / evidence',{exact:true}).fill('DEL-001');await popup.getByRole('button',{name:'Confirm',exact:true}).click();
   await popup.getByRole('button',{name:'Complete order',exact:true}).click();await popup.getByRole('button',{name:'Confirm',exact:true}).click();await popup.getByRole('heading',{name:/Completed/}).waitFor();
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
   await create('QA-CANCEL');await popup.getByRole('button',{name:'Cancel SO',exact:true}).click();await popup.getByLabel('Cancellation reason',{exact:true}).fill('Customer cancelled');await popup.getByRole('button',{name:'Confirm',exact:true}).click();await popup.getByRole('heading',{name:/Cancelled/}).waitFor();
   await popup.getByRole('button',{name:'Back to orders',exact:true}).click();assert.match(await popup.locator('article').first().innerText(),/SO-DEMO-000002/);
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
-  await fromQuote('QA-DRAFT');await popup.getByText('The quotation must be approved before creating an SO',{exact:true}).waitFor();assert.equal(await popup.getByRole('button',{name:'Confirm Sales Order',exact:true}).count(),0);
+  await create('QA-DRAFT');
+  assert.match(await popup.locator('.crm-so-approval').innerText(),/Pending/);
+  assert.equal(await popup.getByRole('button',{name:'Record full delivery',exact:true}).count(),0);
+  await popup.getByRole('button',{name:'Close form',exact:true}).click();
+  await fromQuote('QA-DRAFT');
+  assert.match(await popup.locator('.crm-so-approval').innerText(),/Pending/);
+  assert.equal(await popup.getByRole('button',{name:'Convert Sales Order',exact:true}).count(),0);
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
   await page.getByRole('button',{name:'Switch to Thai',exact:true}).click();
   await page.getByRole('button',{name:'ใบสั่งขาย (SO)',exact:true}).click();await page.getByRole('dialog',{name:'ใบสั่งขาย (Sales Orders)',exact:true}).locator('[data-status=cancelled]').waitFor();
-  assert.deepEqual(errors,[]);await page.close();console.log(`PASS native SO ${width}px: approved conversion, PO upload, idempotent reopen, delivery, completion, cancellation, newest first, draft gate, TH/EN and viewport`);
+  assert.deepEqual(errors,[]);await page.close();console.log(`PASS native SO ${width}px: approved conversion, PO upload, idempotent reopen, delivery, completion, cancellation, newest first, draft conversion with one pending approval, TH/EN and viewport`);
  }
 }finally{await browser.close();}

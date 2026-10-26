@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {canConvertQuotation,validatePO} from '../src/sales-orders.mjs';
 import {salesOrderHTML} from '../src/sales-order-print.mjs';
-test('only approved quotations in a valid sales state may convert',()=>{
- for(const status of ['approved','sent','accepted'])assert.equal(canConvertQuotation({status,approval_status:'approved'}),true);
- for(const q of [{status:'draft',approval_status:'approved'},{status:'approved',approval_status:'pending'},{status:'expired',approval_status:'approved'},{}])assert.equal(canConvertQuotation(q),false);
+test('draft and approved quotations use a single SO approval',()=>{
+ for(const status of ['draft','approved','sent','accepted'])assert.equal(canConvertQuotation({status,approval_status:'approved'}),true);
+ assert.equal(canConvertQuotation({status:'draft',approval_status:null}),true);
+ for(const q of [{status:'rejected'},{status:'submitted',approval_status:'pending'},{status:'draft',approval_status:'rejected'},{status:'expired',approval_status:'approved'},{}])assert.equal(canConvertQuotation(q),false);
 });
 test('PO metadata and attachment required with coherent delivery date',()=>{
  const valid={po_number:'PO-001',po_date:'2026-01-01',po_file_key:'user/file.pdf'};
