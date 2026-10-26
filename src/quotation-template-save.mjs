@@ -17,5 +17,11 @@ export async function saveQuotationTemplate(client,patch,saved){
 }
 export const QUOTATION_TEMPLATE_CHANGED='kc-quotation-template-changed';
 
-// Issued and approval-stage documents keep their saved template.
-export function followsSharedQuotationTemplate(quotation={}){return !quotation.id||quotation.status==='draft'&&!['pending','approved'].includes(quotation.approval_status);}
+// Every document uses the current Super Admin template, irrespective of approval stage.
+export function followsSharedQuotationTemplate(){return true;}
+export async function loadSharedQuotationTemplate(client){
+ const {data,error}=await client.from('crm_quotation_templates').select('*').eq('is_default',true).eq('status','active').maybeSingle();
+ if(error)throw error;
+ if(!data?.id)throw Error('ไม่พบแม่แบบกลาง กรุณาให้ Super Admin บันทึกแม่แบบใบเสนอราคา / No shared quotation template. Contact Super Admin.');
+ return data;
+}
