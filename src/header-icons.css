@@ -1,0 +1,13 @@
+/* Colorful header artwork; keep existing controls, labels and notification badge. */
+.kc-app-header .crm-language-toggle:not(.crm-workspace-launcher){border:0;background:transparent;box-shadow:none;border-radius:50%}
+.kc-app-header .crm-language-toggle:not(.crm-workspace-launcher):hover{background:#e5f5fb}
+.kc-app-header :is(.crm-language-toggle,.kc-header-notifications)>svg{width:24px;height:24px;flex-shrink:0;background:center/contain no-repeat}
+.kc-app-header .kc-header-approval>svg{width:18px;height:18px;flex-shrink:0;background:center/contain no-repeat url('./header-approval.svg')}
+.kc-app-header :is(.crm-language-toggle,.kc-header-notifications,.kc-header-approval)>svg>*{visibility:hidden}
+.kc-app-header .crm-language-toggle:not(.crm-workspace-launcher)>svg{background-image:url('./header-globe.svg')}
+.kc-app-header .crm-workspace-launcher>svg{background-image:url('./header-palette.svg')}
+.kc-app-header .kc-header-notifications>svg{background-image:url('./header-bell.svg')}
+.kc-app-header .kc-header-notifications{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px}
+.kc-profile-avatar-button{display:inline-grid;place-items:center;border-radius:50%;flex-shrink:0}
+.kc-profile-avatar-button>img{display:block}
+.kc-profile-avatar-button:focus-visible,.kc-app-header :is(.kc-header-notifications,.kc-header-approval):focus-visible{outline:2px solid #0aada9;outline-offset:3px}
