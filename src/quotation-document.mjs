@@ -238,4 +238,3 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
   }
   return {QuotationDialog,TemplateSettingsDialog};
 }
-
