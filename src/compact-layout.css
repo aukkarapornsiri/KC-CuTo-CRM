@@ -20,3 +20,16 @@
     .kc-app :is(input,select,textarea) {font-size:16px}
   }
 }
+
+/* Compact record lists in the six requested work areas. Keep print and forms separate. */
+@media screen {
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) :is(th,td){vertical-align:middle!important;padding:5px 12px!important;line-height:1.5}
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td button{vertical-align:middle;display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding-block:3px;margin-block:0;line-height:1.5}
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td[data-field=actions]>button{min-height:28px}
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td :is(svg,input[type=checkbox]){vertical-align:middle}
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td>small{margin-block:2px 0;line-height:1.5}
+@media(max-width:640px){
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) :is(th,td){padding:4px 10px!important}
+.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td button,.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td[data-field=actions]>button{min-height:44px}
+}
+}
