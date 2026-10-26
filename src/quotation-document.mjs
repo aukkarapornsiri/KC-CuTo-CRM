@@ -4,11 +4,11 @@ import {BILLING_PERIODS,periodLabel,recurringLine,serviceEnd,validateRecurring,d
 import {quotationContact} from './quotation-contact.mjs';
 import {formatCustomerAddress} from './customer-address.mjs';
 import {createSellerSignatureHook,signatureFields} from './quotation-seller-signature.mjs';
-import {saveQuotationTemplate,QUOTATION_TEMPLATE_CHANGED,followsSharedQuotationTemplate} from './quotation-template-save.mjs';
+import {saveQuotationTemplate,QUOTATION_TEMPLATE_CHANGED,loadSharedQuotationTemplate} from './quotation-template-save.mjs';
 import {quotationPreparedRows} from './quotation-prepared.mjs';
 import {documentProfile,createDocumentProfileFields} from './profile-document-defaults.mjs?v=20261007-profile';
 import {quotationHeaderCSS,printQuotation} from './quotation-print.mjs?v=20261007-a4';
-import {applyCompanyQuotationDefaults,applyQuotationBranding,demoCompanyStore} from './quotation-company.mjs?v=20261004';
+import {applyCompanyQuotationDefaults,demoCompanyStore} from './quotation-company.mjs?v=20261004';
 import {createQuotationCustomerPicker,recentQuotationCustomers} from './quotation-customer-picker.mjs?v=20261005-company';
 import {DESIGN_DEFAULTS,normalizeDesign,designAttributes,createDesignControls} from './quotation-designer.mjs?v=20261004';
 import {createQuotationProductPicker} from './quotation-product-picker.mjs?v=20261004-expanded';
@@ -36,7 +36,7 @@ const money=value=>value==null||!Number.isFinite(Number(value))?'—':new Intl.N
 const isoDate=()=>new Date().toISOString().slice(0,10);
 const addDays=(date,days)=>{const d=new Date((date||isoDate())+'T00:00:00');d.setDate(d.getDate()+Number(days||0));return d.toISOString().slice(0,10);};
 const colorOk=value=>/^#[0-9a-f]{6}$/i.test(String(value||''));
-const templateSnapshot=row=>Object.fromEntries(Object.entries({...DEFAULT_QUOTATION_TEMPLATE,...row}).filter(([key])=>!['updated_at','updated_by'].includes(key)));
+const templateSnapshot=row=>Object.fromEntries(Object.entries(row).filter(([key])=>!['updated_at','updated_by'].includes(key)));
 export const normalizeQuotationItem=(item={})=>({
   ...(item.billing_period?{billing_period:item.billing_period,cycle_count:Number(item.cycle_count||1),service_start:item.service_start||'',service_end:serviceEnd(item.service_start,item.billing_period,Number(item.cycle_count||1))}:{}),
   price_item_id:item.price_item_id||'',code:String(item.code||''),part_number:String(item.part_number||''),name:String(item.name||item.description||''),
@@ -66,27 +66,20 @@ export function createQuotationDocumentComponents({React,client,useApp}){
     return images;
   }
 
-  function useTemplate(open,existingSnapshot){
+  function useTemplate(open,documentKey){
     const {demoMode}=useApp();
-    const [template,setTemplate]=React.useState(()=>existingSnapshot&&Object.keys(existingSnapshot).length?{...DEFAULT_QUOTATION_TEMPLATE,...existingSnapshot}:copy(DEFAULT_QUOTATION_TEMPLATE));
-    const [ready,setReady]=React.useState(false),[revision,setRevision]=React.useState(0);
-    React.useEffect(()=>{const refresh=()=>setRevision(v=>v+1);window.addEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);return()=>window.removeEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);},[]);
-    React.useEffect(()=>{if(!open){setReady(false);return;}let live=true;setReady(false);(async()=>{try{
-      if(existingSnapshot&&Object.keys(existingSnapshot).length){
-       let resolved=existingSnapshot;
-       try{const [company,current]=demoMode?[demoCompanyStore.value,demoTemplate]:await Promise.all([
-        unwrap(client.rpc('crm_quotation_company')),
-        unwrap(client.from('crm_quotation_templates').select('logo_storage_key,logo_url').eq('is_default',true).eq('status','active').maybeSingle())]);
-        resolved=applyQuotationBranding(existingSnapshot,company,current);
-       }catch{ /* Retain saved branding when central settings are unavailable. */ }
-       if(live)setTemplate({...DEFAULT_QUOTATION_TEMPLATE,...resolved});return;
-      }
-      if(demoMode){if(live)setTemplate(applyCompanyQuotationDefaults(copy(demoTemplate),demoCompanyStore.value));return;}
-      const row=await unwrap(client.from('crm_quotation_templates').select('*').eq('is_default',true).eq('status','active').maybeSingle());
-      const company=await unwrap(client.rpc('crm_quotation_company'));
-      if(live)setTemplate(applyCompanyQuotationDefaults({...DEFAULT_QUOTATION_TEMPLATE,...(row||{})},company));
-    }catch{if(live)setTemplate(copy(DEFAULT_QUOTATION_TEMPLATE));}finally{if(live)setReady(true);}})();return()=>{live=false;};},[open,demoMode,revision,JSON.stringify(existingSnapshot||{})]);
-    return [template,setTemplate,!ready];
+    const [template,setTemplate]=React.useState({}),[ready,setReady]=React.useState(false),[error,setError]=React.useState(''),[revision,setRevision]=React.useState(0);
+    const refresh=()=>{setReady(false);setRevision(v=>v+1);};
+    React.useEffect(()=>{window.addEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);window.addEventListener('focus',refresh);return()=>{window.removeEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);window.removeEventListener('focus',refresh);};},[]);
+    React.useEffect(()=>{let live=true;setReady(false);setError('');if(!open)return;
+      (async()=>{try{
+        const row=demoMode?copy(demoTemplate):await loadSharedQuotationTemplate(client);
+        const company=demoMode?demoCompanyStore.value:await unwrap(client.rpc('crm_quotation_company'));
+        if(live)setTemplate(applyCompanyQuotationDefaults(row,company));
+      }catch(e){if(live){setTemplate({});setError(e.message||String(e));}}finally{if(live)setReady(true);}})();
+      return()=>{live=false;};
+    },[open,documentKey,demoMode,revision]);
+    return [template,refresh,!ready,error];
   }
 
   function renderQuotationPreview({template,images,editing,totals,docLang='th',profile={},preview=true,customerPhone='',customerEmail='',contactName=editing.contact_name}){const docTr=(a,b)=>docLang==='th'?a:b;const recurring=editing.quotation_kind==='recurring';
@@ -150,7 +143,7 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
     const check=(key,th,en)=>h('label',{className:'kc-quote-check'},input({type:'checkbox',checked:!!value[key],disabled:busy,onChange:e=>update(key,e.target.checked)}),tr(th,en));
     return h('dialog',{ref,className:'kc-quote-template-dialog','aria-label':tr('ตั้งค่าแม่แบบใบเสนอราคา','Quotation template settings'),onCancel:e=>{e.preventDefault();if(!busy)onClose();}},
       h('form',{onSubmit:save},
-        h('header',{className:'kc-quote-dialog-head'},h('div',null,h('h2',null,tr('ตั้งค่าแม่แบบใบเสนอราคา','Quotation Template Settings')),h('p',null,tr('แม่แบบกลางสำหรับผู้ใช้ทุกคน ใช้กับใบเสนอราคาใหม่และฉบับร่างเมื่อเปิดครั้งถัดไป เอกสารที่ออกแล้วคงรูปแบบเดิม','Shared by all users. Applies to new quotations and drafts on next open; issued documents retain their saved layout.'))),button('×',onClose,busy,{'aria-label':tr('ปิด','Close'),className:'kc-quote-close'})),
+        h('header',{className:'kc-quote-dialog-head'},h('div',null,h('h2',null,tr('ตั้งค่าแม่แบบใบเสนอราคา','Quotation Template Settings')),h('p',null,tr('แม่แบบกลางล่าสุดสำหรับผู้ใช้ทุกคน ใช้กับใบเสนอราคาทุกใบเมื่อเปิดหรือพิมพ์','The latest shared template applies to every quotation when opened or printed.'))),button('×',onClose,busy,{'aria-label':tr('ปิด','Close'),className:'kc-quote-close'})),
         h('div',{className:'qd-workspace'},h('div',{className:'kc-quote-template-body'},h(DesignControls,{value,onChange:setValue,busy,lang}),(error||images.error)&&h('p',{role:'alert',className:'crm-error'},error||images.error),message&&h('p',{role:'status',className:'crm-notice'},message),
           h('section',null,h('h3',null,tr('ข้อมูลแม่แบบ','Template')),h('div',{className:'kc-quote-template-grid'},textField('name','ชื่อแม่แบบ','Template name'),textField('title_th','ชื่อเอกสารภาษาไทย','Thai document title'),textField('title_en','ชื่อเอกสารภาษาอังกฤษ','English document title'),textField('accent_color','สีหลัก','Accent color','color'))),
           h('section',{className:'kc-company-logo-settings'},h('h3',null,tr('โลโก้บริษัท · ซ้ายบน','Company logo · Top left')),h('p',null,tr('รูปจากการตั้งค่าบริษัท ใช้เป็นโลโก้บริษัทในใบเสนอราคาและฉบับพิมพ์','From company settings, used on quotations and printed documents')),input({type:'file',accept:'image/png,image/jpeg,image/webp','aria-label':tr('เลือกโลโก้บริษัทซ้ายบน','Browse top-left company logo'),disabled:busy||!company,onChange:async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;setBusy(true);setError('');try{if(file.size>250*1024)throw Error(tr('โลโก้บริษัทต้องไม่เกิน 250 KB','Company logo must be no larger than 250 KB'));setCompanyLogo(await readQuotationImage(file));}catch(e){setError(e.message||String(e));}finally{setBusy(false);}}}),companyLogo&&h('img',{src:companyLogo,alt:tr('ตัวอย่างโลโก้บริษัทซ้ายบน','Top-left company logo preview'),style:{maxWidth:180,maxHeight:90,objectFit:'contain',display:'block',margin:'12px 0'}}),button(tr('ล้างโลโก้บริษัท','Clear company logo'),()=>setCompanyLogo(''),busy||!companyLogo),button(tr('บันทึกโลโก้บริษัท','Save company logo'),saveCompanyLogo,busy||!company||companyLogo===(company.logo_url||''))),
@@ -179,21 +172,19 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
       LiveCustomer({id,customer,contacts});onCustomerData?.(id,customer,contacts);
     }
     React.useEffect(()=>{let active=true;const refresh=()=>refreshCustomer().catch(e=>{if(active)setPrintError(e.message||String(e));});refresh();window.addEventListener('focus',refresh);window.addEventListener('crm-work-changed',refresh);return()=>{active=false;customerRevision.current++;window.removeEventListener('focus',refresh);window.removeEventListener('crm-work-changed',refresh);};},[editing?.customer_id,demoMode]);
-    const sharedTemplate=followsSharedQuotationTemplate(editing||{});
-    const snapshot=!sharedTemplate&&editing?.id&&editing?.template_snapshot&&typeof editing.template_snapshot==='object'&&!Array.isArray(editing.template_snapshot)?editing.template_snapshot:null;
-    const [template,,templateLoading]=useTemplate(!!editing,snapshot);
+    const [template,refreshTemplate,templateLoading,templateError]=useTemplate(!!editing,editing?.id||'new');
     const images=useTemplateImages({...template,...signatureFields(editing?.template_snapshot||template)});
     React.useEffect(()=>{const d=ref.current;if(editing&&d&&!d.open)d.showModal();return()=>{if(d?.open)d.close();};},[!!editing]);
     React.useEffect(()=>{if(editing)setPreview(!!initialPreview);},[editing?.id,initialPreview]);
-    React.useEffect(()=>{if(!editing||templateLoading)return;setEditing(old=>{if(!old)return old;if(!old.id&&old.template_snapshot&&Object.keys(old.template_snapshot).length)return {...old,template_id:template.id||null,template_snapshot:{...templateSnapshot(template),...signatureFields(old.template_snapshot)}};const seller=(lookup.profiles||[]).find(p=>p.id===old.owner_id)||profile;const person=old.document_profile||documentProfile(seller);const isNew=!old.id,issue=old.issue_date||isoDate(),term=resolvePaymentTerm(isNew?template.default_payment_term_code:old.payment_term_code,isNew?template.default_payment_terms:old.payment_terms);const next={...old,
+    React.useEffect(()=>{if(!editing||templateLoading||templateError)return;setEditing(old=>{if(!old)return old;if(!old.id&&old.template_snapshot&&Object.keys(old.template_snapshot).length)return {...old,template_id:template.id||null,template_snapshot:{...templateSnapshot(template),...signatureFields(old.template_snapshot)}};const seller=(lookup.profiles||[]).find(p=>p.id===old.owner_id)||profile;const person=old.document_profile||documentProfile(seller);const isNew=!old.id,issue=old.issue_date||isoDate(),term=resolvePaymentTerm(isNew?template.default_payment_term_code:old.payment_term_code,isNew?template.default_payment_terms:old.payment_terms);const next={...old,
       issue_date:issue,payment_terms:term.days,payment_term_code:term.code,tax_rate:isNew?Number(template.default_tax_rate??7):Number(old.tax_rate??template.default_tax_rate??7),wht_rate:isNew?Number(template.default_wht_rate??0):Number(old.wht_rate??template.default_wht_rate??0),
       document_discount:Number(old.document_discount??0),currency:isNew?(template.default_currency||'THB'):(old.currency||template.default_currency||'THB'),document_language:old.document_language||lang,
       payment_instructions:old.payment_instructions||template.default_payment_instructions||'',document_profile:isNew?{...person,line_id:person.line_id||template.sales_line||''}:old.document_profile,prepared_by:old.prepared_by||(isNew?(person.name||template.sales_name||''):''),
       prepared_by_email:old.prepared_by_email||(isNew?(person.email||template.sales_email||''):''),prepared_by_phone:old.prepared_by_phone||(isNew?(person.phone||template.sales_phone||template.company_phone||''):''),valid_until:old.valid_until||addDays(issue,term.days),
       items:Array.isArray(old.items)&&old.items.length?old.items.map(normalizeQuotationItem):[normalizeQuotationItem()],
-      template_id:old.template_id||template.id||null,template_snapshot:sharedTemplate?{...templateSnapshot(template),...signatureFields(old.template_snapshot||{})}:old.template_snapshot||templateSnapshot(template)
-    };return JSON.stringify(next)===JSON.stringify(old)?old:next;});},[templateLoading,template?.id,template?.updated_at,!!editing]);
-    const personalSignature=useSellerSignature({editing,setEditing,profile,demoMode,ready:!templateLoading,lang,busy});
+      template_id:template.id||null,template_snapshot:{...templateSnapshot(template),...signatureFields(old.template_snapshot||{})}
+    };return JSON.stringify(next)===JSON.stringify(old)?old:next;});},[templateLoading,templateError,template?.id,template?.updated_at,!!editing]);
+    const personalSignature=useSellerSignature({editing,setEditing,profile,demoMode,ready:!templateLoading&&!templateError,lang,busy});
     if(!editing)return null;
     const recurring=editing.quotation_kind==='recurring';
     const docLang=editing.document_language||lang,docTr=(th,en)=>docLang==='th'?th:en;
@@ -206,8 +197,9 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
     const addItem=()=>setEditing(old=>({...old,items:[...old.items,normalizeQuotationItem(recurring?{billing_period:'month',cycle_count:1,service_start:old.recurring?.start_date}: {})]}));
     const removeItem=index=>setEditing(old=>({...old,items:old.items.length>1?old.items.filter((_,i)=>i!==index):old.items}));
     let totals,calculationError='';try{totals=quoteTotals(editing.items,{taxRate:editing.tax_rate,withholdingRate:editing.wht_rate,documentDiscount:editing.document_discount,requireName:false});}catch(e){calculationError=tr('คำนวณยอดไม่ได้ กรุณาตรวจจำนวน ราคา ส่วนลด และจำนวนรอบ','Cannot calculate totals. Check quantity, price, discount and cycles');totals={subtotal:null,discount:null,net_before_tax:null,vat:null,total:null,withholding_tax:null,net_total:null,gp_amount:null,gp_margin:null,items:editing.items.map(item=>({...item,total:null,gp:null,margin:null}))};}
+    if(templateLoading||templateError)return h('dialog',{ref,className:'kc-quotation-dialog','aria-label':tr('แม่แบบใบเสนอราคา','Quotation template'),onCancel:e=>{e.preventDefault();onClose();}},h('div',{className:'crm-field'},h('p',{role:templateError?'alert':'status'},templateError?tr('โหลดแม่แบบกลางไม่ได้: ','Unable to load shared template: ')+templateError:tr('กำลังโหลดแม่แบบล่าสุดของ Super Admin…','Loading the latest Super Admin template…')),templateError&&button(tr('ลองโหลดใหม่','Retry'),refreshTemplate),button(tr('ปิด','Close'),onClose)));
     const showGP=!!canViewFinancials&&!!template.show_gp,showMargin=!!canViewFinancials&&!!template.show_margin;const itemGridCols='kc-quote-line';const gridColumns=['36px',...(template.show_item_code?['96px']:[]),'minmax(430px,1fr)','64px','64px','104px','112px',...(showGP?['104px']:[]),...(showMargin?['88px']:[]),'32px'].join(' ');const lineStyle={gridTemplateColumns:gridColumns,minWidth:(920+(template.show_item_code?96:0)+(showGP?104:0)+(showMargin?88:0))+'px'};
-    const printNow=async()=>{setPrintError('');try{if(calculationError)throw Error(calculationError);quoteTotals(editing.items,{taxRate:editing.tax_rate,withholdingRate:editing.wht_rate,documentDiscount:editing.document_discount});validateRecurring(editing);await refreshCustomer();setPreview(true);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await printQuotation(ref.current?.querySelector('.kc-quotation-preview'),editing.code);}catch(e){setPrintError(e.message||String(e));}};
+    const printNow=async()=>{setPrintError('');try{if(!demoMode){const latest=await loadSharedQuotationTemplate(client);if(latest.id!==template.id||latest.updated_at!==template.updated_at){refreshTemplate();throw Error(tr('แม่แบบมีการเปลี่ยนแปลง กำลังโหลดล่าสุด กรุณากดพิมพ์อีกครั้ง','Template changed. Loading the latest version; please print again.'));}}if(calculationError)throw Error(calculationError);quoteTotals(editing.items,{taxRate:editing.tax_rate,withholdingRate:editing.wht_rate,documentDiscount:editing.document_discount});validateRecurring(editing);await refreshCustomer();setPreview(true);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await printQuotation(ref.current?.querySelector('.kc-quotation-preview'),editing.code);}catch(e){setPrintError(e.message||String(e));}};
     const companyName=docLang==='th'?template.company_name_th:template.company_name_en||template.company_name_th;
     const companyAddress=docLang==='th'?template.company_address_th:template.company_address_en||template.company_address_th;
     const title=templateLabel(template,'title',docLang)||docTr('ใบเสนอราคา','Quotation');
@@ -246,3 +238,4 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
   }
   return {QuotationDialog,TemplateSettingsDialog};
 }
+
