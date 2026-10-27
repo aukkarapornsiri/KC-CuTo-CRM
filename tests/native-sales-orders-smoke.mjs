@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {openDesktopMenu} from './menu-helper.mjs';
 const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}: {})});
@@ -35,6 +36,8 @@ try{
   await popup.getByRole('button',{name:'Convert to Excel',exact:true}).click();
   const download=await downloadPromise;assert.equal(download.suggestedFilename(),'SO-DEMO-000001.xlsx');
   await download.saveAs(`test-artifacts/sales-order-${width}.xlsx`);
+  const exported=await fs.readFile(`test-artifacts/sales-order-${width}.xlsx`,'utf8');
+  for(const value of ['Cost Sheet','PN-123','Specification QA','<v>120</v>','TOTAL ORDER VALUE','fitToWidth="1"'])assert.ok(exported.includes(value),value);
   const printedPromise=page.waitForEvent('popup');await popup.getByRole('button',{name:'Print Cost Sheet',exact:true}).click();const printed=await printedPromise;await printed.waitForLoadState();assert.match(await printed.locator('body').innerText(),/PN-123/);assert.match(await printed.locator('.so-header-details').innerText(),/QA Warehouse 2/);assert.match(await printed.locator('.so-header-details').innerText(),/QA Recipient/);assert.match(await printed.locator('.so-header-details').innerText(),/Runrate/);assert.match(await printed.locator('body').innerText(),/Specification QA/);assert.match(await printed.locator('body').innerText(),/Free gift delivered later/);assert.match(await printed.locator('body').innerText(),/120.00/);await printed.pdf({path:`test-artifacts/cost-sheet-${width}.pdf`,preferCSSPageSize:true});await printed.close();
   await popup.getByText('1 Example Road, Bangkok, 10160, Thailand',{exact:true}).waitFor();
   const box=await popup.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width+1&&box.y>=0&&box.y+box.height<=901,'SO popup fits viewport');
@@ -48,6 +51,10 @@ try{
   const signed=await signedPromise;await signed.getByAltText('Approver signature').waitFor();
   assert.match(await signed.getByAltText('Approver signature').getAttribute('src'),/^data:image\/png;base64,/);
   assert.ok((await signed.locator('.cs-signed').innerText()).trim());await signed.close();
+  const signedDownloadPromise=page.waitForEvent('download');
+  await popup.getByRole('button',{name:'Convert to Excel',exact:true}).click();
+  const signedDownload=await signedDownloadPromise;await signedDownload.saveAs(`test-artifacts/signed-sales-order-${width}.xlsx`);
+  assert.ok((await fs.readFile(`test-artifacts/signed-sales-order-${width}.xlsx`,'utf8')).includes('xl/media/signature.png'));
   await popup.getByRole('button',{name:'Record full delivery',exact:true}).click();await popup.getByLabel('Delivery reference / evidence',{exact:true}).fill('DEL-001');await popup.getByRole('button',{name:'Confirm',exact:true}).click();
   await popup.getByRole('button',{name:'Complete order',exact:true}).click();await popup.getByRole('button',{name:'Confirm',exact:true}).click();await popup.getByRole('heading',{name:/Completed/}).waitFor();
   await popup.getByRole('button',{name:'Close form',exact:true}).click();
