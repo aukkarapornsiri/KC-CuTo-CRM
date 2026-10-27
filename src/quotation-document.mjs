@@ -78,7 +78,7 @@ export function createQuotationDocumentComponents({React,client,useApp}){
       setReady(!!cached);if(cached)setTemplate(applyCompanyQuotationDefaults(copy(cached),demoMode?demoCompanyStore.value:lastCompany));
       (async()=>{try{
         const row=demoMode?copy(demoSharedQuotationTemplate.current):await loadSharedQuotationTemplate(client);
-        const company=demoMode?demoCompanyStore.value:await unwrap(client.rpc('crm_quotation_company'));
+        const company=demoMode?demoCompanyStore.value:await unwrap(client.rpc('crm_quotation_company',undefined,{get:true}));
         if(live){lastCompany=company;setTemplate(applyCompanyQuotationDefaults(row,company));}
       }catch(e){if(live){setTemplate({});setError(e.message||String(e));}}finally{if(live)setReady(true);}})();
       return()=>{live=false;};
