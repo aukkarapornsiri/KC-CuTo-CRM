@@ -43,3 +43,15 @@ test('different year, report scope, and identities never share a cache',async()=
 test('access refresh retains its 30 second cadence; business data uses 60 seconds',async()=>{
  const x=harness(),calls={access:0,data:0};const a=x.watch({key:'access',interval:30000,load:async()=>++calls.access}),b=x.watch({load:async()=>++calls.data});await x.advance(60000);assert.deepEqual(calls,{access:3,data:2});a();b();
 });
+
+test('profile-write invalidation retries without publishing an access error',async()=>{
+ const x=harness(),states=[];let attempts=0;
+ const stop=x.watch({key:'role-access',load:async()=>{
+  if(++attempts===1)throw {message:'AbortError: Read invalidated'};
+  return {profile:{id:'alice'},rows:[]};
+ }},state=>states.push(state));
+ await x.advance();assert.equal(attempts,1);assert.equal(states.at(-1).loading,true);
+ assert.ok(states.every(state=>!state.error));
+ await x.advance(250);assert.equal(attempts,2);assert.equal(states.at(-1).data.profile.id,'alice');
+ assert.equal(states.at(-1).loading,false);stop();
+});

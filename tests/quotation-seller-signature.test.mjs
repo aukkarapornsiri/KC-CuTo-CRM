@@ -25,3 +25,10 @@ test('checkbox omits and restores signature without changing saved default or br
  checkbox.props.onChange({target:{checked:false}});assert.equal(editing.template_snapshot.seller_signature_storage_key,'');assert.equal(editing.template_snapshot.logo_url,'logo');
  checkbox.props.onChange({target:{checked:true}});await new Promise(r=>setTimeout(r,0));assert.equal(editing.template_snapshot.seller_signature_storage_key,'me/sign.png');
 });
+
+test('quotation signature control has no upload input or default writer',()=>{
+ const nodes=[];const React={createElement:(type,props,...children)=>{const n={type,props,children};nodes.push(n);return n;},useState:x=>[x,()=>{}],useRef:x=>({current:x}),useEffect:()=>{}};
+ createSellerSignatureHook({React,client:{}})({editing:{owner_id:'me'},setEditing(){},profile:{id:'me'},ready:true,lang:'en',busy:false});
+ assert.equal(nodes.filter(n=>n.type==='input'&&n.props?.type==='file').length,0);
+ assert.equal(nodes.filter(n=>n.type==='input'&&n.props?.type==='checkbox').length,1);
+});
