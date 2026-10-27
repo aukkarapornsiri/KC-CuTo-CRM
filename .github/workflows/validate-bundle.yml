@@ -41,7 +41,7 @@ jobs:
       - name: Validate integration contracts
         run: node tests/integration-contract.mjs
       - name: Validate shared notification polling
-        run: node --test tests/notification-store.test.mjs tests/read-coordinator.test.mjs
+        run: node --test tests/notification-store.test.mjs tests/read-coordinator.test.mjs tests/rest-read-policy.test.mjs
       - name: Validate settings source and input boundaries
         run: |
           node --check src/customer360.mjs

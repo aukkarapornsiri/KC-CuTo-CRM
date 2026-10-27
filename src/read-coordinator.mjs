@@ -24,9 +24,10 @@ export function createReadCoordinator(client, {
       schedule();
     }, Math.max(0, Math.min(...due) - now()));
   }
-  function reset(e) {
+  function reset(e, preserveBackoff = false) {
+    const previousNext=e.next,previousFailures=e.failures;
     e.generation++; e.flight?.controller.abort(); e.flight = null;
-    e.next = 0; e.failures = 0; e.state = {data:null,error:null,loading:false}; emit(e);
+    e.next = preserveBackoff&&previousFailures?previousNext:0; e.failures = preserveBackoff?previousFailures:0; e.state = {data:null,error:null,loading:false}; emit(e);
   }
   function sessionChanged(session) {
     const id = session?.user?.id || null;
@@ -96,7 +97,7 @@ export function createReadCoordinator(client, {
     for (const event of ['crm-access-changed',...changed]) {
       e.events.add(event);
       if (!events.has(event)) {
-        const fn = () => { for (const item of entries.values()) if (item.events.has(event)) invalidate(item); schedule(); };
+        const fn = () => { for (const item of entries.values()) if (item.events.has(event)) {if(event==='crm-access-changed')reset(item,true);else invalidate(item);} schedule(); };
         events.set(event,fn); win?.addEventListener(event,fn);
       }
     }

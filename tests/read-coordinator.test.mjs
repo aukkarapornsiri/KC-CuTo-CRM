@@ -55,3 +55,10 @@ test('profile-write invalidation retries without publishing an access error',asy
  await x.advance(250);assert.equal(attempts,2);assert.equal(states.at(-1).data.profile.id,'alice');
  assert.equal(states.at(-1).loading,false);stop();
 });
+test('permission changes immediately clear old data and discard late results',async()=>{
+ const x=harness(),values=[];let resolve,calls=0;
+ const stop=x.watch({load:()=>{calls++;if(calls===1)return {private:true};return new Promise(r=>resolve=r);}},s=>values.push(s));
+ await x.advance();const refresh=stop.refresh();await x.flush();const old=resolve;
+ x.fire('crm-access-changed');assert.equal(values.at(-1).data,null);
+ old({obsolete:true});await refresh;await x.advance();assert.ok(!values.some(s=>s.data?.obsolete));stop();
+});
