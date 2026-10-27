@@ -17,8 +17,14 @@ export function validateRecurring(quote){
  if((quote.quotation_kind||'standard')==='standard'){if(quote.items?.some(i=>i.billing_period))throw Error('ใบเสนอราคาทั่วไปต้องไม่มีรอบบริการ / Standard quotation cannot have billing cycles');return {};}
  if(quote.quotation_kind!=='recurring')throw Error('Invalid quotation type');
  const r=quote.recurring||{},valid=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')&&serviceEnd(s,'day',1)===s;
- if(!valid(r.start_date)||!valid(r.end_date)||r.end_date<r.start_date||!['advance','arrears'].includes(r.billing_timing))throw Error('กรุณาตรวจสอบระยะสัญญาและเงื่อนไขเรียกเก็บ / Check contract dates and billing timing');
+ if(!valid(r.start_date)||!valid(r.end_date)||r.end_date<r.start_date||!['advance','arrears','advance_once'].includes(r.billing_timing))throw Error('กรุณาตรวจสอบระยะสัญญาและเงื่อนไขเรียกเก็บ / Check contract dates and billing timing');
  for(const item of quote.items||[]){const line=recurringLine(item);if(!line.billing_period||!line.service_end||line.service_start<r.start_date||line.service_end>r.end_date)throw Error('ช่วงบริการทุกรายการต้องอยู่ภายในสัญญา / Every service period must be within the contract');}
  return {start_date:r.start_date,end_date:r.end_date,billing_timing:r.billing_timing};
 }
 export function defaultRecurring(start){return {start_date:start,end_date:serviceEnd(start,'year',1),billing_timing:'advance'};}
+
+export function recurringBillingText(timing,lang='th'){
+ const th=lang==='th';
+ if(timing==='advance_once')return {label:th?'จ่ายล่วงหน้าครั้งเดียว':'One-time upfront payment',description:th?'เรียกเก็บเต็มจำนวนทั้งสัญญาครั้งเดียวก่อนส่งสินค้า':'Full contract amount billed once before delivery',totalNote:th?'ยอดรวมเป็นยอดเรียกเก็บเต็มจำนวนครั้งเดียวก่อนส่งสินค้า':'The total is payable in full once before delivery'};
+ return {label:timing==='arrears'?(th?'หลังใช้บริการ':'In arrears'):(th?'ล่วงหน้า':'In advance'),description:timing==='arrears'?(th?'เรียกเก็บหลังใช้บริการตามรอบของแต่ละรายการ':'Billed in arrears per service cycle'):(th?'เรียกเก็บล่วงหน้าตามรอบของแต่ละรายการ':'Billed in advance per service cycle'),totalNote:th?'ยอดรวมเป็นมูลค่าทั้งสัญญา ไม่ใช่ยอดเรียกเก็บครั้งเดียว':'Totals are for the entire contract, not a single invoice'};
+}
