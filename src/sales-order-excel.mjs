@@ -1,3 +1,4 @@
+import {itemPartNumber} from './item-part-number.mjs';
 // Small dependency-free SpreadsheetML export. Text is always inlineStr, never a formula.
 const ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const rel='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -28,7 +29,7 @@ export function salesOrderSheets(order,approval,lang='th'){
  [t('หมายเหตุ','Notes'),order.note],[t('หลักฐานส่งมอบ','Delivery reference'),order.delivery_reference],
  [t('เหตุผลยกเลิก','Cancellation reason'),order.cancellation_reason]];
  const headers=[t('ลำดับ','No.'),t('สินค้า / บริการ','Product / Service'),'Part Number',t('รายละเอียด','Description'),t('จำนวน','Quantity'),t('หน่วย','Unit'),t('ราคาต่อหน่วย','Unit price'),t('ส่วนลดรายการ','Line discount'),t('ยอดรายการ','Line total'),t('จำนวนรอบ','Cycles'),t('เริ่มบริการ','Service start'),t('สิ้นสุดบริการ','Service end')];
- const items=(order.items||[]).map((v,i)=>[i+1,v.name,v.part_number||v.code||'',v.desc,num(v.qty),v.unit,num(v.price),num(v.discount),num(v.total),num(v.cycle_count),date(v.service_start),date(v.service_end)]);
+ const items=(order.items||[]).map((v,i)=>[i+1,v.name,itemPartNumber(v),v.desc,num(v.qty),v.unit,num(v.price),num(v.discount),num(v.total),num(v.cycle_count),date(v.service_start),date(v.service_end)]);
  return [{name:t('ใบสั่งขาย','Sales Order'),rows,widths:[30,90]},{name:t('รายการสินค้า','Items'),rows:[headers,...items],widths:[8,36,24,60,14,14,20,20,20,14,18,18],filter:items.length>0}];
 }
 function worksheet(sheet){
