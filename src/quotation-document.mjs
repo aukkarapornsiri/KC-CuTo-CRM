@@ -185,12 +185,13 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
       template_id:template.id||null,template_snapshot:{...templateSnapshot(template),...signatureFields(old.template_snapshot||{})}
     };return JSON.stringify(next)===JSON.stringify(old)?old:next;});},[templateLoading,templateError,template?.id,template?.updated_at,!!editing]);
     const personalSignature=useSellerSignature({editing,setEditing,profile,demoMode,ready:!templateLoading&&!templateError,lang,busy});
+    const prices=(lookup.prices||[]).filter(x=>x.status==='active');
+    React.useEffect(()=>{if(!editing||!canViewFinancials||!prices.length)return;setEditing(old=>{if(!old?.items?.length)return old;let changed=false;const items=old.items.map(item=>{if(!item.price_item_id)return item;const p=prices.find(x=>x.id===item.price_item_id);if(!p||p.cost==null||Number(item.cost||0)===Number(p.cost||0))return item;changed=true;return {...item,cost:Number(p.cost||0)};});return changed?{...old,items}:old;});},[editing?.id,canViewFinancials,lookup.prices]);
     if(!editing)return null;
     const recurring=editing.quotation_kind==='recurring';
     const docLang=editing.document_language||lang,docTr=(th,en)=>docLang==='th'?th:en;
     const set=(key,value)=>setEditing(old=>({...old,[key]:value,...(key==='document_language'&&old.address_source==='customer'&&customers.some(c=>c.id===old.customer_id)?{counterparty_address:formatCustomerAddress(customers.find(c=>c.id===old.customer_id),value)}:{})}));
-    const customers=lookup.customers||[],contacts=(liveCustomer?.id===editing.customer_id?liveCustomer.contacts:lookup.contacts||[]).filter(x=>!editing.customer_id||x.customer_id===editing.customer_id),opps=(lookup.opportunities||[]).filter(x=>!editing.customer_id||x.customer_id===editing.customer_id),prices=(lookup.prices||[]).filter(x=>x.status==='active'),people=(lookup.profiles||[]).filter(x=>x.is_active!==false);
-    React.useEffect(()=>{if(!editing||!canViewFinancials||!prices.length)return;setEditing(old=>{if(!old?.items?.length)return old;let changed=false;const items=old.items.map(item=>{if(!item.price_item_id)return item;const p=prices.find(x=>x.id===item.price_item_id);if(!p||p.cost==null||Number(item.cost||0)===Number(p.cost||0))return item;changed=true;return {...item,cost:Number(p.cost||0)};});return changed?{...old,items}:old;});},[editing?.id,canViewFinancials,lookup.prices]);
+    const customers=lookup.customers||[],contacts=(liveCustomer&&liveCustomer.id===editing.customer_id?(liveCustomer.contacts||[]):(lookup.contacts||[])).filter(x=>!editing.customer_id||x.customer_id===editing.customer_id),opps=(lookup.opportunities||[]).filter(x=>!editing.customer_id||x.customer_id===editing.customer_id),people=(lookup.profiles||[]).filter(x=>x.is_active!==false);
     const changeCustomer=(id,created)=>{const row=created||customers.find(x=>x.id===id);setEditing(old=>({...old,customer_id:id,customer_name:row?.name||'',counterparty_address:formatCustomerAddress(row,docLang),address_source:'customer',counterparty_tax_id:row?.tax_id||'',contact_id:'',contact_name:'',opportunity_id:''}));};
     const updateItem=(index,key,value)=>setEditing(old=>({...old,items:old.items.map((item,i)=>i===index?{...item,[key]:['qty','price','discount','cost'].includes(key)?Number(value||0):value}:item)}));
     const choosePrice=(index,id,created)=>{const row=created||prices.find(x=>x.id===id);if(!row)return;setEditing(old=>({...old,items:old.items.map((item,i)=>i===index?{...item,price_item_id:row.id,code:row.code||'',part_number:row.part_number||row.product_details?.part_number||'',name:row.name||'',desc:row.description||'',unit:row.unit||'Unit',price:Number(row.price||0),cost:Number(row.cost||0)}:item)}));};
@@ -204,7 +205,7 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
     const companyAddress=docLang==='th'?template.company_address_th:template.company_address_en||template.company_address_th;
     const title=templateLabel(template,'title',docLang)||docTr('ใบเสนอราคา','Quotation');
     const signature=(key)=>template[key+'_'+(docLang==='th'?'th':'en')]||template[key+'_th'];
-    const currentCustomer=liveCustomer?.id===editing.customer_id?liveCustomer.customer:customers.find(x=>x.id===editing.customer_id);
+    const currentCustomer=liveCustomer&&liveCustomer.id===editing.customer_id?liveCustomer.customer:customers.find(x=>x.id===editing.customer_id);
     const currentContact=quotationContact(editing,currentCustomer,contacts);
     const previewSheet=renderQuotationPreview({template,images,editing,totals,docLang,profile,preview,customerPhone:currentContact.phone,customerEmail:currentContact.email,contactName:currentContact.name});
     const recurringField=(label,key,type='date')=>field(label,input({type,'aria-label':label,required:true,value:editing.recurring?.[key]||'',onChange:e=>setEditing(old=>({...old,recurring:{...old.recurring,[key]:e.target.value}}))}));
