@@ -28,7 +28,7 @@ jobs:
           - group: quotation-contact
             suites: quotation-contact-smoke
           - group: native-sales-orders
-            suites: native-sales-orders-smoke cost-sheet-print-smoke
+            suites: native-sales-orders-smoke cost-sheet-print-smoke workflow-map-smoke
           - group: regression
             suites: internal-workspace-smoke opportunity-dialog-smoke settings-workspace-smoke
           - group: customer-sales

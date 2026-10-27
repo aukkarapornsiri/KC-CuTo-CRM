@@ -13,7 +13,7 @@ test('query errors and missing counts never masquerade as zero',async()=>{
 test('demo reads do not touch production',async()=>{assert.deepEqual(await readWorkflowCounts(null,[['leads']],null,{leads:[{id:1}]}),{leads:1});});
 test('workflow page retains dashboard access gate',()=>{
  const access={profile:{is_active:true,role:'sales'},can:()=>false,dashboards:[]};assert.equal(permitsPage(access,'dashboard','workflow-map'),false);access.can=m=>m==='dashboard';assert.equal(permitsPage(access,'dashboard','workflow-map'),true);
- assert.equal(WORKFLOW_LANES.flatMap(x=>x.cards).length,9);
+ assert.equal(WORKFLOW_LANES.flatMap(x=>x.cards).length,10);
 });
 
 test('connector endpoints follow source to destination and route lane changes outside cards',async()=>{
@@ -27,5 +27,13 @@ test('connector endpoints follow source to destination and route lane changes ou
 });
 test('every workflow link has a valid source and destination',async()=>{
  const {WORKFLOW_LINKS}=await import('../src/workflow-map.mjs');const ids=new Set(WORKFLOW_LANES.flatMap(x=>x.cards.map(c=>c[0])));
- assert.equal(WORKFLOW_LINKS.length,8);for(const [a,b] of WORKFLOW_LINKS){assert.ok(ids.has(a)&&ids.has(b));assert.notEqual(a,b);}
+ assert.equal(WORKFLOW_LINKS.length,9);for(const [a,b] of WORKFLOW_LINKS){assert.ok(ids.has(a)&&ids.has(b));assert.notEqual(a,b);}
+});
+
+test('SO counts native orders rather than reporting facts and uses quotation access',async()=>{
+ const {workflowSource}=await import('../src/workflow-map.mjs');
+ assert.deepEqual(workflowSource('sales_orders'),{module:'quotations',table:'crm_sales_orders',demo:'native_sales_orders'});
+ const client={from(table){assert.equal(table,'crm_sales_orders');return {select(){return {abortSignal:async()=>({count:7,error:null})};}};}};
+ assert.deepEqual(await readWorkflowCounts(client,[['sales_orders']]),{sales_orders:7});
+ assert.deepEqual(await readWorkflowCounts(null,[['sales_orders']],null,{native_sales_orders:[{}],sales_orders:[{},{}]}),{sales_orders:1});
 });
