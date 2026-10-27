@@ -50,6 +50,13 @@ export function createReadCoordinator(client, {
       e.state = {data,error:null,loading:false}; emit(e); return data;
     }).catch(error => {
       if (request.generation !== e.generation) return null;
+      // A queued read invalidated by a successful write is not an access denial.
+      // Keep the gate loading until a fresh read verifies the current permissions.
+      if (error?.name === 'AbortError' || /^(?:AbortError: )?Read invalidated$/.test(error?.message || '')) {
+        e.failures++;
+        e.next = now() + Math.min(250 * 2 ** Math.min(e.failures - 1, 5), 5000);
+        e.state = {...e.state,error:null,loading:true}; emit(e); return null;
+      }
       e.failures++;
       const denied = [401,403].includes(error.status) || error.code === '42501';
       e.next = now() + Math.max(Math.min(e.interval * 2 ** Math.min(e.failures,4),900_000),[401,402,403,429].includes(error.status)||denied?300_000:0);

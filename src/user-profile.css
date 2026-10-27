@@ -1,0 +1,28 @@
+
+.crm-record-popup:has(.crm-personal-profile){width:min(1060px,calc(100vw - 32px));font-family:'IBM Plex Sans Thai','IBM Plex Sans',sans-serif;border-radius:20px;color:#172d3b}
+.crm-record-popup:has(.crm-personal-profile) .crm-record-popup-head{padding:20px 28px;border-bottom:1px solid #dee8ec}
+.crm-record-popup:has(.crm-personal-profile) .crm-record-popup-head h2{font-size:22px;font-weight:600}
+.crm-record-popup:has(.crm-personal-profile) .crm-record-popup-body{padding:24px;background:#f3f7f8}
+.crm-personal-profile>p{margin:0 0 20px!important;font-size:13px!important;color:#647785!important}
+.kc-profile-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.kc-profile-identity,.kc-profile-details{background:white;border:1px solid #e7eef1;border-radius:16px;padding:22px;min-width:0}
+.kc-profile-photo-editor{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.kc-profile-photo-editor label{padding:8px 14px!important;border-radius:10px!important;background:white}
+.kc-profile-photo-editor small{font-size:11px;color:#647785;margin-top:8px;display:block}
+.kc-profile-name{font-size:16px;font-weight:600;text-align:center;overflow-wrap:anywhere;margin:18px 0 4px}
+.kc-profile-role{text-align:center;color:#647785;font-size:12px;margin:0 0 22px}
+.kc-profile-details>h3{font-size:18px;font-weight:600;margin:0 0 20px}
+.crm-personal-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px}
+.crm-personal-profile-grid label{font-size:12px;color:#475e6b;min-width:0}
+.crm-personal-profile-grid input,.crm-personal-profile-grid select{display:block;width:100%;min-width:0;box-sizing:border-box;height:44px;padding:10px 12px;border:1px solid #dee8ec;border-radius:10px;margin-top:7px;background:#f9fbfc;color:#172d3b;font:inherit;font-size:13px}
+.crm-personal-profile-grid input:focus,.crm-personal-profile-grid select:focus{outline:2px solid #0aada94d;outline-offset:1px;border-color:#0aada9}
+.crm-personal-profile-grid small{display:block;margin-top:6px;font-size:11px;line-height:1.6;color:#647785}
+.kc-profile-signature{background:#f1faf9;border:1px solid #d6ece9;border-radius:12px;padding:16px}
+.kc-profile-signature h3{font-size:15px;font-weight:600;margin:0 0 8px}.kc-profile-badge{display:inline-block;font-size:10px;color:#087e77;border-radius:6px;background:#ddf4ef;padding:4px 7px}
+.kc-profile-signature p{font-size:12px;line-height:1.7;color:#475e6b;margin:12px 0}.kc-profile-signature-preview{height:100px;background:white;border:1px dashed #b5d4d0;border-radius:10px;display:grid;place-items:center;margin:16px 0;padding:12px;overflow:hidden}
+.kc-profile-signature-preview img{width:100%;height:74px;object-fit:contain}.kc-profile-signature-preview span{font-size:12px;color:#647785}
+.kc-profile-signature-actions{display:grid;gap:8px}.kc-profile-signature-actions button{width:100%;padding:10px;border:1px solid #b5d4d0;border-radius:9px;font:inherit;font-size:12px;background:white;color:#172d3b}.kc-profile-signature-actions .crm-save{background:#0aada9;color:white;border-color:#0aada9}
+.kc-profile-signature-actions button:disabled{opacity:.55;cursor:not-allowed}.kc-profile-signature small{display:block;color:#647785;font-size:10px;margin-top:8px}.kc-profile-signature .kc-profile-signature-note{font-size:11px;border-top:1px solid #d6ece9;padding-top:12px;margin-bottom:0}
+.kc-profile-footer{position:sticky;bottom:-24px;background:white;padding:16px 20px;margin:20px -24px -24px!important;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #dee8ec;z-index:1}.kc-profile-footer button{border-radius:10px!important;min-height:44px;padding:10px 20px}
+@media(max-width:760px){.kc-profile-layout{grid-template-columns:1fr}.crm-record-popup:has(.crm-personal-profile){width:calc(100vw - 20px)}.crm-record-popup:has(.crm-personal-profile) .crm-record-popup-body{padding:16px}.kc-profile-footer{bottom:-16px;margin:20px -16px -16px!important}.kc-profile-identity,.kc-profile-details{padding:18px}}
+@media(max-width:440px){.crm-personal-profile-grid{grid-template-columns:1fr}.kc-profile-footer button{flex:1}}
