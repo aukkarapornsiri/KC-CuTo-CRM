@@ -13,7 +13,7 @@ try {
    const source=await(await fetch([...document.scripts].find(s=>s.src.includes('app-C2ITSffc')).src)).text();
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
-   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
+   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',prepared_by:i?'Monchai Aukkarapornsiri':'',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
   else {
@@ -23,6 +23,9 @@ try {
    await nav.getByText('Quotations',{exact:true}).click();
    await nav.getByText('Quotation List',{exact:true}).click();
   }
+  await page.locator('[data-entity=quotations] thead [data-field=prepared_by]').waitFor();
+  assert.equal(await page.locator('[data-entity=quotations] tbody tr').filter({has:page.getByRole('button',{name:'Details QA-QUOTE-0',exact:true})}).locator('[data-field=prepared_by]').innerText(),'Not specified');
+  assert.equal(await page.locator('[data-entity=quotations] tbody tr').filter({has:page.getByRole('button',{name:'Details QA-QUOTE-1',exact:true})}).locator('[data-field=prepared_by]').innerText(),'Monchai A.');
   for(const [code,entry] of [['QA-QUOTE-0','Details '],['QA-QUOTE-1','Open Quotation ']]){
    await page.getByRole('button',{name:entry+code,exact:true}).click();
    const dialog=page.getByRole('dialog',{name:'Quotation details',exact:true});
