@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+@import url('./ibm-plex-sans-thai.css');
 /* Shared typography, including login screens and dialogs rendered in portals.
    Override legacy utility/inline weights; only main headings stay bold. */
 body, body * {font-weight:400!important}

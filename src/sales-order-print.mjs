@@ -94,5 +94,5 @@ export async function printCostSheet(order,loadFinancial,lang,loadContext=async(
  // Open synchronously so mobile popup blockers do not discard the print action.
  const popup=window.open('','_blank');if(!popup)throw Error(lang==='th'?'กรุณาอนุญาตหน้าต่างพิมพ์':'Allow the print window');
  popup.opener=null;
- try{const financial=await loadFinancial();if(!financial)throw Error(lang==='th'?'ไม่พบ Cost Sheet หรือไม่มีสิทธิ์ดูต้นทุน':'Cost Sheet unavailable or cost access denied');const context=await loadContext();popup.document.write(costSheetHTML(order,financial,lang,context));popup.document.close();await popup.document.fonts?.ready;await Promise.all([...popup.document.images].map(img=>img.decode()));popup.focus();popup.print();}catch(e){popup.close();throw e;}
+ try{const financial=await loadFinancial();if(!financial)throw Error(lang==='th'?'ไม่พบ Cost Sheet หรือไม่มีสิทธิ์ดูต้นทุน':'Cost Sheet unavailable or cost access denied');const context=await loadContext();popup.document.write(costSheetHTML(order,financial,lang,context));popup.document.close();for(const face of document.fonts)popup.document.fonts.add(face);await popup.document.fonts?.ready;await Promise.all([...popup.document.images].map(img=>img.decode()));popup.focus();popup.print();}catch(e){popup.close();throw e;}
 }
