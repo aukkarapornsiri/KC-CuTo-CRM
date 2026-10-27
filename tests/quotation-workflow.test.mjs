@@ -12,7 +12,7 @@ test('quotation financial fields are permission-gated and contract handoff stays
   assert.match(quotation,/showMargin=!!canViewFinancials&&!!template\.show_margin/);
   assert.match(workspace,/const can=action=>demoMode\|\|access\.can\(module,action\)/);
   assert.match(workspace,/entity==='prices'&&f\.key==='cost'&&!can\('approve'\)/);
-  assert.match(workspace,/client\.rpc\('crm_price_catalog'\)/);
+  assert.match(workspace,/client\.rpc\('crm_price_catalog',undefined,\{get:true\}\)/);
   assert.match(workspace,/สร้างสัญญาจากใบเสนอราคา/);
   assert.match(workspace,/sourceQuotationId:selected\.id/);
   assert.match(workspace,/sourceOpportunityId:selected\.opportunity_id/);
