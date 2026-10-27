@@ -12,3 +12,21 @@ test('all users follow central templates for new/draft documents, including issu
 
 test('shared loader uses saved template exactly, never seed or snapshot',async()=>{const saved={id:'admin',company_name_th:'',design_options:{fontSize:14}};assert.deepEqual(await loadSharedQuotationTemplate(clientFor({write:saved})),saved);});
 test('missing template and denied reads fail instead of returning a default',async()=>{await assert.rejects(loadSharedQuotationTemplate(clientFor({write:null})),/No shared/);await assert.rejects(loadSharedQuotationTemplate(clientFor({error:Error('denied')})),/denied/);});
+
+test('reopening checks only revision, changed revision reloads full template, callers get copies',async()=>{
+ let row={id:'shared',updated_at:'v1',name:'Original'},reads=[];
+ const client={from(){let columns;const q={select(value){columns=value;return q},eq(){return q},async maybeSingle(){reads.push(columns);return {data:columns==='*'?structuredClone(row):{id:row.id,updated_at:row.updated_at},error:null}}};return q}};
+ const first=await loadSharedQuotationTemplate(client);first.name='Local edit';
+ assert.equal((await loadSharedQuotationTemplate(client)).name,'Original');
+ assert.deepEqual(reads,['*','id,updated_at']);
+ row={...row,updated_at:'v2',name:'Changed by Admin'};
+ assert.equal((await loadSharedQuotationTemplate(client)).name,'Changed by Admin');
+ assert.deepEqual(reads,['*','id,updated_at','id,updated_at','*']);
+});
+test('concurrent opens share one read, permission errors discard cached data',async()=>{
+ let count=0,deny=false;
+ const client={from(){const q={select(){return q},eq(){return q},async maybeSingle(){count++;await Promise.resolve();return deny?{error:Error('denied')}:{data:{id:'shared',updated_at:'v1'}}}};return q}};
+ await Promise.all([loadSharedQuotationTemplate(client),loadSharedQuotationTemplate(client)]);assert.equal(count,1);
+ deny=true;await assert.rejects(loadSharedQuotationTemplate(client),/denied/);
+ const {peekSharedQuotationTemplate}=await import('../src/quotation-template-save.mjs');assert.equal(peekSharedQuotationTemplate(client),null);
+});

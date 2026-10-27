@@ -4,7 +4,7 @@ import {BILLING_PERIODS,periodLabel,recurringLine,serviceEnd,validateRecurring,d
 import {quotationContact} from './quotation-contact.mjs';
 import {formatCustomerAddress} from './customer-address.mjs';
 import {createSellerSignatureHook,signatureFields} from './quotation-seller-signature.mjs';
-import {saveQuotationTemplate,QUOTATION_TEMPLATE_CHANGED,loadSharedQuotationTemplate,demoSharedQuotationTemplate} from './quotation-template-save.mjs';
+import {saveQuotationTemplate,QUOTATION_TEMPLATE_CHANGED,loadSharedQuotationTemplate,peekSharedQuotationTemplate,demoSharedQuotationTemplate} from './quotation-template-save.mjs';
 import {quotationPreparedRows} from './quotation-prepared.mjs';
 import {documentProfile,createDocumentProfileFields} from './profile-document-defaults.mjs?v=20261007-profile';
 import {quotationHeaderCSS,printQuotation} from './quotation-print.mjs?v=20261007-a4';
@@ -66,16 +66,20 @@ export function createQuotationDocumentComponents({React,client,useApp}){
     return images;
   }
 
+  let lastCompany=null;
   function useTemplate(open,documentKey){
     const {demoMode}=useApp();
-    const [template,setTemplate]=React.useState({}),[ready,setReady]=React.useState(false),[error,setError]=React.useState(''),[revision,setRevision]=React.useState(0);
+    const cached=demoMode?demoSharedQuotationTemplate.current:peekSharedQuotationTemplate(client);
+    const [template,setTemplate]=React.useState(()=>cached?applyCompanyQuotationDefaults(copy(cached),demoMode?demoCompanyStore.value:lastCompany):{}),[ready,setReady]=React.useState(!!cached),[error,setError]=React.useState(''),[revision,setRevision]=React.useState(0);
     const refresh=()=>{setReady(false);setRevision(v=>v+1);};
-    React.useEffect(()=>{window.addEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);window.addEventListener('focus',refresh);return()=>{window.removeEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);window.removeEventListener('focus',refresh);};},[]);
-    React.useEffect(()=>{let live=true;setReady(false);setError('');if(!open)return;
+    React.useEffect(()=>{window.addEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);return()=>{window.removeEventListener(QUOTATION_TEMPLATE_CHANGED,refresh);};},[]);
+    React.useEffect(()=>{let live=true;setError('');if(!open)return;
+      const cached=demoMode?demoSharedQuotationTemplate.current:peekSharedQuotationTemplate(client);
+      setReady(!!cached);if(cached)setTemplate(applyCompanyQuotationDefaults(copy(cached),demoMode?demoCompanyStore.value:lastCompany));
       (async()=>{try{
         const row=demoMode?copy(demoSharedQuotationTemplate.current):await loadSharedQuotationTemplate(client);
         const company=demoMode?demoCompanyStore.value:await unwrap(client.rpc('crm_quotation_company'));
-        if(live)setTemplate(applyCompanyQuotationDefaults(row,company));
+        if(live){lastCompany=company;setTemplate(applyCompanyQuotationDefaults(row,company));}
       }catch(e){if(live){setTemplate({});setError(e.message||String(e));}}finally{if(live)setReady(true);}})();
       return()=>{live=false;};
     },[open,documentKey,demoMode,revision]);
@@ -171,7 +175,7 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
       if(revision!==customerRevision.current)return;
       LiveCustomer({id,customer,contacts});onCustomerData?.(id,customer,contacts);
     }
-    React.useEffect(()=>{let active=true;const refresh=()=>refreshCustomer().catch(e=>{if(active)setPrintError(e.message||String(e));});refresh();window.addEventListener('focus',refresh);window.addEventListener('crm-work-changed',refresh);return()=>{active=false;customerRevision.current++;window.removeEventListener('focus',refresh);window.removeEventListener('crm-work-changed',refresh);};},[editing?.customer_id,demoMode]);
+    React.useEffect(()=>{let active=true;const refresh=()=>refreshCustomer().catch(e=>{if(active)setPrintError(e.message||String(e));});refresh();window.addEventListener('crm-work-changed',refresh);return()=>{active=false;customerRevision.current++;window.removeEventListener('crm-work-changed',refresh);};},[editing?.customer_id,demoMode]);
     const [template,refreshTemplate,templateLoading,templateError]=useTemplate(!!editing,editing?.id||'new');
     const images=useTemplateImages({...template,...signatureFields(editing?.template_snapshot||template)});
     React.useEffect(()=>{const d=ref.current;if(editing&&d&&!d.open)d.showModal();return()=>{if(d?.open)d.close();};},[!!editing]);
