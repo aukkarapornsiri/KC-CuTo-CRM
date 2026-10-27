@@ -45,3 +45,48 @@ test('one cancelled subscriber does not cancel a shared read',async()=>{
  const controller=new AbortController();const a=p.fetch(url(),{signal:controller.signal});const b=p.fetch(url());
  const rejected=assert.rejects(a,{name:'AbortError'});await tick();controller.abort();release();await rejected;assert.equal((await b).status,200);
 });
+test('cancelled queued read never reaches the network',async()=>{
+ let calls=0;const releases=[];
+ const p=createRestReadPolicy(async()=>{calls++;await new Promise(r=>releases.push(r));return new Response('{}');},{origin});
+ const busy=Array.from({length:5},(_,i)=>p.fetch(url('busy-'+i)));await tick();
+ const c=new AbortController(),abandoned=p.fetch(url('abandoned'),{signal:c.signal});const rejected=assert.rejects(abandoned,{name:'AbortError'});c.abort();await rejected;
+ releases.splice(0).forEach(r=>r());await Promise.all(busy);await tick();
+ const observed=calls;releases.splice(0).forEach(r=>r());await tick();assert.equal(observed,5);
+});
+test('429 and gateway errors stop fan-out and honor Retry-After without retrying writes',async()=>{
+ for(const status of [429,502,503,504]){
+  let calls=0,time=0;const p=createRestReadPolicy(async()=>{calls++;return new Response('{}',{status,headers:{'Retry-After':'20'}});},{origin,now:()=>time,random:()=>0});
+  assert.equal((await p.fetch(url())).status,status);await p.fetch(url('other'));assert.equal(calls,1);
+  time=19999;await p.fetch(url('other'));assert.equal(calls,1);
+  time=20000;await p.fetch(url('other'));assert.equal(calls,2);
+  await p.fetch(url(),{method:'POST',body:'{}'});assert.equal(calls,3);
+ }
+});
+test('permission invalidation rejects a late response even when transport ignores abort',async()=>{
+ const win=new EventTarget();let release;
+ const p=createRestReadPolicy(async()=>{await new Promise(r=>release=r);return new Response('{"private":true}');},{origin,window:win});
+ const pending=p.fetch(url());const denied=assert.rejects(pending,{name:'AbortError'});await tick();win.dispatchEvent(new Event('crm-access-changed'));release();await denied;
+});
+test('SO approval and rejection notify work subscribers exactly once after success',async()=>{
+ const win=new EventTarget();let events=0;win.addEventListener('crm-work-changed',()=>events++);
+ const p=createRestReadPolicy(async()=>new Response('{}'),{origin,window:win});
+ await p.fetch(url('rpc/crm_so_approval_action'),{method:'POST',body:'{}'});assert.equal(events,1);
+});
+test('all shared subscribers cancelling aborts transport; a later subscriber starts a fresh read',async()=>{
+ let calls=0;const signals=[],release=[];
+ const p=createRestReadPolicy(async req=>{calls++;signals.push(req.signal);await new Promise(r=>release.push(r));return new Response('{}');},{origin});
+ const a=new AbortController(),b=new AbortController();const one=p.fetch(url(),{signal:a.signal}),two=p.fetch(url(),{signal:b.signal});
+ const done=Promise.allSettled([one,two]);await tick();a.abort();assert.equal(signals[0].aborted,false);b.abort();await done;assert.equal(signals[0].aborted,true);
+ const fresh=p.fetch(url());await tick();assert.equal(calls,2);release.splice(0).forEach(r=>r());assert.equal((await fresh).status,200);
+});
+test('HTTP-date Retry-After is respected and failed mutations do not announce work changes',async()=>{
+ const win=new EventTarget();let time=Date.parse('2026-10-27T00:00:00Z'),calls=0,events=0;win.addEventListener('crm-work-changed',()=>events++);
+ const p=createRestReadPolicy(async()=>{calls++;return new Response('{}',{status:503,headers:{'Retry-After':'Tue, 27 Oct 2026 00:01:00 GMT'}});},{origin,window:win,now:()=>time,random:()=>0});
+ await p.fetch(url());time+=59999;await p.fetch(url('next'));assert.equal(calls,1);
+ await p.fetch(url('rpc/crm_so_approval_action'),{method:'POST'});assert.equal(calls,2);assert.equal(events,0);
+});
+test('permission boundary still rejects late reads after a write detached deduplication',async()=>{
+ const win=new EventTarget();let release;
+ const p=createRestReadPolicy(async(req,init)=>{if(init?.method==='POST')return new Response('{}');await new Promise(r=>release=r);return new Response('{}');},{origin,window:win});
+ const read=p.fetch(url());const denied=assert.rejects(read,{name:'AbortError'});await tick();await p.fetch(url(),{method:'POST'});win.dispatchEvent(new Event('crm-access-changed'));release();await denied;
+});
