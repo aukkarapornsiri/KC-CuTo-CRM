@@ -19,11 +19,40 @@ export const QUOTATION_TEMPLATE_CHANGED='kc-quotation-template-changed';
 
 // Every document uses the current Super Admin template, irrespective of approval stage.
 export function followsSharedQuotationTemplate(){return true;}
+let templateCache=new WeakMap();
+const observedClients=new WeakSet();
+const copy=value=>value?structuredClone(value):null;
+export function clearSharedQuotationTemplateCache(){templateCache=new WeakMap();}
+if(typeof window!=='undefined'){
+ for(const event of [QUOTATION_TEMPLATE_CHANGED,'crm-access-changed','storage'])window.addEventListener(event,clearSharedQuotationTemplateCache);
+}
+function cacheFor(client){
+ if(!observedClients.has(client)&&client.auth?.onAuthStateChange){
+  observedClients.add(client);
+  client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN')clearSharedQuotationTemplateCache();});
+ }
+ let state=templateCache.get(client);
+ if(!state){state={row:null,flight:null};templateCache.set(client,state);}
+ return state;
+}
+export function peekSharedQuotationTemplate(client){return copy(templateCache.get(client)?.row);}
 export async function loadSharedQuotationTemplate(client){
- const {data,error}=await client.from('crm_quotation_templates').select('*').eq('is_default',true).eq('status','active').maybeSingle();
- if(error)throw error;
- if(!data?.id)throw Error('ไม่พบแม่แบบกลาง กรุณาให้ Super Admin บันทึกแม่แบบใบเสนอราคา / No shared quotation template. Contact Super Admin.');
- return data;
+ const state=cacheFor(client);
+ if(state.flight)return copy(await state.flight);
+ state.flight=(async()=>{
+  // The small revision read detects changes made by another user/device.
+  // Full template data is fetched only on first use or a changed revision.
+  if(state.row){
+   const {data,error}=await client.from('crm_quotation_templates').select('id,updated_at').eq('is_default',true).eq('status','active').maybeSingle();
+   if(error)throw error;
+   if(data?.id===state.row.id&&data.updated_at===state.row.updated_at)return state.row;
+  }
+  const {data,error}=await client.from('crm_quotation_templates').select('*').eq('is_default',true).eq('status','active').maybeSingle();
+  if(error)throw error;
+  if(!data?.id)throw Error('ไม่พบแม่แบบกลาง กรุณาให้ Super Admin บันทึกแม่แบบใบเสนอราคา / No shared quotation template. Contact Super Admin.');
+  state.row=copy(data);return state.row;
+ })();
+ try{return copy(await state.flight);}catch(error){state.row=null;throw error;}finally{state.flight=null;}
 }
 
 export const demoSharedQuotationTemplate={current:null};
