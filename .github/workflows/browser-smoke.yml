@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: lower-report
+            suites: ""
           - group: decision-report
             suites: ""
           - group: email-task-return
@@ -76,6 +78,9 @@ jobs:
       - name: Validate decision report dashboard
         if: matrix.group == 'decision-report'
         run: node tests/decision-reports-browser.cjs
+      - name: Validate lower report details
+        if: matrix.group == 'lower-report'
+        run: node tests/target-report-details-browser.cjs
       - name: Upload smoke screenshots
         if: always()
         uses: actions/upload-artifact@v4
