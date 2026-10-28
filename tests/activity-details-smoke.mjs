@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {openDesktopMenu} from './menu-helper.mjs';
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
 try{for(const width of [1440,390]){
  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -22,7 +22,8 @@ try{for(const width of [1440,390]){
   await nav.getByText('Lead Inbox',{exact:true}).click();
  }
  await page.getByRole('button',{name:'Details LD-QA-SOURCE',exact:true}).click();
- await page.getByRole('dialog',{name:'Lead Detail',exact:true}).getByRole('button',{name:'Add Activity',exact:true}).click();
+ const leadDialog=page.getByRole('dialog',{name:'Lead Detail',exact:true});if(width<641)await leadDialog.getByRole('button',{name:'View all lead details',exact:true}).click();
+ await leadDialog.getByRole('button',{name:'Add Activity',exact:true}).click();
  const form=page.getByRole('form',{name:'Record form',exact:true});
  await form.getByLabel('Subject',{exact:true}).fill('ติดตามลีด QA Source Lead');
  await form.getByLabel('Scheduled at',{exact:true}).fill('2026-10-29T10:30');

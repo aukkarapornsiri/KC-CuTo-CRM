@@ -29,7 +29,7 @@ export function createLeadDetailEnterprise({React}){
   ];
   return h('div',{className:'kc-lead-detail-overlay',role:'presentation',onMouseDown:e=>{if(e.target===e.currentTarget)onClose?.();}},
    h('section',{className:'kc-lead-detail-modal',role:'dialog','aria-modal':true,'aria-label':t('รายละเอียดลีด','Lead Detail')},
-    h('header',{className:'kc-lead-detail-header'},
+    h('header',{className:'kc-lead-detail-header'+(mobileExpanded?' is-mobile-expanded':'')},
      h('div',{className:'kc-lead-detail-title-row'},
       h('div',{className:'kc-lead-detail-mark','aria-hidden':true},'LD'),
       h('div',{className:'kc-lead-detail-heading'},h('div',{className:'kc-lead-detail-code'},clean(record.code)),h('h2',null,clean(record.lead_type==='Individual'?record.contact_name:record.company_name)),h('div',{className:'kc-lead-detail-sub'},t('รายละเอียดลีด · ข้อมูลล่าสุดในระบบ','Lead Detail · Latest CRM information'))),
