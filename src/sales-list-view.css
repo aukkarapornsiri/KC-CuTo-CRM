@@ -51,3 +51,7 @@
 .crm-sales-view-button:focus-visible,.crm-sales-pin:focus-visible,.crm-sales-tool:focus-visible,.crm-sales-primary-actions button:focus-visible,.crm-sales-view-menu button:focus-visible{outline:3px solid #b98514;outline-offset:2px}
 @media(max-width:900px){.crm-sales-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.crm-sales-header{padding:16px}.crm-sales-view-button{font-size:21px}.crm-sales-primary-actions{width:100%;margin-left:0}.crm-sales-primary-actions button{flex:1}.crm-sales-toolbar{align-items:flex-start;flex-direction:column}.crm-sales-tools{width:100%;margin-left:0}.crm-sales-search{flex:1;width:auto}}
+
+.crm-status-metrics{grid-template-columns:repeat(var(--summary-columns,4),minmax(0,1fr))}
+.crm-sales-metrics .crm-master-form{min-width:0;overflow-wrap:anywhere}
+@media(max-width:900px){.crm-status-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}

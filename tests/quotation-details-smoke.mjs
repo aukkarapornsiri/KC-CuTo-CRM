@@ -24,6 +24,10 @@ try {
    await nav.getByText('Quotation List',{exact:true}).click();
   }
   await page.locator('[data-entity=quotations] thead [data-field=prepared_by]').waitFor();
+  const summary=page.getByRole('region',{name:'Quotation summary'});
+  await summary.waitFor();assert.equal(await summary.locator('.crm-master-form').count(),4);
+  assert.deepEqual(await summary.locator('p').allTextContents(),['50','112,350,000 THB','110,103,000 THB','0%']);
+  assert.ok(await summary.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Summary cards fit viewport');
   assert.equal(await page.locator('[data-entity=quotations] tbody tr').filter({has:page.getByRole('button',{name:'Details QA-QUOTE-0',exact:true})}).locator('[data-field=prepared_by]').innerText(),'Not specified');
   assert.equal(await page.locator('[data-entity=quotations] tbody tr').filter({has:page.getByRole('button',{name:'Details QA-QUOTE-1',exact:true})}).locator('[data-field=prepared_by]').innerText(),'Monchai A.');
   for(const [code,entry] of [['QA-QUOTE-0','Details '],['QA-QUOTE-1','Open Quotation ']]){
