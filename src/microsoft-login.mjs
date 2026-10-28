@@ -1,3 +1,4 @@
+import {rememberEmailTask} from './assignment-links.mjs';
 export function microsoftOptions(href) {
   const redirect = new URL(href);
   redirect.search = '';
@@ -15,6 +16,7 @@ export function MicrosoftLogin({React,client,lang='th'}) {
   },[]);
   const th=lang==='th';
   async function login(){
+    try{rememberEmailTask(window.location.href,window.sessionStorage);}catch{}
     setBusy(true);setFailed(false);
     try {const {error}=await client.auth.signInWithOAuth(microsoftOptions(window.location.href)); if(error)throw error;}
     catch {setFailed(true);setBusy(false);}
