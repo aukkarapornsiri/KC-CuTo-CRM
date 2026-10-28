@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: decision-report
+            suites: ""
           - group: email-task-return
             suites: email-task-return-smoke
           - group: activity-details
@@ -72,7 +74,7 @@ jobs:
           done
           exit "$task_status"
       - name: Validate decision report dashboard
-        if: matrix.group == 'regression'
+        if: matrix.group == 'decision-report'
         run: node tests/decision-reports-browser.cjs
       - name: Upload smoke screenshots
         if: always()
