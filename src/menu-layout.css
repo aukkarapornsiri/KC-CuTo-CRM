@@ -56,3 +56,6 @@
 /* Compact account summary; account status filters remain available. */
 .kc-app .crm-internal[data-entity=customers] .crm-status-metrics .crm-master-form{min-height:60px;padding:8px 12px}
 .kc-app .crm-internal[data-entity=customers] .crm-status-metrics .crm-master-form p{margin-top:2px;font-size:17px;line-height:22px}
+/* Contact summary cards use the same compact height as leads and accounts. */
+.kc-app .crm-internal[data-entity=contacts] .crm-status-metrics .crm-master-form{min-height:60px;padding:8px 12px}
+.kc-app .crm-internal[data-entity=contacts] .crm-status-metrics .crm-master-form p{margin-top:2px;font-size:17px;line-height:22px}
