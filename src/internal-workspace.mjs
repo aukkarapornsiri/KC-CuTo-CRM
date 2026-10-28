@@ -239,7 +239,6 @@ export function createInternalWorkspace({React,client,useApp,useAccess}){
    h('div',{className:'crm-sales-primary-actions'},can('export')&&btn(h(React.Fragment,null,contactIcon('download'),t('ส่งออก CSV','Export CSV')),()=>download(entity+'.csv',filtered,columns),busy,{'aria-label':t('ส่งออก CSV','Export CSV')}),can('create')&&btn(h(React.Fragment,null,contactIcon('plus'),t('สร้างโอกาส','New Opportunity')),()=>start(null),busy,{className:'crm-save','aria-label':t('เพิ่มรายการ','Add record')})));
   const salesToolbar=entity==='opportunities'&&h('div',{className:'crm-sales-controls'},
    h('div',{className:'crm-sales-toolbar'},
-    h('span',{className:'crm-sales-count',role:'status'},loaded?filtered.length+' '+t('รายการ','records')+' • '+t('แสดง 50 รายการต่อหน้า','50 per page'):t('กำลังโหลด…','Loading…')),
     h('div',{className:'crm-sales-tools'},
      h('label',{className:'crm-sales-search'},contactIcon('search'),h('input',{type:'search','aria-label':t('ค้นหารายการ','Search records'),placeholder:t('ค้นหาโอกาสการขาย…','Search opportunities…'),value:query,onChange:e=>{Q(e.target.value);Page(0);}})),
      btn(contactIcon('reload'),()=>run(()=>read(true)),busy,{className:'crm-sales-tool','aria-label':t('โหลดใหม่','Reload'),title:t('โหลดใหม่','Reload')}),
