@@ -28,3 +28,6 @@ export function decisionMetrics(rows,{month,owner='',today=bangkokDay()}={}){
  return {period,open,won:won.length,closed:closed.length,winRate:closed.length?won.length/closed.length:null,pipeline:open.reduce((n,r)=>n+amount(r.amount),0),weighted:open.reduce((n,r)=>n+amount(r.amount)*Math.min(100,Math.max(0,amount(r.probability)))/100,0),risks,riskValue:risks.reduce((n,r)=>n+amount(r.record.amount),0),stages:[...stageMap.values()].sort((a,b)=>b.value-a.value),missingDates:scoped.filter(r=>!day(r.close_date)).length};
 }
 export async function readReportOpportunities(client){const rows=[];for(let offset=0;offset<20000;offset+=500){const r=await client.from('opportunities').select('*').order('id').range(offset,offset+499);if(r.error)throw r.error;rows.push(...(r.data||[]));if((r.data||[]).length<500)return rows;}throw new Error('Report exceeds 20,000 records');}
+
+// Read-only RPC must not invalidate other queued report reads as a POST would.
+export function readReportTargets(client,year){return client.rpc('crm_get_sales_targets',{p_year:year},{get:true});}
