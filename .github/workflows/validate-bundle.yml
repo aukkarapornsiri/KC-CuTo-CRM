@@ -64,7 +64,7 @@ jobs:
           node --test tests/marketing-edge.test.mjs
           node --check src/internal-workspace.mjs
           node --check src/approval-center.mjs
-          node --test tests/approval-center.test.mjs
+          node --test tests/approval-center.test.mjs tests/assignment-links.test.mjs tests/microsoft-login.test.mjs
           node --check src/lead-detail-enterprise.mjs
           node --test tests/lead-detail-enterprise.test.mjs
           node --test tests/thai-address.test.mjs tests/bilingual-address.test.mjs

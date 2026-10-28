@@ -6,7 +6,7 @@ export const approvalCategory=module=>module==='quotations'?'quotation':['sales_
 export function createApprovalCenter({React,client,useApp,useAccess,records}){
  const h=React.createElement,Popup=createRecordPopup(React),unwrap=async q=>{const {data,error}=await q;if(error)throw error;return data;};
  async function readAll(query){const rows=[];for(let offset=0;offset<20000;offset+=500){const batch=await unwrap(query().range(offset,offset+499));rows.push(...batch);if(batch.length<500)return rows;}throw Error('Too many approval records. Please contact your administrator.');}
- return function ApprovalCenter({lang='th',onSource}){
+ return function ApprovalCenter({lang='th',onSource,initialRecordId,initialKind}){
   const {profile,demoMode,navigate,refreshNotifications}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
   const [rows,Rows]=React.useState([]),[tab,Tab]=React.useState('pending'),[category,Category]=React.useState('all'),[search,Search]=React.useState(''),[selected,Selected]=React.useState(null),[comment,Comment]=React.useState(''),[busy,Busy]=React.useState(false),[loading,Loading]=React.useState(true),[error,ErrorText]=React.useState(''),[message,Message]=React.useState('');
   const generation=React.useRef(0),lock=React.useRef(false);
@@ -35,6 +35,27 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
    }catch(e){if(token===generation.current)ErrorText(e.message||String(e));}finally{if(token===generation.current)Loading(false);}
   }
   React.useEffect(()=>{void load();return()=>{generation.current++;};},[profile?.id,demoMode,tab,access.loading]);
+  React.useEffect(()=>{
+   if(!initialRecordId||!profile?.id||access.loading)return;
+   let active=true;
+   (async()=>{try{
+    if(!can('view')||!can('approve'))throw Error(t('ไม่มีสิทธิ์เข้าถึงงานอนุมัติ','Approval access denied'));
+    let selectedTask;
+    if(initialKind!=='so'){
+     const requests=demoMode?(records.approval_requests||[]).filter(a=>a.quotation_id===initialRecordId):await unwrap(client.from('crm_approval_requests').select('*').eq('quotation_id',initialRecordId).order('created_at',{ascending:false}).limit(1));
+     const a=requests[0];if(a)selectedTask={...a.snapshot,kind:'quotation',key:'q:'+a.id,id:a.quotation_id,request:a,created_at:a.created_at,status:a.status};
+    }
+    // Legacy SO emails link to their source quotation. Resolve the existing SO.
+    if(!selectedTask||initialKind==='so'||!canReviewQuotation(selectedTask.request,profile.id,true)){
+     const order=demoMode?(records.native_sales_orders||[]).find(s=>initialKind==='so'?s.id===initialRecordId:s.quotation_id===initialRecordId):await unwrap(client.from('crm_sales_orders').select('*').eq(initialKind==='so'?'id':'quotation_id',initialRecordId).maybeSingle());
+     if(order){const a=demoMode?order.so_approval:await unwrap(client.from('crm_so_approvals').select('*').eq('sales_order_id',order.id).maybeSingle());if(a&&(!selectedTask||a.status==='pending'))selectedTask={...order,kind:'so',key:'so:'+order.id,request:a,status:a.status,orderStatus:order.status,created_at:a.requested_at};}
+    }
+    if(!active)return;
+    if(selectedTask){Selected(selectedTask);Comment('');}
+    else ErrorText(t('ไม่พบคำขออนุมัติของรายการนี้ หรือไม่มีสิทธิ์เข้าถึง','Approval request not found or access denied'));
+   }catch(e){if(active)ErrorText(e.message||String(e));}})();
+   return()=>{active=false;};
+  },[initialRecordId,initialKind,profile?.id,access.loading,demoMode]);
   async function decide(action){
    if(lock.current||!selected)return;
    if(action==='reject'&&!comment.trim()){ErrorText(t('กรุณาระบุเหตุผลที่ไม่อนุมัติ','Enter a rejection reason'));return;}
