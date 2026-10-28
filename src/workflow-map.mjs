@@ -11,7 +11,7 @@ export const WORKFLOW_LANES=[
  ['sales_orders','quot-list','ใบสั่งขาย (SO)','Sales Orders (SO)','รับ PO อนุมัติ SO และติดตามการส่งมอบ','Receive PO, approve SO and track delivery','▣'],
  ['contracts','con-all','สัญญาและการต่ออายุ','Contracts & Renewals','ดูแลข้อตกลงและโอกาสต่ออายุ','Manage agreements and renewal opportunities','▧']]},
  {id:'service',label:['บริการและกิจกรรม','Service & Activities'],note:['ดูแลสินทรัพย์ → ให้บริการ → ติดตามลูกค้า','Installed base → Service → Customer follow-up'],cards:[
- ['assets','asset-all','สินค้าและคลัง','Products & Inventory','ข้อมูลสินทรัพย์และระบบที่ติดตั้ง','Assets and installed systems','⬡'],
+ ['assets','asset-all','ทรัพย์สินย์ลูกค้า','Customer Assets','ข้อมูลสินทรัพย์และระบบที่ติดตั้ง','Assets and installed systems','⬡'],
  ['tickets','tk-all','งานบริการ','Service','รับแจ้งปัญหา มอบหมาย และแก้ไขงาน','Receive, assign and resolve requests','⚒'],
  ['activities','act-timeline','กิจกรรมและงานติดตาม','Activities','โทร นัดหมาย และติดตามได้ทุกขั้นตอน','Calls, meetings and follow-ups across every stage','◷']]}
 ];
