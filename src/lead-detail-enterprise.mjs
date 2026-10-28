@@ -12,6 +12,7 @@ export function createLeadDetailEnterprise({React}){
   const [owners,setOwners]=React.useState([]);
   const [ownerId,setOwnerId]=React.useState(record?.owner_id||'');
   const [assignBusy,setAssignBusy]=React.useState(false);
+  const [mobileExpanded,MobileExpanded]=React.useState(false);
   const [assignError,setAssignError]=React.useState('');
   React.useEffect(()=>{setOwnerId(record?.owner_id||'');setAssignError('');},[record?.id,record?.owner_id]);
   React.useEffect(()=>{let active=true;setOwners([]);if(!record||!canAssign)return;setOwnersLoading(true);setAssignError('');Promise.resolve().then(()=>loadOwners?.()||[]).then(list=>{if(active)setOwners(list.filter(x=>x&&x.is_active!==false));}).catch(e=>{if(active)setAssignError(e.message||String(e));}).finally(()=>{if(active)setOwnersLoading(false);});return()=>{active=false;};},[record?.id,canAssign]);
@@ -46,15 +47,16 @@ export function createLeadDetailEnterprise({React}){
       canConvert&&h('button',{type:'button',className:'kc-lead-action-btn primary',onClick:onConvert,disabled:busy},t('แปลงเป็นลูกค้า','Convert to Customer')),
       h('button',{type:'button',className:'kc-lead-action-btn',onClick:onClose},t('ปิดรายละเอียด','Close Detail'))
      ),
+     h('section',{className:'kc-lead-mobile-summary'},h('strong',null,record.product_interest||t('รายละเอียดเบื้องต้น','Essential details')),h('p',null,record.contact_name||'—'),h('p',null,record.note||record.next_action||'—'),h('p',null,t('แหล่งที่มา: ','Source: ')+(record.source||'—')),record.phone&&h('a',{href:'tel:'+String(record.phone).replace(/[^+0-9]/g,'')},record.phone),h('p',null,h('button',{type:'button',onClick:()=>MobileExpanded(!mobileExpanded),'aria-expanded':mobileExpanded},t(mobileExpanded?'ซ่อนรายละเอียด':'ดูข้อมูลลีดทั้งหมด',mobileExpanded?'Hide details':'View all lead details')))),
      canAssign&&h('div',{className:'kc-lead-assign-panel'},
       h('label',null,t('เลือกผู้รับมอบหมายที่มีสิทธิ์','Select eligible assignee'),h('select',{value:ownerId,onChange:e=>setOwnerId(e.target.value),disabled:busy||assignBusy||ownersLoading,'aria-label':t('เลือกผู้รับมอบหมายลีด','Choose lead assignee')},h('option',{value:''},ownersLoading?t('กำลังโหลดรายชื่อ…','Loading people…'):t('เลือกผู้รับผิดชอบ','Choose assignee')),owners.map(x=>h('option',{key:x.id,value:x.id},x.display_name||x.name||x.email)))),
-      h('button',{type:'button',className:'kc-lead-action-btn primary assign',onClick:confirmAssign,disabled:busy||assignBusy||ownersLoading||!owners.some(x=>x.id===ownerId)||ownerId===record.owner_id},assignBusy?t('กำลังบันทึก...','Saving...'):t('บันทึก Assign','Save assignment')),
+      h('button',{type:'button',className:'kc-lead-action-btn primary assign',onClick:confirmAssign,disabled:busy||assignBusy||ownersLoading||!owners.some(x=>x.id===ownerId)||ownerId===record.owner_id},assignBusy?t('กำลังบันทึก...','Saving...'):t('มอบหมายลีด','Assign lead')),
       !ownersLoading&&!assignError&&!owners.length&&h('div',{role:'status'},t('ไม่พบผู้รับมอบหมายที่มีสิทธิ์','No eligible assignees found')),
       assignError&&h('div',{className:'kc-lead-assign-error',role:'alert'},assignError)
      ),
      !canAssign&&h('p',{className:'kc-lead-assign-help'},t('การมอบหมายลีดต้องมีสิทธิ์แก้ไขและมอบหมายในตารางบทบาทและสิทธิ์','Lead assignment requires Edit and Assign permissions in Roles & Permissions'))
     ),
-    h('div',{className:'kc-lead-detail-body'},
+    h('div',{className:'kc-lead-detail-body'+(mobileExpanded?' is-mobile-expanded':'')},
      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลลีด','Lead Information')),h('span',null,t('ข้อมูลทั่วไปแสดงแบบ Compact เพื่อให้เห็นบริบทได้เร็ว','Compact information for fast context'))),
      h('div',{className:'kc-lead-info-grid'},fields.map(([label,value])=>h('div',{className:'kc-lead-info-field',key:label},h('div',{className:'kc-lead-info-label'},label),h('div',{className:'kc-lead-info-value'},clean(value))))),
      h('section',{className:'kc-lead-note-wrap'},
