@@ -25,7 +25,7 @@ export function permitsPage(access,module,page){
  if(module==='dashboard'&&page?.startsWith('dash-')&&access.profile?.is_super_admin!==true)return access.dashboards.some(row=>row.dashboard_type===page.slice(5)&&row.visible);
  return true;
 }
-export function filterModules(modules,access){return modules.map(m=>({...m,...(m.subs?{subs:m.subs.filter(p=>permitsPage(access,m.id,p.id))}:{})})).filter(m=>access.can(m.id,'view')||m.subs?.length>0||(m.id==='settings'&&access.profile?.is_super_admin===true));}
+export function filterModules(modules,access){return modules.map(m=>({...m,...(m.subs?{subs:m.subs.filter(p=>!(m.id==='contracts'&&['con-m365','con-gws'].includes(p.id))&&permitsPage(access,m.id,p.id))}:{})})).filter(m=>access.can(m.id,'view')||m.subs?.length>0||(m.id==='settings'&&access.profile?.is_super_admin===true));}
 export function notifyAccessChanged(){globalThis.window?.dispatchEvent(new Event(ACCESS_CHANGED));}
 export function createRoleAccess({React,client,useApp}){
  const h=React.createElement,empty={profile:null,rows:[],dashboards:[],loading:true,error:'',can:()=>false};
