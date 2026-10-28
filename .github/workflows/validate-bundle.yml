@@ -74,6 +74,8 @@ jobs:
           node --check src/sales-targets.mjs
           node --test tests/sales-targets.test.mjs
           node --check src/internal-reports.mjs
+          node --check src/decision-reports.mjs
+          node --test tests/decision-report-model.test.mjs
           node --test tests/internal-model.test.mjs
           node --check src/opportunity-dialog.mjs
           node --test tests/opportunity-form.test.mjs

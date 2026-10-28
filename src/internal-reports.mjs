@@ -1,3 +1,4 @@
+import {createDecisionReports} from './decision-reports.mjs';
 import {shortSalesName} from './sales-name.mjs';
 import {ENTITIES,summarizePipeline} from './internal-model.mjs';
 import {recordOptionLabel} from './record-display.mjs';
@@ -6,7 +7,7 @@ import {toCSV} from './settings-model.mjs';
 import {filterReportRows,groupReportRows,reportTone,REPORT_VALUE_KEYS,REPORT_DATE_KEYS} from './report-view-model.mjs?v=20261028-enterprise';
 
 export function createInternalReports({React,client,useApp,TargetSummary}){
- const h=React.createElement;
+ const h=React.createElement,DecisionReports=createDecisionReports({React,client,useApp});
  function Records({lang,tabs}){
   const {demoMode,profile,navigate}=useApp(),t=(th,en)=>lang==='th'?th:en;
   const [page,Page]=React.useState(0),[query,Query]=React.useState(''),[status,Status]=React.useState('');
@@ -94,8 +95,8 @@ export function createInternalReports({React,client,useApp,TargetSummary}){
   );
  }
  return function Reports({lang}){
-  const [tab,T]=React.useState('records');
-  const tabs=h('nav',{className:'kc-report-tabs','aria-label':lang==='th'?'ประเภทรายงาน':'Report type'},h('button',{'aria-pressed':tab==='records',onClick:()=>T('records')},lang==='th'?'รายงานข้อมูล':'Record reports'),h('button',{'aria-pressed':tab==='targets',onClick:()=>T('targets')},lang==='th'?'รายงานเป้ายอดขาย':'Sales target report'));
-  return tab==='targets'?h('div',{className:'kc-reports'},tabs,h(TargetSummary,{lang})):h(Records,{lang,tabs});
+  const [tab,T]=React.useState('overview');
+  const tabs=h('nav',{className:'kc-report-tabs','aria-label':lang==='th'?'ประเภทรายงาน':'Report type'},h('button',{'aria-pressed':tab==='overview',onClick:()=>T('overview')},lang==='th'?'ภาพรวมเพื่อการตัดสินใจ':'Decision overview'),h('button',{'aria-pressed':tab==='records',onClick:()=>T('records')},lang==='th'?'รายงานข้อมูล':'Record reports'),h('button',{'aria-pressed':tab==='targets',onClick:()=>T('targets')},lang==='th'?'รายงานเป้ายอดขาย':'Sales target report'));
+  return tab==='overview'?h(DecisionReports,{lang,tabs,onRecords:()=>T('records'),onTargets:()=>T('targets')}):tab==='targets'?h('div',{className:'kc-reports'},tabs,h(TargetSummary,{lang})):h(Records,{lang,tabs});
  };
 }
