@@ -1,0 +1,49 @@
+/* Shared menu-page geometry; the active section still supplies its own accent. */
+.kc-app{--menu-gap:16px;--menu-control-height:40px;--menu-radius:12px;--menu-line:color-mix(in srgb,var(--kc-section-icon,#ffda80) 28%,#e2e8f0);--menu-tint:color-mix(in srgb,var(--kc-section-icon,#ffda80) 8%,var(--crm-surface,#fff))}
+.kc-app :is(.crm-internal,.crm-account-list,.svc-root,.kc-reports,.crm-inventory,.crm-targets,.email-workspace){max-width:none;min-width:0;width:100%;box-sizing:border-box}
+.kc-app :is(.crm-contact-header,.crm-account-header,.crm-sales-header,.crm-service-header,.svc-header,.kc-reports-heading,.email-heading,.crm-target-heading){box-sizing:border-box;width:100%;min-height:106px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin:0 0 16px;padding:18px 22px;border:1px solid var(--menu-line);border-radius:16px;background:var(--crm-surface,#fff)}
+.kc-app :is(.crm-contact-icon,.crm-account-icon,.crm-sales-icon,.crm-service-icon){width:54px;height:54px;flex:none;border-radius:12px}
+.kc-app :is(.crm-contact-title,.crm-account-title,.crm-sales-title,.crm-service-title){flex:1;min-width:200px}
+.kc-app :is(.crm-contact-primary-actions,.crm-account-actions,.crm-sales-primary-actions,.crm-service-primary-actions){display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-left:auto}
+.kc-app .crm-menu-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;margin:0 0 16px;min-width:0;width:100%;box-sizing:border-box}
+.kc-app .crm-menu-filter-fields{display:flex;align-items:end;flex-wrap:wrap;gap:8px;padding:12px;margin:0;min-width:0;border:1px solid var(--menu-line);border-radius:var(--menu-radius);background:var(--menu-tint)}
+.kc-app .crm-menu-filter-fields>.crm-menu-field{display:flex;flex:1 1 110px;flex-direction:column;align-items:stretch;gap:6px;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left}
+.kc-app .crm-menu-field>span{display:block;font-size:12px;line-height:20px;color:var(--crm-muted,#64748b)}
+.kc-app .crm-menu-controls :is(select,input:not([type=checkbox]),button){box-sizing:border-box;height:var(--menu-control-height);min-height:var(--menu-control-height);max-height:var(--menu-control-height);margin:0;font-size:12px;line-height:normal}
+.kc-app .crm-menu-field :is(select,input){width:100%;min-width:0;padding:0 10px;border:1px solid var(--menu-line);border-radius:8px;background:var(--crm-surface,#fff);color:var(--crm-text,#273a52)}
+.kc-app .crm-menu-filter-fields>button{flex:none;white-space:nowrap;padding:0 12px;border-radius:8px}
+.kc-app .crm-menu-search-tools{grid-column:2;display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0 0 13px;min-width:0}
+.kc-app .crm-menu-controls:not(:has(.crm-menu-filter-fields)) .crm-menu-search-tools{margin-bottom:0}
+.kc-app .crm-menu-search-tools :is(.crm-contact-search,.crm-account-search,.crm-sales-search,.crm-service-search){display:flex;align-items:center;flex:none;box-sizing:border-box;width:220px;height:40px;min-height:40px;gap:8px;margin:0;padding:0 12px;border:1px solid var(--menu-line);border-radius:10px;background:var(--crm-surface,#fff)}
+.kc-app .crm-menu-search-tools :is(.crm-contact-search,.crm-account-search,.crm-sales-search,.crm-service-search) input{width:100%;min-width:0;padding:0;border:0;background:transparent;outline:0}
+.kc-app .crm-menu-search-tools>input[type=search]{width:220px;min-width:0;padding:0 12px;border:1px solid var(--menu-line);border-radius:10px}
+.kc-app .crm-menu-search-tools>button{flex:none;min-width:40px;border-radius:10px}
+.kc-app .crm-sales-metrics{gap:10px;margin:0 0 16px;align-items:stretch}
+.kc-app .crm-sales-metrics .crm-master-form{box-sizing:border-box;min-height:78px;margin:0;padding:12px 14px;border:1px solid var(--menu-line);border-radius:11px;background:var(--menu-tint)}
+.kc-app :is(.svc-metrics,.crm-inventory-metrics,.crm-target-kpis,.kc-report-metrics){gap:10px;margin-bottom:16px}
+.kc-app :is(.svc-metrics,.crm-inventory-metrics,.kc-report-metrics)>*{border-radius:11px;min-height:78px;box-sizing:border-box}
+.kc-app :is(.kc-report-filters,.kc-inventory-toolbar,.email-toolbar,.crm-access-toolbar,.crm-user-toolbar,.crm-targets>.crm-actions){display:flex;align-items:end;flex-wrap:wrap;gap:10px;padding:12px;border:1px solid var(--menu-line);border-radius:12px;background:var(--menu-tint);margin-bottom:16px}
+.kc-app :is(.kc-report-filters,.kc-inventory-toolbar,.email-toolbar,.crm-access-toolbar,.crm-user-toolbar,.crm-targets>.crm-actions) :is(input:not([type=checkbox]),select,button){box-sizing:border-box;min-height:40px;border-radius:8px}
+.kc-app .kc-reports .kc-report-filters .crm-field{padding:0;margin:0;border:0;background:transparent;box-shadow:none}
+.kc-app :is(.svc-header,.kc-reports-heading,.email-heading,.crm-target-heading) h1{margin:0;font-size:25px;line-height:1.3}
+.kc-app .crm-settings:not(.crm-internal):not(.crm-inventory):not(.crm-targets)>h1{box-sizing:border-box;min-height:90px;margin:0 0 16px;padding:24px 22px;border:1px solid var(--menu-line);border-radius:16px;background:var(--crm-surface,#fff);font-size:25px;line-height:1.4}
+@media(max-width:1399px){.kc-app .crm-menu-controls{grid-template-columns:minmax(0,1fr)}.kc-app .crm-menu-search-tools{grid-column:1;grid-row:1;margin:0;justify-self:end}.kc-app .crm-menu-filter-fields{grid-column:1;grid-row:2}}
+@media(max-width:760px){.kc-app :is(.crm-contact-header,.crm-account-header,.crm-sales-header,.crm-service-header,.svc-header,.kc-reports-heading,.email-heading,.crm-target-heading){padding:16px;gap:12px}.kc-app .crm-menu-search-tools{width:100%;flex-wrap:wrap;justify-content:flex-start}.kc-app .crm-menu-search-tools :is(.crm-contact-search,.crm-account-search,.crm-sales-search,.crm-service-search){flex:1 0 100%;width:100%;max-width:none}.kc-app .crm-menu-filter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.kc-app .crm-menu-filter-fields>button{width:100%;white-space:normal}.kc-app .crm-menu-controls :is(select,input:not([type=checkbox])){font-size:16px}.kc-app .crm-menu-field>span{min-height:20px;height:auto}.kc-app :is(.crm-contact-primary-actions,.crm-account-actions,.crm-sales-primary-actions,.crm-service-primary-actions){margin-left:0;width:100%}}
+/* Analytical menus retain their charts while sharing page spacing and controls. */
+.kc-app :is(.sales-map-heading,.exec-heading){box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;min-height:106px;margin:0 0 16px;padding:18px 22px;border:1px solid var(--menu-line);border-radius:16px;background:var(--crm-surface,#fff)}
+.kc-app :is(.sales-map-controls,.exec-controls,.seller-tools){display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;border:1px solid var(--menu-line);border-radius:12px;background:var(--menu-tint)}
+.kc-app :is(.sales-map-controls,.exec-controls,.seller-tools) :is(input,select,button){min-height:40px;box-sizing:border-box;border-radius:8px}
+.kc-app .kc-dashboard-studio .dash-hero{margin-bottom:16px;border-radius:16px}
+.kc-app :is(.crm-table-scroll,.crm-account-table-wrap,.svc-table-scroll,.kc-report-scroll){border-radius:12px}
+@media(max-width:760px){.kc-app :is(.sales-map-heading,.exec-heading){padding:16px}.kc-app :is(.sales-map-controls,.exec-controls,.seller-tools){gap:8px}}
+.kc-app .crm-settings-hub{max-width:none;padding:0}
+.kc-app .crm-hub-header{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:106px;margin:0 0 16px;padding:18px 22px;border:1px solid var(--menu-line);border-radius:16px;background:var(--crm-surface,#fff)}
+.kc-app .crm-hub-header h1{font-size:25px;margin:0 0 6px;line-height:1.3}
+.kc-app .crm-hub-search{height:40px;box-sizing:border-box;margin:0 0 16px;padding:0 12px;border-radius:10px}
+.kc-app .crm-hub-search input{height:38px;min-height:0;padding:0;font-size:14px}
+.kc-app .crm-hub-grid{gap:16px}.kc-app .crm-category-card{border-radius:12px}
+.kc-app .kc-reports{padding:0;gap:16px;background:transparent}
+.kc-app .kc-reports>:is(.kc-reports-heading,.kc-report-filters,.kc-report-metrics){margin:0}
+.kc-app .kc-reports .kc-report-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.kc-app .kc-reports .kc-report-filters :is(input,select){height:40px;min-height:40px}
+@media(max-width:760px){.kc-app .crm-hub-header{padding:16px;flex-wrap:wrap}.kc-app .kc-reports .kc-report-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.kc-app .kc-reports .kc-report-filters>label:first-child{grid-column:1/-1}}
