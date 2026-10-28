@@ -72,7 +72,8 @@ jobs:
           node --check src/number-format.mjs
           node --test tests/number-format.test.mjs
           node --check src/sales-targets.mjs
-          node --test tests/sales-targets.test.mjs
+          node --test tests/sales-targets.test.mjs tests/target-report-model.test.mjs
+          node --check src/target-report-details.mjs
           node --check src/internal-reports.mjs
           node --check src/decision-reports.mjs
           node --test tests/decision-report-model.test.mjs
