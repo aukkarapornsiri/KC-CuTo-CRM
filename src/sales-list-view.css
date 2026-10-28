@@ -66,3 +66,14 @@
 
 /* Align the full opportunity page sections to shared left and right edges. */
 .crm-internal[data-entity=opportunities]>.crm-sales-header,.crm-internal[data-entity=opportunities] .crm-sales-toolbar,.crm-internal[data-entity=opportunities] .crm-sales-filters,.crm-internal[data-entity=opportunities]>.crm-sales-metrics{box-sizing:border-box;width:100%}
+
+/* Filters and search share one desktop row, with the record count above. */
+.crm-sales-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 12px;margin-bottom:17px;align-items:end}
+.crm-sales-controls .crm-sales-toolbar{display:contents}
+.crm-sales-controls .crm-sales-count{grid-column:1/-1;grid-row:1}
+.crm-sales-controls .crm-sales-filters{grid-column:1;grid-row:2;grid-template-columns:minmax(90px,1fr) minmax(100px,1fr) minmax(120px,1.2fr) repeat(2,minmax(135px,1fr)) max-content;gap:8px;margin:0}
+.crm-sales-controls .crm-sales-tools{grid-column:2;grid-row:2;align-self:end;margin:0 0 12px}
+.crm-sales-controls .crm-sales-search{box-sizing:border-box;width:240px;height:40px}
+.crm-sales-controls:not(:has(.crm-sales-filters)) .crm-sales-tools{margin-bottom:0}
+@media(max-width:1399px){.crm-sales-controls{grid-template-columns:minmax(0,1fr)}.crm-sales-controls .crm-sales-tools{grid-column:1;grid-row:2;margin:0;justify-self:end}.crm-sales-controls .crm-sales-filters{grid-column:1;grid-row:3;grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.crm-sales-controls .crm-sales-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.crm-sales-controls .crm-sales-tools{width:100%}.crm-sales-controls .crm-sales-search{width:auto;min-width:0;flex:1}}
