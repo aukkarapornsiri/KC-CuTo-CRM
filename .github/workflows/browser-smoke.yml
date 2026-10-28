@@ -71,6 +71,9 @@ jobs:
             cat test-artifacts/$suite.log
           done
           exit "$task_status"
+      - name: Validate decision report dashboard
+        if: matrix.group == 'regression'
+        run: node tests/decision-reports-browser.cjs
       - name: Upload smoke screenshots
         if: always()
         uses: actions/upload-artifact@v4
