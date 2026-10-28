@@ -56,7 +56,7 @@
 .crm-sales-metrics .crm-master-form{min-width:0;overflow-wrap:anywhere}
 @media(max-width:900px){.crm-status-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Keep opportunity filter labels and controls aligned without date-field cards. */
-.crm-sales-filters{display:grid;grid-template-columns:repeat(2,minmax(110px,1fr)) minmax(150px,1.25fr) repeat(2,minmax(150px,1fr)) auto;align-items:end;gap:12px}
+.crm-sales-filters{display:grid;grid-template-columns:140px 160px 200px 160px 160px max-content;justify-content:start;align-items:end;gap:12px}
 .crm-sales-filters>label,.crm-sales-filters>label.crm-field{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left}
 .crm-sales-filters>label>span{line-height:20px}
 .crm-sales-filters select,.crm-sales-filters input,.crm-sales-filters>button{box-sizing:border-box;width:100%;height:40px;min-height:40px;max-height:40px;margin:0;padding:0 12px;line-height:normal}
