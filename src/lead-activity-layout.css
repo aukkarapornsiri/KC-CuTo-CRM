@@ -31,3 +31,9 @@ html[data-crm-personal=true] .kc-app .crm-master-table .crm-task-empty button{co
 }
 .kc-app .crm-empty-create:disabled{opacity:.55}
 
+
+.crm-activity-detail .crm-field{min-width:0;overflow-wrap:anywhere}
+.crm-activity-detail .crm-profile-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.crm-activity-detail .crm-actions{flex-wrap:wrap}
+.crm-activity-detail .crm-profile-links button{padding:10px 16px;min-height:44px;border:1px solid var(--kc-section-action,#aa4149);border-radius:10px;background:var(--kc-section-action,#aa4149);color:#fff;cursor:pointer;font:inherit}
+.crm-activity-detail .crm-profile-links button:disabled{opacity:.55;cursor:wait}
