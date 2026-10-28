@@ -38,6 +38,8 @@ jobs:
           test -f app-Dou2_7PY.css
           test -f app-C2ITSffc.js
           grep -q "app-C2ITSffc.js" index.html
+      - name: Validate activity details and source lead links
+        run: node --test tests/activity-detail.test.mjs tests/lead-workflow.test.mjs
       - name: Validate integration contracts
         run: node tests/integration-contract.mjs
       - name: Validate shared notification polling

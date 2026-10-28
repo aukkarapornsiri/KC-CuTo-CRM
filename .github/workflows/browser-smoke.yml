@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: activity-details
+            suites: activity-details-smoke
           - group: compact-layout
             suites: compact-layout-smoke
           - group: quotation-recurring

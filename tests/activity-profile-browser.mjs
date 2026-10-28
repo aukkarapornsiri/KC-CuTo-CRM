@@ -33,7 +33,9 @@ export async function checkActivityWorkflow(page,open,width){
  await open('Activities','My Activities');
  const root=page.locator('[data-entity=activities]');
  await root.getByRole('button',{name:/^Details /}).first().click();
- const detail=root.getByRole('region',{name:'Record details'});
+ const modal=root.getByRole('dialog',{name:'Activity Details',exact:true});
+ assert.equal(await modal.evaluate(el=>el.matches(':modal')),true,'Details opens above the list');
+ const detail=modal.getByRole('region',{name:'Record details'});
  assert.equal(await detail.getByRole('button',{name:'Open Contact',exact:true}).count(),1,'Activity links to its contact');
  await detail.getByRole('button',{name:'Edit',exact:true}).click();
  const form=root.getByRole('form',{name:'Record form'});

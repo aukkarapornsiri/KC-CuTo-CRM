@@ -31,3 +31,7 @@ html[data-crm-personal=true] .kc-app .crm-master-table .crm-task-empty button{co
 }
 .kc-app .crm-empty-create:disabled{opacity:.55}
 
+
+.crm-activity-detail .crm-field{min-width:0;overflow-wrap:anywhere}
+.crm-activity-detail .crm-profile-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.crm-activity-detail .crm-actions{flex-wrap:wrap}
