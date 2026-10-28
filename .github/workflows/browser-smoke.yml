@@ -38,7 +38,7 @@ jobs:
           - group: navigation-settings
             suites: sales-targets-smoke sales-attainment-ring-smoke dashboard-layout-smoke navigation-smoke smoke settings-cards-smoke settings-smoke master-data-smoke
           - group: operations
-            suites: workspace-theme-smoke executive-smoke marketing-map-smoke service-desk-smoke inventory-smoke
+            suites: service-overview-smoke workspace-theme-smoke executive-smoke marketing-map-smoke service-desk-smoke inventory-smoke
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
