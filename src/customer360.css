@@ -15,3 +15,29 @@
 .c360>.c360-panel{margin-top:20px}.c360 .c360-panel h4{font-size:14px;font-weight:600;margin:22px 0 8px}.c360 .c360-contact-link{display:inline-flex;align-items:center;margin:6px 8px;padding:9px 14px;min-height:42px;border:1px solid var(--c360-line);border-radius:10px;color:var(--c360-teal);background:white;text-decoration:none}.c360 .c360-contact-link:focus-visible{outline:3px solid #32afb4;outline-offset:3px}
 
 .c360 .c360-readiness-value{display:grid;grid-template-columns:minmax(140px,1fr) 2fr;gap:16px;padding:12px 0;border-bottom:1px solid var(--c360-line)}.c360-readiness-value dt{color:var(--c360-muted)}.c360-readiness-value dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.c360 .crm-record-popup textarea{width:100%;font:inherit;border:1px solid #c8d8dd;border-radius:8px;padding:10px;box-sizing:border-box}.c360 .c360-panel>button{margin:8px 8px 8px 0}@media(max-width:600px){.c360 .c360-readiness-value{grid-template-columns:1fr;gap:4px}}
+
+/* Full Customer Intelligence workspace: viewport-sized modal, one main scroll area. */
+.crm-customer360-dialog{box-sizing:border-box;margin:auto;width:min(1440px,calc(100vw - 32px));height:calc(100dvh - 32px);max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);padding:0;border:1px solid #d3e0e5;border-radius:20px;background:#f4f7fa;color:#183744;box-shadow:0 24px 90px #102f3d45;overflow:hidden;font-family:var(--crm-font,'Anuphan',sans-serif);font-size:15px;line-height:1.6}
+.crm-customer360-dialog[open]{display:flex;flex-direction:column}
+.crm-customer360-dialog::backdrop{background:#0b2238a6;backdrop-filter:blur(3px)}
+.crm-customer360-dialog>.crm-customer360-dialog-head{display:flex;flex:none;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px;background:#fff;border-bottom:1px solid #dfe8ec}
+.crm-customer360-dialog-head h2{margin:0;color:#102f3d;font-size:18px;line-height:1.4;font-weight:600;overflow-wrap:anywhere}
+.crm-customer360-dialog-head button{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;border:1px solid #cfdee4;border-radius:12px;background:#f1f5f7;color:#183744;font:32px/1 sans-serif;cursor:pointer}
+.crm-customer360-dialog-head button:hover{background:#e3edf1}
+.crm-customer360-dialog-head button:focus-visible{outline:3px solid #26a7ac;outline-offset:2px}
+.crm-customer360-dialog>.crm-customer360-dialog-body{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:20px}
+.crm-customer360-dialog-body>.crm-record-detail{margin:0;padding:0;border:0;background:transparent;box-shadow:none;max-width:none}
+.crm-customer360-dialog .c360{margin:0 0 20px;padding:20px;box-shadow:none;font-size:15px}
+.crm-customer360-dialog .c360 :is(p,dd,label,td,.c360-tabs button,.c360-row button){font-size:14px;line-height:1.65}
+.crm-customer360-dialog .c360 :is(small,dt,th,.c360-sync,.c360-kpis span){font-size:13px}
+.crm-customer360-dialog .c360 .c360-hero h2{font-size:clamp(24px,3vw,34px)}
+.crm-customer360-dialog .c360 .c360-list{max-height:none;overflow:visible}
+@media(max-width:600px){
+ .crm-customer360-dialog{width:calc(100vw - 12px);max-width:calc(100vw - 12px);height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);border-radius:14px}
+ .crm-customer360-dialog>.crm-customer360-dialog-head{padding:10px 12px;gap:10px}
+ .crm-customer360-dialog-head h2{font-size:15px}
+ .crm-customer360-dialog>.crm-customer360-dialog-body{padding:10px;scrollbar-gutter:auto}
+ .crm-customer360-dialog .c360{padding:12px;border-radius:14px}
+ .crm-customer360-dialog .c360 .c360-hero{padding:18px}
+ .crm-customer360-dialog .c360 :is(input,select,textarea){font-size:16px}
+}
