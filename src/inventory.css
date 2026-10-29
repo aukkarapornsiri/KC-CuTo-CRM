@@ -28,3 +28,17 @@
 .crm-inventory .kc-inventory-search::placeholder{color:#376a6b;opacity:1}
 .crm-inventory .kc-inventory-search:focus{background:#fff;outline:3px solid #99e6dc;outline-offset:2px}
 @media(max-width:600px){.crm-inventory .kc-inventory-toolbar .kc-inventory-search{flex-basis:100%;width:100%;min-width:0;max-width:none}.crm-inventory .kc-inventory-item-actions>button{max-width:100%}}
+
+/* Keep the product-description pointer visible regardless of the OS cursor theme. */
+.crm-inventory-dialog[data-kind="item"] textarea {
+  color: #182d43;
+  caret-color: #182d43;
+  cursor: url("../assets/text-cursor-contrast.svg") 12 12, text;
+}
+@media (forced-colors: active) {
+  .crm-inventory-dialog[data-kind="item"] textarea {
+    color: CanvasText;
+    caret-color: CanvasText;
+    cursor: text;
+  }
+}
