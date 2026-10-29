@@ -95,6 +95,7 @@ jobs:
       - name: Test assignment email summaries in isolated Postgres
         run: |
           npm install --no-save --no-package-lock @electric-sql/pglite@0.3.14
+          node --test tests/quotation-followup.test.mjs tests/quotation-followup-db.test.mjs
           node --test tests/assignment-email-summary.test.mjs
       - name: Parse Edge Function TypeScript
         run: |
