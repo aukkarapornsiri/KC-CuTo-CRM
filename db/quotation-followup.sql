@@ -85,7 +85,7 @@ begin
  closed:=p_status in ('won','lost','cancelled');
  if not closed and (p_next is null or p_next<=now()) then raise exception 'An open follow-up requires a future next activity';end if;
  if q.status in ('accepted','rejected','cancelled') and not closed then raise exception 'This quotation is closed';end if;
- insert into public.crm_quotation_followups(quotation_id) values(p_id) on conflict do nothing;
+ insert into public.crm_quotation_followups(quotation_id,activity_id) values(p_id,(select id from public.activities where related_module='quotations' and related_id=p_id and type='Proposal Follow-up' and status not in ('completed','cancelled') order by scheduled_at,id limit 1)) on conflict do nothing;
  select * into f from public.crm_quotation_followups where quotation_id=p_id for update;
  if f.revision is distinct from p_revision then raise exception 'Record changed; reload before saving';end if;
  -- Swap the pointer before completing the old activity, so direct completion cannot bypass next-date validation.
@@ -107,10 +107,12 @@ grant execute on function public.crm_quotation_followup_save(uuid,text,text,time
 create view public.crm_quotation_followup_list with(security_invoker=true) as
  select q.id,q.code,q.customer_name,q.project_name,q.total,q.currency,q.owner_id,q.owner_name,q.status document_status,q.approval_status,q.valid_until,q.created_at,
  f.sent_at,coalesce(f.status,case when q.status='accepted' then 'won' when q.status='rejected' then 'lost' when q.status='cancelled' then 'cancelled' else 'waiting' end) followup_status,
- f.last_result,f.last_at,f.next_at,f.activity_id,coalesce(f.revision,0) revision,
+ coalesce(f.last_result,history.description) last_result,coalesce(f.last_at,history.updated_at) last_at,case when f.quotation_id is not null then f.next_at else planned.scheduled_at end next_at,coalesce(f.activity_id,planned.id) activity_id,coalesce(f.revision,0) revision,
  (coalesce(f.status,'waiting') not in ('won','lost','cancelled') and q.status not in ('accepted','rejected','cancelled')) is_open,
  (f.quotation_id is not null) tracked
  from public.quotations q left join public.crm_quotation_followups f on f.quotation_id=q.id
+ left join lateral(select a.id,a.scheduled_at from public.activities a where a.related_module='quotations' and a.related_id=q.id and a.type='Proposal Follow-up' and a.status not in ('completed','cancelled') order by a.scheduled_at,a.id limit 1) planned on f.quotation_id is null
+ left join lateral(select a.description,a.updated_at from public.activities a where a.related_module='quotations' and a.related_id=q.id and a.type='Proposal Follow-up' and a.status='completed' order by a.updated_at desc,a.id limit 1) history on f.quotation_id is null
  where private.crm_can('quotations','view') and private.crm_qf_owner_visible(q.owner_id);
 grant select on public.crm_quotation_followup_list to authenticated;
 
@@ -135,7 +137,8 @@ begin
   insert into public.crm_quotation_followups(quotation_id,sent_at) values(new.id,now()) on conflict(quotation_id) do update set sent_at=coalesce(public.crm_quotation_followups.sent_at,excluded.sent_at);
   select * into f from public.crm_quotation_followups where quotation_id=new.id for update;
   if s.enabled and f.activity_id is null and f.status not in ('won','lost','cancelled') and new.owner_id is not null and private.crm_assignment_eligible(new.owner_id,'activities') then
-   due:=private.crm_qf_business_date(now(),s.business_days);aid:=private.crm_qf_schedule(new,due);
+   select id,scheduled_at into aid,due from public.activities where related_module='quotations' and related_id=new.id and type='Proposal Follow-up' and status not in ('completed','cancelled') order by scheduled_at,id limit 1;
+   if aid is null then due:=private.crm_qf_business_date(now(),s.business_days);aid:=private.crm_qf_schedule(new,due);end if;
    update public.crm_quotation_followups set next_at=due,activity_id=aid,revision=revision+1 where quotation_id=new.id;
   end if;
  end if;
