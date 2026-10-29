@@ -11,3 +11,16 @@ test('initial account list renders its newest-first label in both languages',asy
  const List=createAccountList({React});
  for(const lang of ['th','en']){const tree=List({lang,rows,loaded:true,busy:false,profile:{id:'u'},route:'customer-list',can:()=>false});assert.ok(JSON.stringify(tree).includes(lang==='th'?'ใหม่ล่าสุดก่อน':'Newest first'));}
 });
+
+test('account names open 360 on double click, keyboard activation or touch, not a mouse single click',async()=>{
+ const {createAccountList}=await import('../src/account-list-view.mjs');
+ const React={createElement:(tag,props,...children)=>({tag,props,children}),useState:value=>[value,()=>{}],useRef:()=>({current:null}),useEffect:()=>{}};
+ const opened=[];const tree=createAccountList({React})({lang:'en',rows,loaded:true,busy:false,profile:{id:'u'},route:'customer-list',can:()=>false,onDetail:row=>opened.push(row.id)});
+ function find(node){if(!node||typeof node!=='object')return; if(node.props?.className==='crm-account-name')return node;for(const child of (node.children||[]).flat(Infinity)){const found=find(child);if(found)return found;}}
+ const name=find(tree);assert.ok(name);
+ name.props.onClick({detail:1,nativeEvent:{pointerType:'mouse'}});assert.deepEqual(opened,[]);
+ name.props.onClick({detail:2,nativeEvent:{pointerType:'mouse'}});assert.deepEqual(opened,[]);
+ name.props.onDoubleClick();assert.deepEqual(opened,['a']);
+ name.props.onClick({detail:0,nativeEvent:{}});assert.deepEqual(opened,['a','a']);
+ name.props.onClick({detail:1,nativeEvent:{pointerType:'touch'}});assert.deepEqual(opened,['a','a','a']);
+});

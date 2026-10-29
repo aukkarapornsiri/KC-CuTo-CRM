@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: customer360-popup
+            suites: customer360-popup-smoke customer360-smoke customer360-create-smoke
           - group: lower-report
             suites: ""
           - group: decision-report
