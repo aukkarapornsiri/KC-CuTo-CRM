@@ -34,7 +34,7 @@ export function contextEntries(modules,activeModule){
   const module=byId.get(activeModule);
   if(group){
     if(group.id==='sales'){
-      const specs=[['opportunities',null],['quotations','quot-pricebook'],['quotations',null],['contracts',null]];
+      const specs=[['opportunities',null],['quotations','quot-pricebook'],['quotations',null],['quotations','quot-followup'],['contracts',null]];
       const items=specs.map(([id,pageId])=>{
         const item=byId.get(id);
         if(!item)return null;

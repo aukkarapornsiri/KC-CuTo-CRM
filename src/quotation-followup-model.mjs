@@ -1,0 +1,9 @@
+export const FOLLOWUP_STATUSES=[['waiting','รอตอบกลับ','Waiting for reply'],['negotiating','กำลังเจรจา','Negotiating'],['budget','รออนุมัติงบ','Awaiting budget'],['po','รอ PO','Awaiting PO'],['won','ลูกค้ายืนยันสั่งซื้อ','Customer confirmed'],['lost','ลูกค้าปฏิเสธ','Customer declined'],['cancelled','ยกเลิกติดตาม','Follow-up cancelled']];
+export const followupClosed=status=>['won','lost','cancelled'].includes(status);
+export const followupLabel=(status,lang)=>FOLLOWUP_STATUSES.find(x=>x[0]===status)?.[lang==='th'?1:2]||status||'—';
+export const bangkokDate=(date=new Date())=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+export function followupBounds(days=3,now=new Date()){const today=bangkokDate(now),start=new Date(today+'T00:00:00+07:00'),end=new Date(+start+86400000);return {today,start:start.toISOString(),end:end.toISOString(),expiry:bangkokDate(new Date(+start+days*86400000))};}
+export function followupFilter(row,filter,days=3,now=new Date()){const b=followupBounds(days,now);if(filter==='all')return true;if(!row.is_open)return false;return filter==='today'?row.next_at>=b.start&&row.next_at<b.end:filter==='overdue'?!!row.next_at&&Date.parse(row.next_at)<+now:filter==='missing'?!row.next_at:filter==='expiry'?!!row.valid_until&&row.valid_until>=b.today&&row.valid_until<=b.expiry:false;}
+export function followupValidation(status,result,next,now=new Date()){if(!FOLLOWUP_STATUSES.some(x=>x[0]===status))return 'status';if(!result.trim()||result.length>4000)return 'result';if(!followupClosed(status)&&(!next||!Number.isFinite(Date.parse(next))||Date.parse(next)<=+now))return 'next';return '';}
+export function bangkokInput(value){if(!value)return '';const d=new Date(value);if(!Number.isFinite(+d))return '';return new Date(+d+7*3600000).toISOString().slice(0,16);}
+export const fromBangkokInput=value=>value?new Date(value+':00+07:00').toISOString():null;

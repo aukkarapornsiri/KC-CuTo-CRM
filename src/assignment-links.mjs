@@ -2,9 +2,9 @@ export const RECORD_PAGES={leads:'lead-inbox',activities:'act-my',tickets:'tk-al
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const PENDING_TASK_KEY='kc-crm-pending-email-task';
 const MAX_AGE=8*60*60*1000;
-export function assignmentTarget(module,id){module=String(module||'').toLowerCase();return RECORD_PAGES[module]&&UUID.test(id||'')?{module,page:RECORD_PAGES[module],params:{recordId:id}}:null;}
+export function assignmentTarget(module,id){module=String(module||'').toLowerCase();if(module==='quotation_followups'&&UUID.test(id||''))return {module:'quotations',page:'quot-followup',params:{recordId:id}};return RECORD_PAGES[module]&&UUID.test(id||'')?{module,page:RECORD_PAGES[module],params:{recordId:id}}:null;}
 export function emailTask(href){
- try{const url=new URL(href),module=String(url.searchParams.get('module')||'').toLowerCase(),id=url.searchParams.get('record');if(['sales_orders','crm_sales_orders'].includes(module)&&UUID.test(id||''))return {module:'sales_orders',record:id};const target=assignmentTarget(module,id);return target?{module:target.module,record:id}:null;}catch{return null;}
+ try{const url=new URL(href),module=String(url.searchParams.get('module')||'').toLowerCase(),id=url.searchParams.get('record');if(['sales_orders','crm_sales_orders'].includes(module)&&UUID.test(id||''))return {module:'sales_orders',record:id};if(module==='quotation_followups'&&UUID.test(id||''))return {module,record:id};const target=assignmentTarget(module,id);return target?{module:target.module,record:id}:null;}catch{return null;}
 }
 export function rememberEmailTask(href,storage,now=Date.now()){
  const task=emailTask(href);if(task)try{storage?.setItem(PENDING_TASK_KEY,JSON.stringify({...task,savedAt:now}));}catch{}return task;
@@ -15,6 +15,7 @@ export function pendingEmailTask(href,storage,now=Date.now()){
 }
 export function emailDestination(task,can){
  if(!task)return null;
+ if(task.module==='quotation_followups')return can('quotations','view')?assignmentTarget(task.module,task.record):null;
  if(task.module==='sales_orders')return can('quotations','view')&&can('quotations','approve')?{module:'quotations',page:'quot-approval',params:{approvalRecordId:task.record,approvalKind:'so'}}:null;
  const target=assignmentTarget(task.module,task.record);if(!target||!can(target.module,'view'))return null;
  return target.module==='quotations'&&can('quotations','approve')?{module:'quotations',page:'quot-approval',params:{approvalRecordId:task.record,approvalKind:'quotation'}}:target;
