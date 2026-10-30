@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: ai-analytics
+            suites: ai-dashboard-smoke
           - group: quotation-print
             suites: quotation-print-smoke
           - group: quotation-followup
