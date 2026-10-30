@@ -14,6 +14,11 @@ try{for(const scenario of ['short','two-pages','many','long-item','long-notes','
  await page.evaluate('(async()=>{'+module+';const source=document.querySelector("article");const style=document.createElement("style");style.textContent=quotationPrintCSS;document.head.append(style);const table=buildQuotationPrint(source,document);document.body.replaceChildren(table);await prepareQuotationPrint(table,document);})()');
  const headerStyle=await page.locator('.kc-print-header').first().evaluate(header=>{const stripe=header.querySelector('.kc-quote-brand-stripe'),ribbon=header.querySelector('.kc-quote-brand-ribbon'),logo=header.querySelector('.kc-quote-ribbon-logo');return {stripe:getComputedStyle(stripe).display,background:getComputedStyle(stripe).backgroundImage,ribbon:ribbon.getBoundingClientRect().height,logo:logo.getBoundingClientRect().height};});assert.notEqual(headerStyle.stripe,'none');assert.ok(Math.abs(headerStyle.ribbon-45.35)<.2);assert.ok(Math.abs(headerStyle.logo-45.35)<.2);
  await page.emulateMedia({media:'print'});await page.pdf({path:`test-artifacts/quotation-print-${scenario}.pdf`,preferCSSPageSize:true,printBackground:scenario!=='no-background'});
+
+ if(scenario==='short'){
+  const gap=await page.locator('.kc-print-signatures').evaluate(n=>n.getBoundingClientRect().top-n.previousElementSibling.getBoundingClientRect().bottom);
+  assert.ok(gap>=0&&gap<16,'signatures follow content without a large empty gap');
+ }
  const pages=await page.locator('.kc-print-page').count();
  if(scenario==='short'||scenario==='no-background')assert.equal(pages,1);else if(scenario!=='no-code')assert.ok(pages>1);
  const bounds=await page.locator('.kc-print-page').evaluateAll(pages=>pages.map(page=>{const body=page.querySelector('.kc-print-page-body'),footer=page.querySelector('.kc-print-page-footer');return {fits:body.scrollHeight<=body.clientHeight+1,last:body.lastElementChild?.getBoundingClientRect().bottom||0,footer:footer.getBoundingClientRect().top,width:page.scrollWidth<=page.clientWidth+1};}));

@@ -1,6 +1,6 @@
 export const quotationHeaderCSS=`
 /* Shared quotation header for preview, print and Save as PDF. */
-:is(.kc-quotation-preview,.kc-print-root) .kc-print-header,.kc-quotation-preview>header{display:grid;grid-template-columns:1.2fr 1fr;gap:6mm;align-items:start;padding-bottom:2mm}
+:is(.kc-quotation-preview,.kc-print-root) .kc-print-header,.kc-quotation-preview>header{display:grid;grid-template-columns:1.2fr 1fr;gap:4mm;align-items:start;padding-bottom:0}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company{gap:1px;color:#0b203b;font-size:calc(var(--document-size,12px) * .833333);line-height:1.3}
 :is(.kc-quotation-preview,.kc-print-root) .kc-company-logo{width:30mm;height:11mm;margin:0;object-position:left center}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-company strong{font-size:15px;font-weight:400;color:#233b55}
@@ -15,12 +15,12 @@ export const quotationHeaderCSS=`
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dl>div:first-child{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.7fr;align-items:center;gap:8px;background:#edf5f8;border:0;padding:4px 7px;font-size:calc(var(--document-size,12px) * .833333)}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dt{color:#4d647a}.kc-quote-preview-id dd{overflow-wrap:anywhere}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-id dd{font-weight:400;text-align:left}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party{display:grid;grid-template-columns:1.15fr 1fr;gap:3mm;padding:0;margin:4mm 0 1mm}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section{border:1px solid #d7e5e8;border-radius:6px;padding:3mm;display:flex;flex-direction:column;gap:1mm;font-size:9px;min-width:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party{display:grid;grid-template-columns:1.15fr 1fr;gap:3mm;padding:0;margin:2mm 0 1mm}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section{border:1px solid #d7e5e8;border-radius:6px;padding:2mm 2.5mm;display:flex;flex-direction:column;gap:.6mm;font-size:9px;min-width:0}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:nth-child(2){background:linear-gradient(120deg,#f4fdfd,white)}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party h3{font-size:12px;font-weight:400;color:var(--document-accent,#0aada9);margin:0 0 3px;padding-bottom:3px}
-.kc-quote-customer-fields,.kc-quote-prepared-fields{margin:0}.kc-quote-customer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 8px;padding-top:3px}
-.kc-quote-customer-fields dt{color:var(--document-accent,#0aada9)}.kc-quote-customer-fields dd,.kc-quote-prepared-fields dd{margin:1mm 0 0;overflow-wrap:anywhere}
+.kc-quote-customer-fields,.kc-quote-prepared-fields{margin:0}.kc-quote-customer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px;padding-top:1px}
+.kc-quote-customer-fields dt{color:var(--document-accent,#0aada9)}.kc-quote-customer-fields dd,.kc-quote-prepared-fields dd{margin:.3mm 0 0;overflow-wrap:anywhere}
 .kc-quote-prepared-fields{border-top:1px solid #a4e0df;padding-top:1mm}.kc-quote-prepared-fields>div{display:grid;grid-template-columns:1fr 1.35fr;gap:4px;padding:1px 0;font-size:calc(var(--document-size,12px) * .833333);line-height:1.5}.kc-quote-prepared-fields dt{color:#738796}.kc-quote-prepared-fields dd{margin:0}
 :is(.kc-quotation-preview,.kc-print-root)[data-design-prepared=false] .kc-quote-preview-party{grid-template-columns:1fr}
 
@@ -31,8 +31,8 @@ export const quotationHeaderCSS=`
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-customer-fields>div{min-width:0}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-customer-fields dt,:is(.kc-quotation-preview,.kc-print-root) .kc-quote-customer-fields dd{font-size:calc(var(--document-size,12px) * .833333);font-weight:400}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:first-child>strong{font-size:11px;font-weight:400}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:nth-child(2) h3{border-bottom:1px solid #a4e0df;padding-bottom:5px}
-:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields{border-top:0;display:grid;gap:3px;padding-top:0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-party>section:nth-child(2) h3{border-bottom:1px solid #a4e0df;padding-bottom:3px}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields{border-top:0;display:grid;gap:1px;padding-top:0}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields dt,:is(.kc-quotation-preview,.kc-print-root) .kc-quote-prepared-fields dd{font-size:calc(var(--document-size,12px) * .833333);font-weight:400}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-ribbon{background:transparent}
 :is(.kc-quotation-preview,.kc-print-root) .kc-quote-brand-stripe{background:none;width:100%;height:100%;position:absolute;inset:0;z-index:0;pointer-events:none}
@@ -41,6 +41,18 @@ export const quotationHeaderCSS=`
 :is(.kc-quotation-preview,.kc-print-root)[data-design-borders=false] .kc-quote-preview-party>section{border-color:transparent}
 .kc-print-root .kc-quote-preview-line{font-size:var(--document-size,12px);padding-top:var(--print-row-space,2.2mm);padding-bottom:var(--print-row-space,2.2mm)}
 .kc-print-root[data-design-spacing=compact]{--print-row-space:1.2mm}.kc-print-root[data-design-spacing=airy]{--print-row-space:3.2mm}
+
+/* Approved compact layout shared by the central template, every user preview and PDF. */
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-summary{grid-template-columns:minmax(0,1fr) 36%;gap:5mm;margin-top:2mm;padding:2mm 0}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-terms p{margin:1mm 0 2mm;line-height:1.35}
+:is(.kc-quotation-preview,.kc-print-root) .kc-quote-preview-summary dl>div{padding:1mm 0}
+.kc-quotation-preview>footer{margin-top:3mm;gap:6mm}
+.kc-quotation-preview>footer>div{padding-top:12mm}
+.kc-quotation-preview>footer .kc-quote-seller-signature{height:11mm}
+.kc-print-root .kc-print-signatures{padding-top:2mm}
+.kc-print-root .kc-print-footer footer>div{padding-top:12mm}
+.kc-print-root .kc-quote-seller-signature{height:11mm}
+
 `;
 /** Isolated A4 print document: no dialog clipping or mobile layout rules. */
 export const quotationPrintCSS=`
@@ -65,7 +77,7 @@ export const quotationPrintCSS=`
 .kc-print-footer{padding-top:3mm;border-top:.3mm solid var(--document-accent,#0aada9);margin-top:3mm}.kc-print-footer footer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6mm;text-align:center;font-size:8pt}.kc-print-footer footer>div{position:relative;padding-top:14mm}.kc-print-footer i{display:block;border-top:.2mm solid;margin:0 2mm 1mm}.kc-print-footer span,.kc-print-footer small{display:block}.kc-quote-seller-signature{position:absolute;top:0;left:50%;transform:translateX(-50%);max-width:40mm;height:13mm;object-fit:contain}.kc-quote-preview-footer{font-size:8pt;text-align:center;white-space:pre-wrap;margin:2mm 0 0}.kc-print-reference{text-align:right;font-size:7pt;color:#536471;margin:2mm 0 0}
 [data-design-prepared=false] .kc-quote-preview-party>section:nth-child(2),[data-design-signatures=false] .kc-print-footer footer,[data-design-notes=false] .kc-quote-preview-terms,[data-design-address=false] .kc-quote-preview-company>span:first-of-type,[data-design-contact=false] .kc-quote-preview-company>span:not(:first-of-type),[data-design-tax=false] .kc-quote-preview-company>small{display:none}
 thead,tfoot{break-inside:avoid}
-.kc-print-root{font-family:var(--document-font,Tahoma,Arial,sans-serif)}.kc-print-page{width:190mm;height:277mm;display:flex;flex-direction:column;break-after:page}.kc-print-page:last-child{break-after:auto}.kc-print-page-header,.kc-print-page-footer{flex:none}.kc-print-page-header{padding-bottom:2mm}.kc-print-page-body{flex:1;min-height:0;display:flex;flex-direction:column}.kc-print-page-body>*{flex:none}.kc-print-page-body>.kc-print-signatures{margin-top:auto}.kc-print-page-footer{margin-top:2mm}.kc-print-long-text{white-space:pre-wrap;font-size:9pt;line-height:1.4;overflow-wrap:anywhere}.kc-print-measure{position:absolute;left:-10000px;width:190mm}
+.kc-print-root{font-family:var(--document-font,Tahoma,Arial,sans-serif)}.kc-print-page{width:190mm;height:277mm;display:flex;flex-direction:column;break-after:page}.kc-print-page:last-child{break-after:auto}.kc-print-page-header,.kc-print-page-footer{flex:none}.kc-print-page-header{padding-bottom:2mm}.kc-print-page-body{flex:1;min-height:0;display:flex;flex-direction:column}.kc-print-page-body>*{flex:none}.kc-print-page-body>.kc-print-signatures{margin-top:3mm}.kc-print-page-footer{margin-top:2mm}.kc-print-long-text{white-space:pre-wrap;font-size:9pt;line-height:1.4;overflow-wrap:anywhere}.kc-print-measure{position:absolute;left:-10000px;width:190mm}
 .kc-print-root[data-watermark]:not([data-watermark=""]):before{content:attr(data-watermark);position:fixed;top:40%;left:0;right:0;text-align:center;transform:rotate(-28deg);font-size:48pt;opacity:.075;color:var(--document-accent);pointer-events:none}
 [data-design-prepared=false] .kc-quote-preview-party{grid-template-columns:1fr}
 ${quotationHeaderCSS}
