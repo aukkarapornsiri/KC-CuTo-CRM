@@ -45,7 +45,7 @@ jobs:
       - name: Validate integration contracts
         run: node tests/integration-contract.mjs
       - name: Validate shared notification polling
-        run: node --test tests/notification-store.test.mjs tests/read-coordinator.test.mjs tests/rest-read-policy.test.mjs
+        run: node --test tests/notification-center.test.mjs tests/notification-store.test.mjs tests/read-coordinator.test.mjs tests/rest-read-policy.test.mjs
       - name: Validate settings source and input boundaries
         run: |
           node --check src/customer360.mjs
@@ -98,7 +98,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock @electric-sql/pglite@0.3.14
           node --test tests/quotation-followup.test.mjs tests/quotation-followup-db.test.mjs
-          node --test tests/assignment-email-summary.test.mjs
+          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs
       - name: Parse Edge Function TypeScript
         run: |
           npx -y esbuild supabase/functions/crm-user-admin/index.ts --bundle --platform=neutral --format=esm --external:npm:* --outfile=/tmp/crm-user-admin.js
