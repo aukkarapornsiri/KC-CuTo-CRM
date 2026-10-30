@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: quotation-print
+            suites: quotation-print-smoke
           - group: quotation-followup
             suites: quotation-followup-smoke
           - group: customer360-popup
@@ -60,7 +62,7 @@ jobs:
           npm install --save-dev playwright
           npx playwright install --with-deps chromium
       - name: Install PDF text verification
-        if: matrix.group == 'customer-sales' || matrix.group == 'native-sales-orders'
+        if: matrix.group == 'customer-sales' || matrix.group == 'native-sales-orders' || matrix.group == 'quotation-print'
         run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
       - name: Start static development site
         run: |
