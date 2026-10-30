@@ -33,3 +33,8 @@
 .kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td button,.kc-app:has(.kc-rail-item:is([data-section="leads"],[data-section="contacts"],[data-section="service"],[data-section="sales"],[data-section="activities"],[data-section="documents"])[data-active="true"]) table:not(:where(dialog *,[role="dialog"] *,.kc-quotation-preview *,.kc-print-root *)) td[data-field=actions]>button{min-height:44px}
 }
 }
+
+/* Dashboard filter search: the rounded wrapper owns the single focus border. */
+.kc-role-dashboard div:has(>svg):has(>input.bg-transparent){min-width:0;max-width:100%;cursor:text}
+.kc-role-dashboard div:has(>svg)>input.bg-transparent{min-width:0;width:100%;border:0!important;outline:none!important;box-shadow:none!important;border-radius:0;background:transparent!important}
+.kc-role-dashboard div:has(>svg):has(>input.bg-transparent:focus){border-color:var(--crm-primary,#0aada9)!important;box-shadow:0 0 0 1px var(--crm-primary,#0aada9)}
