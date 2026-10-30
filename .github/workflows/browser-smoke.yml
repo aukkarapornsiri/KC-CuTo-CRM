@@ -38,7 +38,7 @@ jobs:
           - group: compact-layout
             suites: compact-layout-smoke
           - group: quotation-recurring
-            suites: quotation-recurring-smoke
+            suites: quotation-recurring-smoke rental-quotation-smoke
           - group: quotation-delete
             suites: quotation-delete-smoke
           - group: quotation-contact

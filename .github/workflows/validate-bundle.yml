@@ -82,7 +82,7 @@ jobs:
           node --test tests/internal-model.test.mjs
           node --check src/opportunity-dialog.mjs
           node --test tests/opportunity-form.test.mjs
-          node --test tests/quotation-workflow.test.mjs tests/quotation-recurring.test.mjs tests/sales-order-cost-sheet.test.mjs tests/native-sales-orders.test.mjs tests/sales-order-excel.test.mjs
+          node --test tests/rental-quotation.test.mjs tests/quotation-workflow.test.mjs tests/quotation-recurring.test.mjs tests/sales-order-cost-sheet.test.mjs tests/native-sales-orders.test.mjs tests/sales-order-excel.test.mjs
           node --test tests/quotation-template.test.mjs tests/quotation-designer.test.mjs tests/quotation-customer-picker.test.mjs tests/quotation-persistence.test.mjs tests/quotation-company.test.mjs
           node --test tests/account360-connector.test.mjs
           node --check src/experience.mjs
@@ -98,7 +98,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock @electric-sql/pglite@0.3.14
           node --test tests/quotation-followup.test.mjs tests/quotation-followup-db.test.mjs
-          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs
+          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs tests/rental-quotation-db.test.mjs
       - name: Parse Edge Function TypeScript
         run: |
           npx -y esbuild supabase/functions/crm-user-admin/index.ts --bundle --platform=neutral --format=esm --external:npm:* --outfile=/tmp/crm-user-admin.js

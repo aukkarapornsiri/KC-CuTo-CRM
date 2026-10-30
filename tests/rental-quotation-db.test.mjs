@@ -1,0 +1,22 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {PGlite} from '@electric-sql/pglite';
+test('migration leaves existing data byte-for-byte intact; database agrees on new fixed-price rentals',async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema private;
+ create function private.crm_can(text,text) returns boolean language sql as $$select true$$;
+ create table quotations(id uuid primary key default gen_random_uuid(),quotation_kind text default 'standard',recurring jsonb default '{}',items jsonb,tax_rate numeric default 7,wht_rate numeric default 0,document_discount numeric default 0,subtotal numeric,discount numeric,vat numeric,total numeric,withholding_tax numeric,net_total numeric,gp_amount numeric,gp_margin numeric,status text,approval_status text,approval_comment text,updated_at timestamptz);
+ create table crm_price_items(id uuid,cost numeric,account360_vat_mode text,status text,product_details jsonb);
+ create table crm_quotation_financials(quotation_id uuid primary key,cost_total numeric,gp_amount numeric,gp_margin numeric,updated_at timestamptz,line_financials jsonb);
+ `);
+ await db.exec(fs.readFileSync('db/recurring-upfront-once.sql','utf8'));await db.exec(fs.readFileSync('db/quotation-line-rounding.sql','utf8'));
+ await db.exec(`create trigger a_guard before insert or update on quotations for each row execute function private.crm_quote_recurring_guard();create trigger b_totals before insert or update on quotations for each row execute function private.crm_quote_totals();insert into quotations(items) values('[{"name":"Legacy","qty":2,"price":100,"cost":60}]');`);
+ const before=(await db.query('select to_jsonb(q) as row from quotations q')).rows;
+ await db.exec(fs.readFileSync('db/rental-quotation.sql','utf8'));
+ assert.deepEqual((await db.query('select to_jsonb(q) as row from quotations q')).rows,before);
+ const recurring={start_date:'2026-11-01',end_date:'2026-11-30',billing_timing:'advance_once',rental:{version:1,payment:'full',advance_months:1,deposit:5000,deposit_terms:'Return',usage_enabled:false,bw_rate:0,color_rate:0}};
+ const item={name:'Lump',qty:5,price:12000,cost:8000,billing_period:'once',cycle_count:1,service_start:'2026-11-01',service_end:'2026-11-07'};
+ await db.query('insert into quotations(quotation_kind,recurring,items) values ($1,$2,$3)',['recurring',JSON.stringify(recurring),JSON.stringify([item])]);
+ const rows=await db.query("select q.id,q.total::float8,q.items,f.cost_total::float8,f.gp_amount::float8 from quotations q join crm_quotation_financials f on f.quotation_id=q.id where quotation_kind='recurring'");const row=rows.rows[0];assert.equal(row.total,12840);assert.equal(row.cost_total,8000);assert.equal(row.gp_amount,4000);assert.equal('cost' in row.items[0],false);
+ await db.query("update quotations set items=jsonb_set(items,'{0,qty}','100') where id=$1",[row.id]);assert.equal((await db.query('select total::float8 from quotations where id=$1',[row.id])).rows[0].total,12840);assert.equal((await db.query('select cost_total::float8 from crm_quotation_financials where quotation_id=$1',[row.id])).rows[0].cost_total,8000);
+ await assert.rejects(db.query("update quotations set items=jsonb_set(items,'{0,cycle_count}','7') where id=$1",[row.id]),/lump-sum/);
+ await assert.rejects(db.query("update quotations set recurring=jsonb_set(recurring,'{rental,deposit}','-1') where id=$1",[row.id]),/rental amount/);
+ assert.deepEqual((await db.query("select to_jsonb(q) as row from quotations q where quotation_kind='standard'")).rows,before);
+ }finally{await db.close();}});
