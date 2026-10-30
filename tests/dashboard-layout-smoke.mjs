@@ -24,10 +24,10 @@ try{
    assert.ok(await page.locator('.kc-ai-wave-hand').evaluateAll(els=>els.every(el=>getComputedStyle(el).animationName==='none')),'all robot instances respect pause');
    assert.equal(await root.count(),1,role);
    assert.equal(await page.locator('.dash-hero h1').evaluate(el=>getComputedStyle(el).fontSize),heading,role+' heading');
-   const cards=root.locator('.kc-dash-kpis>div');assert.ok(await cards.count()>=6,role+' preserves KPIs');
+   const cards=root.locator('.kc-dash-kpis>div');if(role==='AI'){assert.equal(await cards.count(),0,'AI focuses on analysis');assert.equal(await page.locator('.sales-map-panel').count(),0,'AI excludes operational sales map');}else{assert.ok(await cards.count()>=6,role+' preserves KPIs');
    const cardStyle=await cards.first().evaluate(el=>({padding:getComputedStyle(el).padding,borderRadius:getComputedStyle(el).borderRadius}));
    assert.deepEqual(cardStyle,executive,role+' executive card style');
-   assert.equal(await root.locator('.kc-dash-kpis').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),width===1440?3:2,role+' columns');
+   assert.equal(await root.locator('.kc-dash-kpis').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),width===1440?3:2,role+' columns');}
    assert.ok(await root.locator('select').count()>0,role+' filters retained');
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),role+' horizontal overflow');
    await page.screenshot({path:`test-artifacts/dashboard-${index}-${width}.png`,fullPage:true});

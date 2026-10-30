@@ -1,3 +1,4 @@
+import {dashboardRoleContext} from './dashboard-context.mjs';
 import {shortSalesName} from './sales-name.mjs';
 import {observeRead,readIdentity} from './read-coordinator.mjs';
 import {createSellerRanking} from './seller-ranking.mjs?v=20261004-vertical';
@@ -50,6 +51,7 @@ export function createSalesMap({React,client,useApp,records}){
 export function createDashboardSalesMap(dependencies){
  const {React}=dependencies,h=React.createElement,SalesMap=createSalesMap(dependencies);
  return function DashboardSalesMap({lang,Component}){
-  return h('div',{className:'kc-dashboard-layout'},h(Component,{lang}),h(SalesMap,{lang}));
+  const [role,setRole]=React.useState(null);
+  return h(dashboardRoleContext(React).Provider,{value:setRole},h('div',{className:'kc-dashboard-layout'},h(Component,{lang}),role&&role!=='ai'&&h(SalesMap,{lang})));
  };
 }
