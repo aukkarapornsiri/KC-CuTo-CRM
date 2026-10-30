@@ -3,3 +3,19 @@
 .kc-dashboard-layout:has(.kc-ai-analytics){grid-template-columns:minmax(0,1fr)}
 .kc-dashboard-layout:has(.kc-ai-analytics)>*,.kc-dashboard-studio[data-dashboard-role=ai]{min-width:0;max-width:100%}
 .kc-role-dashboard.kc-ai-analytics .ai-filters :is(input,select){min-width:0;width:100%}
+/* Compact AI banner: keep analysis close to the heading on every screen. */
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-hero{display:grid;grid-template-columns:minmax(0,1fr) 180px;min-height:0;gap:18px;padding:18px 24px 42px;margin-bottom:16px;align-items:center}
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-hero-copy{padding:0;width:auto;min-width:0}
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-hero h1{margin:6px 0!important}
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-hero-meta{margin-top:10px;gap:10px}
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-mascot{width:180px;height:164px;margin:0;align-self:center}
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-mascot-robot{width:180px;height:164px}
+.kc-dashboard-layout [data-dashboard-role=ai] .dash-motion{bottom:9px;right:18px}
+@media(max-width:600px){
+ .kc-dashboard-layout [data-dashboard-role=ai] .dash-hero{grid-template-columns:minmax(0,1fr) 96px;gap:10px;padding:16px 16px 46px}
+ .kc-dashboard-layout [data-dashboard-role=ai] .dash-hero h1{font-size:22px!important}
+ .kc-dashboard-layout [data-dashboard-role=ai] .dash-eyebrow{font-size:8px;letter-spacing:.1em;gap:6px}
+ .kc-dashboard-layout [data-dashboard-role=ai] .dash-hero-meta{font-size:11px;gap:6px}
+ .kc-dashboard-layout [data-dashboard-role=ai] .dash-mascot,.kc-dashboard-layout [data-dashboard-role=ai] .dash-mascot-robot{width:96px;height:100px}
+ .kc-dashboard-layout [data-dashboard-role=ai] .dash-mascot-shadow{width:70px}
+}
