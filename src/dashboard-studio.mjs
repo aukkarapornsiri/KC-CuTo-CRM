@@ -1,3 +1,4 @@
+import {dashboardRoleContext} from './dashboard-context.mjs';
 import {readIdentity} from './read-coordinator.mjs';
 import {TARGET_EVENT,targetMetrics} from './sales-target-model.mjs?v=20261002-targets';
 import {createSalesMotion} from './sales-motion.mjs?v=20261004-loop';
@@ -17,6 +18,8 @@ export function isSalesDashboardPerson(person={}){return person.active!==false&&
 export function createDashboardStudio({React,useApp,readTargets}){
  const h=React.createElement,AIRobot=createAIRobot(React);
  function Scene({role,lang,children}){
+  const setDashboardRole=React.useContext(dashboardRoleContext(React));
+  React.useLayoutEffect(()=>{setDashboardRole(role);},[role,setDashboardRole]);
   const config=DASHBOARD_ROLES[role]||DASHBOARD_ROLES.my,i=lang==='th'?0:1,{demoMode,profile}=useApp();
   const [motion,Motion]=React.useState(()=>{try{return localStorage.getItem('kc-dashboard-motion')!=='off';}catch{return true;}});
   const [sales,Sales]=React.useState({percent:null,status:'loading',members:[],canLink:false});
