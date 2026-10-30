@@ -67,6 +67,11 @@ export function createQuotationDocumentComponents({React,client,useApp}){
   }
 
   let lastCompany=null;
+  async function prepareQuotationTemplate(demoMode=false){
+    if(demoMode)return;
+    const [,company]=await Promise.all([loadSharedQuotationTemplate(client),unwrap(client.rpc('crm_quotation_company',undefined,{get:true}))]);
+    lastCompany=company;
+  }
   function useTemplate(open,documentKey){
     const {demoMode}=useApp();
     const cached=demoMode?demoSharedQuotationTemplate.current:peekSharedQuotationTemplate(client);
@@ -178,7 +183,7 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
     React.useEffect(()=>{let active=true;const refresh=()=>refreshCustomer().catch(e=>{if(active)setPrintError(e.message||String(e));});refresh();window.addEventListener('crm-work-changed',refresh);return()=>{active=false;customerRevision.current++;window.removeEventListener('crm-work-changed',refresh);};},[editing?.customer_id,demoMode]);
     const [template,refreshTemplate,templateLoading,templateError]=useTemplate(!!editing,editing?.id||'new');
     const images=useTemplateImages({...template,...signatureFields(editing?.template_snapshot||template)});
-    React.useEffect(()=>{const d=ref.current;if(editing&&d&&!d.open)d.showModal();return()=>{if(d?.open)d.close();};},[!!editing]);
+    React.useEffect(()=>{const d=ref.current;if(editing&&!templateLoading&&d&&!d.open)d.showModal();return()=>{if(d?.open)d.close();};},[!!editing,templateLoading]);
     React.useEffect(()=>{if(editing)setPreview(!!initialPreview);},[editing?.id,initialPreview]);
     React.useEffect(()=>{if(!editing||templateLoading||templateError)return;setEditing(old=>{if(!old)return old;if(!old.id&&old.template_snapshot&&Object.keys(old.template_snapshot).length)return {...old,template_id:template.id||null,template_snapshot:{...templateSnapshot(template),...signatureFields(old.template_snapshot)}};const seller=(lookup.profiles||[]).find(p=>p.id===old.owner_id)||profile;const person=old.document_profile||documentProfile(seller);const isNew=!old.id,issue=old.issue_date||isoDate(),term=resolvePaymentTerm(isNew?template.default_payment_term_code:old.payment_term_code,isNew?template.default_payment_terms:old.payment_terms);const next={...old,
       issue_date:issue,payment_terms:term.days,payment_term_code:term.code,tax_rate:isNew?Number(template.default_tax_rate??7):Number(old.tax_rate??template.default_tax_rate??7),wht_rate:isNew?Number(template.default_wht_rate??0):Number(old.wht_rate??template.default_wht_rate??0),
@@ -202,7 +207,8 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
     const addItem=()=>setEditing(old=>({...old,items:[...old.items,normalizeQuotationItem(recurring?{billing_period:'month',cycle_count:1,service_start:old.recurring?.start_date}: {})]}));
     const removeItem=index=>setEditing(old=>({...old,items:old.items.length>1?old.items.filter((_,i)=>i!==index):old.items}));
     let totals,calculationError='';try{totals=quoteTotals(editing.items,{taxRate:editing.tax_rate,withholdingRate:editing.wht_rate,documentDiscount:editing.document_discount,requireName:false});}catch(e){calculationError=tr('คำนวณยอดไม่ได้ กรุณาตรวจจำนวน ราคา ส่วนลด และจำนวนรอบ','Cannot calculate totals. Check quantity, price, discount and cycles');totals={subtotal:null,discount:null,net_before_tax:null,vat:null,total:null,withholding_tax:null,net_total:null,gp_amount:null,gp_margin:null,items:editing.items.map(item=>({...item,total:null,gp:null,margin:null}))};}
-    if(templateLoading||templateError)return h('dialog',{ref,className:'kc-quotation-dialog','aria-label':tr('แม่แบบใบเสนอราคา','Quotation template'),onCancel:e=>{e.preventDefault();onClose();}},h('div',{className:'crm-field'},h('p',{role:templateError?'alert':'status'},templateError?tr('โหลดแม่แบบกลางไม่ได้: ','Unable to load shared template: ')+templateError:tr('กำลังโหลดแม่แบบล่าสุดของ Super Admin…','Loading the latest Super Admin template…')),templateError&&button(tr('ลองโหลดใหม่','Retry'),refreshTemplate),button(tr('ปิด','Close'),onClose)));
+    if(templateLoading)return null;
+    if(templateError)return h('dialog',{ref,className:'kc-quotation-dialog','aria-label':tr('แม่แบบใบเสนอราคา','Quotation template'),onCancel:e=>{e.preventDefault();onClose();}},h('div',{className:'crm-field'},h('p',{role:templateError?'alert':'status'},templateError?tr('โหลดแม่แบบกลางไม่ได้: ','Unable to load shared template: ')+templateError:tr('กำลังโหลดแม่แบบล่าสุดของ Super Admin…','Loading the latest Super Admin template…')),templateError&&button(tr('ลองโหลดใหม่','Retry'),refreshTemplate),button(tr('ปิด','Close'),onClose)));
     const showGP=!!canViewFinancials&&!!template.show_gp,showMargin=!!canViewFinancials&&!!template.show_margin;const itemGridCols='kc-quote-line';const gridColumns=['36px',...(template.show_item_code?['96px']:[]),'minmax(430px,1fr)','64px','64px','104px','112px',...(showGP?['104px']:[]),...(showMargin?['88px']:[]),'32px'].join(' ');const lineStyle={gridTemplateColumns:gridColumns,minWidth:(920+(template.show_item_code?96:0)+(showGP?104:0)+(showMargin?88:0))+'px'};
     const printNow=async()=>{setPrintError('');try{if(!demoMode){const latest=await loadSharedQuotationTemplate(client);if(latest.id!==template.id||latest.updated_at!==template.updated_at){refreshTemplate();throw Error(tr('แม่แบบมีการเปลี่ยนแปลง กำลังโหลดล่าสุด กรุณากดพิมพ์อีกครั้ง','Template changed. Loading the latest version; please print again.'));}}if(calculationError)throw Error(calculationError);quoteTotals(editing.items,{taxRate:editing.tax_rate,withholdingRate:editing.wht_rate,documentDiscount:editing.document_discount});validateRecurring(editing);await refreshCustomer();setPreview(true);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await printQuotation(ref.current?.querySelector('.kc-quotation-preview'),editing.code);}catch(e){setPrintError(e.message||String(e));}};
     const companyName=docLang==='th'?template.company_name_th:template.company_name_en||template.company_name_th;
@@ -241,6 +247,6 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
       )
     );
   }
-  return {QuotationDialog,TemplateSettingsDialog};
+  return {QuotationDialog,TemplateSettingsDialog,prepareQuotationTemplate};
 }
 
