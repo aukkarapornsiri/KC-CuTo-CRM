@@ -65,7 +65,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
     if(demoMode)throw Error(t('การอนุมัติต้องใช้บัญชีจริง','Approval requires a signed-in account'));
     if(action==='approve'){const signature=await loadProfileSignature(client,profile.id,false);if(!signature.seller_signature_storage_key)throw Error(t('กรุณาบันทึกลายเซ็นใน Profile ก่อนอนุมัติ','Save your signature in Profile before approving'));}
     await unwrap(selected.kind==='quotation'?client.rpc('crm_quotation_transition',{p_quotation:selected.id,p_action:action,p_comment:comment}):client.rpc('crm_so_approval_action',{p_sales_order_id:selected.id,p_action:action,p_note:comment}));
-    Selected(null);Comment('');Message(t('บันทึกผลการอนุมัติแล้ว','Decision saved'));window.dispatchEvent(new Event('crm-records-refresh'));await load();await refreshNotifications?.();
+    Selected(null);Comment('');Message(t('บันทึกผลการอนุมัติแล้ว','Decision saved'));window.dispatchEvent(new Event('crm-records-refresh'));void load();void refreshNotifications?.();
    }catch(e){ErrorText(e.message||String(e));}finally{lock.current=false;Busy(false);}
   }
   const open=r=>{Selected(r);Comment('');ErrorText('');Message('');};

@@ -90,3 +90,4 @@ test('permission boundary still rejects late reads after a write detached dedupl
  const p=createRestReadPolicy(async(req,init)=>{if(init?.method==='POST')return new Response('{}');await new Promise(r=>release=r);return new Response('{}');},{origin,window:win});
  const read=p.fetch(url());const denied=assert.rejects(read,{name:'AbortError'});await tick();await p.fetch(url(),{method:'POST'});win.dispatchEvent(new Event('crm-access-changed'));release();await denied;
 });
+test('quotation approval RPC refreshes mounted notification subscribers on success',async()=>{const win=new EventTarget();let events=0;win.addEventListener('crm-work-changed',()=>events++);const p=createRestReadPolicy(async()=>new Response('{}'),{origin,window:win});await p.fetch(url('rpc/crm_quotation_transition'),{method:'POST',body:'{}'});assert.equal(events,1);});
