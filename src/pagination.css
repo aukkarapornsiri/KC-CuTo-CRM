@@ -1,0 +1,13 @@
+/* Shared pagination: independent of host toolbar/button rules. */
+.kc-pagination{display:flex!important;flex-wrap:wrap;align-items:center!important;justify-content:space-between;gap:12px 20px;width:100%;box-sizing:border-box;padding:16px 0;font-family:'IBM Plex Sans Thai',sans-serif;color:#334155;font-size:14px}
+.kc-pagination-summary{font-size:13px!important;line-height:1.5;font-variant-numeric:tabular-nums;color:#64748b}
+.kc-pagination-controls,.kc-pagination-numbers{display:flex;align-items:center;gap:8px;min-width:0}
+.kc-pagination .kc-pagination-controls button{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto;box-sizing:border-box;height:44px!important;min-height:44px!important;max-height:44px!important;margin:0!important;padding:0!important;border:1px solid #dce3eb!important;border-radius:10px!important;background:#fff!important;color:#334155!important;font:inherit!important;font-size:14px!important;line-height:1!important;cursor:pointer;box-shadow:none!important}
+.kc-pagination .kc-pagination-direction{width:112px!important;min-width:112px!important}
+.kc-pagination .kc-pagination-number{width:44px!important;min-width:44px!important;font-variant-numeric:tabular-nums}
+.kc-pagination .kc-pagination-number[aria-current=page]{background:#2563eb!important;border-color:#2563eb!important;color:#fff!important;font-weight:600!important}
+.kc-pagination .kc-pagination-controls button:hover:not(:disabled):not([aria-current=page]){background:#eff6ff!important;border-color:#93b4ed!important}
+.kc-pagination .kc-pagination-controls button:disabled{background:#f8fafc!important;color:#9ca8b5!important;opacity:1!important;cursor:default}
+.kc-pagination button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+.kc-pagination-gap{display:flex;align-items:center;justify-content:center;min-width:12px;height:44px;line-height:1}
+@media(max-width:720px){.kc-pagination{align-items:flex-start!important;flex-direction:column}.kc-pagination-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.kc-pagination-numbers{grid-column:1/-1;grid-row:1;flex-wrap:wrap;justify-content:center}.kc-pagination .kc-pagination-direction{width:100%!important;min-width:0!important}.kc-pagination-controls>.kc-pagination-direction:first-child{grid-row:2;grid-column:1}.kc-pagination-controls>.kc-pagination-direction:last-child{grid-row:2;grid-column:2}}
