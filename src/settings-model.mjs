@@ -1,3 +1,4 @@
+import {LEAD_RULE_FIELDS} from './lead-field-rules.mjs';
 import {validateMaster} from './master-data.mjs';
 export const MODULES=['dashboard','leads','customers','contacts','opportunities','quotations','contracts','assets','tickets','activities','documents','reports','ai','settings','inventory'];
 export const ACTIONS=['view','create','edit','delete','export','approve','assign','import','manage_settings'];
@@ -28,7 +29,7 @@ export function validateCompany(input){
 export const IMPORTS={
  customers:['name','name_en','phone','email','tax_id','website','address','province'],
  contacts:['name','company','position','department','phone','email','line_id'],
- leads:['company_name','contact_name','position','phone','email','source','product_interest','note'],
+ leads:['lead_type',...LEAD_RULE_FIELDS,'contact_name','mailing_street_th','mailing_street_en'],
  master_data_items:['category','code','name_th','name_en','sort_order','status']
 };
 export function csvCell(v){const s=String(v??'');return '"'+(/^[\s]*[=+@\-]/.test(s)?"'"+s:s).replaceAll('"','""')+'"';}
@@ -48,7 +49,7 @@ export function validateImport(table,text){
  if(new Set(headers).size!==headers.length||headers.some(k=>!IMPORTS[table].includes(k)))throw Error('Unknown or duplicate columns; download the template');
  const keys=new Set();return rows.map((values,i)=>{if(values.length!==headers.length)throw Error(`Row ${i+2}: wrong number of columns`);const out=Object.fromEntries(headers.map((key,j)=>[key,values[j].trim()]));
  if(table==='master_data_items'){const data=validateMaster({...out,sort_order:out.sort_order||0,status:out.status||'active'});const key=data.category+':'+data.code;if(keys.has(key))throw Error(`Row ${i+2}: duplicate code`);keys.add(key);return data;}
- const required=table==='leads'?'company_name':'name';if(!out[required])throw Error(`Row ${i+2}: ${required} is required`);
+ if(table==='leads'&&!('last_name' in out)&&out.contact_name)out.last_name=out.contact_name;const required='name';if(table!=='leads'&&!out[required])throw Error(`Row ${i+2}: ${required} is required`);
  for(const [key,v] of Object.entries(out)){if(v.length>2000)throw Error(`Row ${i+2}: ${key} too long`);if(key==='email'&&v&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))throw Error(`Row ${i+2}: invalid email`);}
  const fingerprint=JSON.stringify(out);if(keys.has(fingerprint))throw Error(`Row ${i+2}: duplicate record`);keys.add(fingerprint);return out;});
 }
