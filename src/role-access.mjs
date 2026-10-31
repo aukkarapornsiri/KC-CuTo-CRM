@@ -18,7 +18,7 @@ export function permitsPage(access,module,page){
  if(['set-users','set-roles','set-permissions','set-dashboard-access'].includes(page))return access.profile.is_super_admin===true;
  if(page==='set-inventory'||page==='quot-pricebook')return access.can('inventory','view');
  if(page==='set-sales-targets')return access.can('reports','view');
- if(['set-ai','set-api','set-package'].includes(page))return access.can('settings','manage_settings');
+ if(['set-ai','set-api','set-package','set-lead-fields'].includes(page))return access.can('settings','manage_settings');
  if(page==='set-import-export')return ['customers','contacts','leads','settings'].some(m=>access.can(m,'import')||access.can(m,'export'));
  if(module==='settings'&&page==='set-notifications')return !!effectiveRole(access.profile);
  if(!access.can(module,'view')||!access.can(module,pageAction(page)))return false;
