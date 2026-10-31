@@ -8,6 +8,7 @@ export function attachLeadQuotations(leads,quotes=[],opportunities=[],followups=
  return leads.map(l=>{const items=[...(docs.get(l.id)?.values()||[])];return {...l,quotation_summary:{available,items,count:items.length,sent_count:items.filter(q=>q.sent).length}};});
 }
 export function leadMatchesStatus(row,status){
+ if(status==='won')return row.sales_outcome?.available===true&&row.sales_outcome.won===true;
  if(status==='proposed')return row.quotation_summary?.available===true&&row.quotation_summary.count>0;
  if(status==='has_quotation')return row.quotation_summary?.available===true&&row.quotation_summary.count>0;
  return null;
