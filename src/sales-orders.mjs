@@ -21,7 +21,7 @@ export function validatePO(value){
 export function createSalesOrders({React,client,useApp,useAccess,records}){
  const Pagination=createPagination(React);
  const h=React.createElement,Popup=createRecordPopup(React),unwrap=async p=>{const {data,error}=await p;if(error)throw error;return data;};
- return function SalesOrders({lang,quotation,onClose,onQuotation}){
+ return function SalesOrders({lang,quotation,initialOrderId,onClose,onQuotation}){
   const {demoMode,profile,navigate}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
   const canFinancial=demoMode||(access.can('quotations','view')&&(access.can('quotations','approve')||['sales_user','sales_coordinator','sales_manager','sales_director'].includes(profile?.role==='custom'?profile.custom_role_key:profile?.role)));
   const can=action=>demoMode||access.can('quotations',action),statusLabel=s=>SO_STATUS[s]?.[lang==='th'?0:1]||s;
@@ -62,6 +62,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
   }
   React.useEffect(()=>{if(!can('view')){Loading(false);return;}readList();return()=>{requestRevision.current++;};},[demoMode]);
   React.useEffect(()=>{const list=filterOrders(allRows,{query,scope,owner,approval:approvalFilter,due,status:filter,userId:profile?.id},approvalRows);Total(list.length);const next=Math.min(page,Math.max(0,Math.ceil(list.length/50)-1));if(next!==page)Page(next);Rows(list.slice(next*50,next*50+50));},[allRows,query,scope,owner,approvalFilter,due,filter,page,approvalRows,profile?.id]);
+  React.useEffect(()=>{if(initialOrderId&&can('view'))run(()=>openOrder(initialOrderId));},[initialOrderId,demoMode]);
   React.useEffect(()=>{if(!quotation||!can('view'))return;run(async()=>{
    const existing=demoMode?(records.native_sales_orders||[]).find(s=>s.quotation_id===quotation.id):await unwrap(client.from('crm_sales_orders').select('id').eq('quotation_id',quotation.id).maybeSingle());
    if(existing)await openOrder(existing.id);else Create(true);

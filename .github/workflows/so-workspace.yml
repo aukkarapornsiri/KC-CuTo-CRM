@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'src/sales-order*'
+      - 'src/customer360*'
+      - 'tests/customer360-journey*'
       - 'tests/sales-order-redesign-smoke.mjs'
       - '.github/workflows/so-workspace.yml'
   workflow_dispatch:
@@ -21,6 +23,7 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/so-http.log 2>&1 &
           sleep 2
           node tests/sales-order-redesign-smoke.mjs
+          node tests/customer360-journey-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
