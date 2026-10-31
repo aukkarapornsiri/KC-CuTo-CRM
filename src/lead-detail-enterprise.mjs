@@ -6,7 +6,7 @@ export function createLeadDetailEnterprise({React}){
  const h=React.createElement;
  const clean=v=>v==null||v===''?'-':String(v);
  const initials=name=>String(name||'SA').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'SA';
- return function LeadDetailEnterprise({record,lang='th',busy=false,canEdit=false,canAssign=false,canConvert=false,onAccount,onClose,onEdit,onConvert,loadOwners,onAssign,onActivity,onOpportunity}){
+ return function LeadDetailEnterprise({record,history,lang='th',busy=false,canEdit=false,canAssign=false,canConvert=false,onAccount,onClose,onEdit,onConvert,loadOwners,onAssign,onActivity,onOpportunity}){
   const t=(th,en)=>lang==='th'?th:en;
   const [ownersLoading,setOwnersLoading]=React.useState(false);
   const [owners,setOwners]=React.useState([]);
@@ -56,7 +56,7 @@ export function createLeadDetailEnterprise({React}){
      ),
      !canAssign&&h('p',{className:'kc-lead-assign-help'},t('การมอบหมายลีดต้องมีสิทธิ์แก้ไขและมอบหมายในตารางบทบาทและสิทธิ์','Lead assignment requires Edit and Assign permissions in Roles & Permissions'))
     ),
-    h('div',{className:'kc-lead-detail-body'+(mobileExpanded?' is-mobile-expanded':'')},
+    h('div',{className:'kc-lead-detail-body'+(mobileExpanded?' is-mobile-expanded':'')},history,
      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลลีด','Lead Information')),h('span',null,t('ข้อมูลทั่วไปแสดงแบบ Compact เพื่อให้เห็นบริบทได้เร็ว','Compact information for fast context'))),
      h('div',{className:'kc-lead-info-grid'},fields.map(([label,value])=>h('div',{className:'kc-lead-info-field',key:label},h('div',{className:'kc-lead-info-label'},label),h('div',{className:'kc-lead-info-value'},clean(value))))),
      h('section',{className:'kc-lead-note-wrap'},
