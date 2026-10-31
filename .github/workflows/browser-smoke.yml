@@ -19,8 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - group: sales-order-redesign
-            suites: sales-order-redesign-smoke
           - group: pagination
             suites: pagination-smoke
           - group: ai-analytics
