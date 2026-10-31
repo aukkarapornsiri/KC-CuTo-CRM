@@ -66,3 +66,5 @@
 .kc-app .svc-root .svc-kpis .svc-kpi{min-height:62px;padding:8px 12px}
 .kc-app .svc-root .svc-kpis .svc-kpi span{font-size:12px;line-height:20px}
 .kc-app .svc-root .svc-kpis .svc-kpi strong{font-size:20px;line-height:24px;margin-top:2px}
+
+.crm-summary-caption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 16px;margin:10px 0;color:#64748b;font-size:12px;line-height:1.5}.crm-summary-count{margin:6px 0 12px;color:#64748b;font-size:12px}.crm-status-card{text-align:left;width:100%;font:inherit;cursor:pointer}.crm-status-card[aria-pressed=true]{outline:2px solid #a86310;outline-offset:-2px}.crm-status-card:focus-visible{outline:3px solid #2563eb}.crm-status-card:disabled{cursor:wait}
