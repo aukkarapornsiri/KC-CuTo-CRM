@@ -44,6 +44,13 @@ try{
   assert.equal(await popup.getByRole('button',{name:'Follow-up Center',exact:true}).count(),1);
   await popup.getByRole('button',{name:'Back to orders',exact:true}).click();
   assert.ok(await popup.locator('.crm-so').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'SO fits viewport');
+  if(width>760){
+   const geometry=await popup.locator('tbody tr').first().evaluate(row=>({heights:[...row.cells].map(c=>c.getBoundingClientRect().height),tops:[...row.cells].map(c=>c.getBoundingClientRect().top),linkHeight:row.cells[0].querySelector('button').getBoundingClientRect().height,shadow:getComputedStyle(row).boxShadow}));
+   assert.ok(Math.max(...geometry.tops)-Math.min(...geometry.tops)<1,'All columns share a row');
+   assert.ok(geometry.heights.every(h=>h<=110),'Compact consistent row height');
+   assert.ok(geometry.linkHeight<=26,'Document link does not add button-height spacing');
+   assert.notEqual(geometry.shadow,'none');
+  }
   await popup.screenshot({path:`test-artifacts/so-redesign-${width}.png`});
   assert.deepEqual(errors,[]);
   await page.close();
