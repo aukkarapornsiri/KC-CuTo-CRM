@@ -37,7 +37,6 @@ An isolated worktree at `C:\Temp\kc-kuto-source-20260924`, branch `fix/source-ch
 - Missing nullable fields in customer demo fixtures.
 - Contract audit payload types and a missing check for failure to read the original contract.
 
-A portable code patch is retained at `source-recovery/typecheck-fixes.patch`, against baseline `504853d`. This is a source-repair checkpoint, not a replacement for the deployed bundle. The original working tree was preserved.
 
 Scoped ESLint still reports **115 errors and 9 warnings**, both before and after the patch. The source project's AGENTS.md prohibits merge before lint passes, so this branch is not merged or deployed. TASKS.md and its HTML report record Needs Review, with no active file locks.
 
