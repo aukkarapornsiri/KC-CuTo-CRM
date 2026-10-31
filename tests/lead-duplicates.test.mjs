@@ -1,2 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {leadMatch,duplicateCandidates,leadPhone} from '../src/lead-duplicates.mjs';
 test('normalized Thai phones, case-folded email, blank fields and fuzzy names',()=>{assert.equal(leadPhone('+66 81-234-5678'),'0812345678');assert.deepEqual(leadMatch({},{}),[]);assert.deepEqual(leadMatch({email:' SALES@Example.com ',phone:'+66 81-234-5678'},{email:'sales@example.com',mobile:'0812345678'}),['email','phone']);assert.deepEqual(leadMatch({company_name:'บริษัท เทค จำกัด',contact_name:'หนึ่ง'},{company_name:'บริษัท เทค จำกัด',contact_name:'สอง'}),['company']);assert.deepEqual(duplicateCandidates({id:'a',email:'a@b.c'},[{id:'a',email:'a@b.c'},{id:'b',email:'a@b.c',duplicate_of:'a'}]),[]);});
+
+import {duplicateIds} from '../src/internal-model.mjs';
+test('duplicate list normalizes phone/mobile without counting the same row twice',()=>{assert.deepEqual([...duplicateIds([{id:'a',phone:'0812345678',mobile:'+66812345678'}],'leads')],[]);assert.deepEqual([...duplicateIds([{id:'a',phone:'0812345678'},{id:'b',mobile:'+66812345678'}],'leads')].sort(),['a','b']);});
