@@ -124,3 +124,12 @@
  .crm-internal[data-entity="leads"] .crm-master-table :is(th,td){text-align:left}
  .crm-internal[data-entity="leads"] .crm-master-table td[data-field="actions"]>button:first-child{justify-content:flex-start;text-align:left;margin-left:0;padding-left:0}
 }
+
+/* All lead filters share one desktop row, including source. */
+@media(min-width:761px){
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields{flex-wrap:nowrap;align-items:end}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields>.crm-menu-field{flex:1 1 0;min-width:0}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields>.crm-menu-field>span{white-space:nowrap;font-size:11px}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields select{width:100%;min-width:0;text-overflow:ellipsis}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields>button{padding:0 8px;font-size:11px}
+}

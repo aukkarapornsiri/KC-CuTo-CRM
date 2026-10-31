@@ -17,7 +17,7 @@ test('duplicate review opens the editor and never deletes source records',async(
  const Inner=Workspace({lang:'th',entity:'leads',route:'lead-inbox'}).type;state.length=0;
  const render=()=>{cursor=0;return Inner({lang:'th',entity:'leads',route:'lead-inbox'});};
  const flatten=node=>node&&typeof node==='object'?[node,...(node.children||[]).flatMap(flatten)]:[];
- render();state[0]=structuredClone(records);state[4]=true;state[14]=true;
+ render();state[0]=structuredClone(records);state[4]=true;state[15]=true;
  let nodes=flatten(render());
  assert.deepEqual(nodes.filter(n=>n.type==='th').slice(0,2).map(n=>n.children[0]),['วันที่สร้าง','รหัส']);
  const button=nodes.find(n=>n.props['aria-label']==='ตรวจและรวมลีด LD-1');assert.ok(button);
