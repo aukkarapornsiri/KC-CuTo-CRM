@@ -41,7 +41,7 @@ jobs:
           test -f app-C2ITSffc.js
           grep -q "app-C2ITSffc.js" index.html
       - name: Validate activity details and source lead links
-        run: node --test tests/activity-detail.test.mjs tests/lead-workflow.test.mjs
+        run: node --test tests/activity-detail.test.mjs tests/lead-workflow.test.mjs tests/lead-duplicates.test.mjs
       - name: Validate integration contracts
         run: node tests/integration-contract.mjs
       - name: Validate shared notification polling
@@ -98,7 +98,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock @electric-sql/pglite@0.3.14
           node --test tests/quotation-followup.test.mjs tests/quotation-followup-db.test.mjs
-          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs tests/rental-quotation-db.test.mjs
+          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs tests/rental-quotation-db.test.mjs tests/lead-duplicates-db.test.mjs
       - name: Parse Edge Function TypeScript
         run: |
           npx -y esbuild supabase/functions/crm-user-admin/index.ts --bundle --platform=neutral --format=esm --external:npm:* --outfile=/tmp/crm-user-admin.js

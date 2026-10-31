@@ -23,6 +23,8 @@ jobs:
             suites: ai-dashboard-smoke
           - group: quotation-print
             suites: quotation-print-smoke
+          - group: lead-duplicates
+            suites: lead-duplicates-smoke
           - group: quotation-followup
             suites: quotation-followup-smoke
           - group: customer360-popup
