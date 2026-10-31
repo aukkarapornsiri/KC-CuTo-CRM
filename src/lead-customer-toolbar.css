@@ -133,3 +133,12 @@
  .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields select{width:100%;min-width:0;text-overflow:ellipsis}
  .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields>button{padding:0 8px;font-size:11px}
 }
+
+@media(min-width:761px){
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-filter-fields:has(.crm-lead-period-date){gap:6px}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-field.crm-lead-period-date{flex:1.5 1 0}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-field.crm-lead-period-date input{padding:0 6px;font-size:12px}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-controls:has(.crm-lead-period-date){grid-template-columns:minmax(0,1fr)}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-controls:has(.crm-lead-period-date) .crm-menu-search-tools{grid-column:1;grid-row:1;margin:0;justify-self:end}
+ .kc-app .crm-internal[data-entity="leads"] .crm-menu-controls:has(.crm-lead-period-date) .crm-menu-filter-fields{grid-column:1;grid-row:2}
+}
