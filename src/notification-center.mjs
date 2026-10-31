@@ -1,3 +1,4 @@
+import {createPagination} from './pagination.mjs';
 import {observeRead} from './read-coordinator.mjs';
 import {toCSV} from './settings-model.mjs';
 import {assignmentTarget,emailDestination} from './assignment-links.mjs';
@@ -20,20 +21,22 @@ export function notificationText(row,lang='th'){
  return {title,body};
 }
 export function createNotificationCenter({React,client,useApp,useAccess}){
+ const Pagination=createPagination(React);
  const h=React.createElement;
  return function NotificationCenter({lang}){
  const {profile,demoMode,navigate,refreshNotifications}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
+ const [total,Total]=React.useState(null);
  const [rows,Rows]=React.useState([]),[view,View]=React.useState('open'),[page,Page]=React.useState(0),[query,Query]=React.useState(''),[busy,Busy]=React.useState(false),[error,ErrorText]=React.useState('');
  const subscription=React.useRef(null),locked=React.useRef(false);const size=25;
  const load=()=>subscription.current?.refresh();
  React.useEffect(()=>{
   Rows([]);ErrorText('');Busy(!demoMode&&!!profile?.id);
   const stop=observeRead(client,{key:'notification-page:'+view+':'+page,userId:profile?.id,demo:demoMode,enabled:demoMode||!!profile?.id,interval:60000,events:['crm-work-changed','crm-records-refresh'],load:async signal=>{
-   if(demoMode)return [];
-   let q=client.from('notifications').select('id,created_at,title,body,is_read,resolved_at,resolution,priority,event_kind,event_key,related_module,related_id').eq('user_id',profile.id).order('created_at',{ascending:false}).order('id',{ascending:false}).range(page*size,(page+1)*size-1);
+   if(demoMode)return {rows:[],total:0};
+   let q=client.from('notifications').select('id,created_at,title,body,is_read,resolved_at,resolution,priority,event_kind,event_key,related_module,related_id',{count:'exact'}).eq('user_id',profile.id).order('created_at',{ascending:false}).order('id',{ascending:false}).range(page*size,(page+1)*size-1);
    if(view==='open')q=q.is('resolved_at',null);if(view==='done')q=q.not('resolved_at','is',null);if(view==='unread')q=q.eq('is_read',false).is('resolved_at',null);
-   const {data,error}=await q.abortSignal(AbortSignal.any([signal,AbortSignal.timeout(15000)]));if(error)throw error;return newestNotifications(data||[]);
-  }},({data,error,loading})=>{if(data)Rows(data);Busy(loading);ErrorText(error?error.message||String(error):'');});
+   const {data,error,count}=await q.abortSignal(AbortSignal.any([signal,AbortSignal.timeout(15000)]));if(error)throw error;return {rows:newestNotifications(data||[]),total:count};
+  }},({data,error,loading})=>{if(data){Rows(data.rows);Total(data.total);}Busy(loading);ErrorText(error?error.message||String(error):'');});
   subscription.current=stop;return()=>{stop();subscription.current=null;};
  },[profile?.id,demoMode,page,view]);
  const change=async(row,patch)=>{if(locked.current||busy)return;locked.current=true;Busy(true);try{
@@ -57,6 +60,6 @@ export function createNotificationCenter({React,client,useApp,useAccess}){
  !row.resolved_at&&h('button',{type:'button',disabled:busy,onClick:()=>{if(window.confirm(t('ปิดการแจ้งเตือนนี้? สถานะงานต้นทางจะไม่เปลี่ยน','Dismiss this notification? The source record status will not change.')))void change(row,{resolved_at:new Date().toISOString(),resolution:'dismissed'});}},t('ปิดการแจ้งเตือน','Dismiss')))));})))),
  busy&&h('p',{role:'status'},t(rows.length?'กำลังอัปเดตรายการ…':'กำลังโหลดการแจ้งเตือน…',rows.length?'Updating notifications…':'Loading notifications…')),
  !busy&&!list.length&&h('p',{role:'status'},t('ไม่มีรายการในมุมมองนี้','No notifications in this view')),
- h('div',{className:'crm-notification-toolbar'},h('button',{disabled:busy||page===0,onClick:()=>Page(page-1)},t('ก่อนหน้า','Previous')),h('span',null,t('หน้า ','Page ')+(page+1)),h('button',{disabled:busy||rows.length<size,onClick:()=>Page(page+1)},t('ถัดไป','Next'))));
+ h(Pagination,{lang,page,total,pageSize:size,onChange:Page,busy}));
  };
 }

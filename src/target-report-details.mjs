@@ -1,5 +1,7 @@
+import {createPagination} from './pagination.mjs';
 import {targetReportDetails,filterReportPeople,targetDetailsCSV} from './target-report-model.mjs';
 export function createTargetReportDetails(React){
+ const Pagination=createPagination(React);
  const h=React.createElement;
  return function TargetReportDetails({data,from,to,scope,lang,onPerson,onReload,busy}){
   const t=(th,en)=>lang==='th'?th:en,locale=lang==='th'?'th-TH':'en-US';
@@ -23,7 +25,7 @@ export function createTargetReportDetails(React){
    h('section',{className:'kc-target-panel'},h('h3',null,t('ผลงานรายพนักงาน','Employee performance')),h('p',null,period+' · '+t('แยกผู้ที่ยังไม่มีเป้าออกจากผู้ทำผลงานต่ำ','Unassigned targets are separate from low attainment')),
     h('div',{className:'kc-target-tools'},h('label',null,h('span',null,t('ค้นหาพนักงาน','Search employees')),h('input',{type:'search',value:query,onChange:e=>Q(e.target.value),placeholder:t('ค้นหาชื่อพนักงาน…','Search name…')})),h('label',null,h('span',null,state),h('select',{'aria-label':state,value:status,onChange:e=>S(e.target.value)},h('option',{value:''},t('ทั้งหมด','All statuses')),...Object.entries(labels).map(([key,label])=>h('option',{key,value:key},label)))),h('label',null,h('span',null,t('เรียงตาม','Sort by')),h('select',{'aria-label':t('เรียงตาม','Sort by'),value:sort,onChange:e=>O(e.target.value)},h('option',{value:'actual'},t('ยอด SO สูงสุด','Highest SO sales')),h('option',{value:'attainment'},t('เปอร์เซ็นต์สูงสุด','Highest attainment')),h('option',{value:'name'},t('ชื่อพนักงาน','Employee name')))),h('span',{role:'status'},people.length+' '+t('คน','people'))),
     h('table',{className:'kc-target-table kc-target-people'},heads([t('พนักงาน','Employee'),target,actual,attain,state,t('รายละเอียด','Details')]),h('tbody',null,people.slice(index*10,index*10+10).map(r=>h('tr',{key:r.id,'data-person':r.id},td(t('พนักงาน','Employee'),r.name,'kc-target-name'),td(target,r.target===null?t('ยังไม่ตั้งเป้าครบ','Target incomplete'):cash(r.target),'numeric'),td(actual,h('strong',null,cash(r.actual)),'numeric kc-target-actual'),td(attain,progress(r)),td(state,badge(r)),td(t('รายละเอียด','Details'),h('button',{className:'kc-target-link',onClick:()=>onPerson(r.id),'aria-label':t('ดูข้อมูล ','View ')+r.name},t('ดูข้อมูล →','View →'))))))),!people.length&&h('p',{role:'status'},t('ไม่พบพนักงานตามเงื่อนไข','No matching employees')),
-    h('div',{className:'kc-target-pagination'},h('small',null,people.length?`${index*10+1}–${Math.min(people.length,index*10+10)} / ${people.length}`:'0 / 0'),pages>1&&h(React.Fragment,null,h('button',{disabled:index===0,onClick:()=>P(index-1)},t('ก่อนหน้า','Previous')),h('button',{disabled:index>=pages-1,onClick:()=>P(index+1)},t('ถัดไป','Next'))))),
+    h(Pagination,{lang,page:index,total:people.length,pageSize:10,onChange:P,busy})),
    h('footer',null,h('p',null,t('ยอด 0 ≠ ยังไม่ตั้งเป้า ≠ ยังไม่ถึงรอบ · เป้าบริษัทใช้ค่าที่ตั้งไว้โดยตรง · ข้อมูลและการส่งออกตามสิทธิ์เดิม','Zero sales ≠ unassigned target ≠ future period · Company targets use the configured value · Existing access and export permissions apply')),h('button',{onClick:onReload,disabled:busy},t('โหลดเป้าใหม่','Reload targets'))));
  };
 }

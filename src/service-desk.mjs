@@ -1,3 +1,4 @@
+import {createPagination} from './pagination.mjs';
 import {createServiceOverview} from './service-overview.mjs?v=20261028-figma';
 import {createMenuControls} from './menu-controls.mjs';
 import {sortRecordsNewest} from './record-order.mjs';
@@ -21,6 +22,7 @@ const DESCRIPTORS={
 };
 export function createServiceDesk({React,client,useApp,records}){
  const MenuControls=createMenuControls(React),ServiceOverview=createServiceOverview(React);
+ const Pagination=createPagination(React);
  const h=React.createElement,DocumentProfileFields=createDocumentProfileFields(React);
  const unwrap=async p=>{const {data,error}=await p;if(error)throw error;return data;};
  async function all(table){const rows=[];for(let i=0;i<20000;i+=500){const part=await unwrap(client.from(table).select('*').order('id').range(i,i+499));rows.push(...part);if(part.length<500)return rows;}throw Error('More than 20,000 records: request a filtered server query');}
@@ -98,7 +100,7 @@ export function createServiceDesk({React,client,useApp,records}){
  const board=h('div',{className:'svc-kanban'},STATUSES.map(s=>h('section',{key:s},h('h3',null,statusName(s),' · ',filtered.filter(x=>x.status===s).length),filtered.filter(x=>x.status===s).slice(0,100).map(card))));
  return h(React.Fragment,null,filters(),h('p',{role:'status'},`${filtered.length} ${txt('เคส','cases')}`),view==='kanban'?board:view==='card'?h('div',{className:'svc-cards'},shown.map(card)):table,
  !filtered.length&&section(txt('ยังไม่มีเคสในมุมมองนี้','No cases in this view'),h('p',null,txt('สร้างเคสหรือปรับตัวกรองเพื่อเริ่มต้น','Create a case or change filters'))),
- view!=='kanban'&&h('div',{className:'svc-toolbar'},b('←',()=>Page(Math.max(0,page-1)),{disabled:page===0}),h('span',null,`${page+1} / ${Math.max(1,Math.ceil(filtered.length/30))}`),b('→',()=>Page(page+1),{disabled:(page+1)*30>=filtered.length})));
+ view!=='kanban'&&h(Pagination,{lang,page,total:filtered.length,pageSize:30,onChange:Page,busy})) ;
  }
  function jobList(key,kind,items=data[key]||[]){return h('div',{className:'svc-table-scroll'},h('table',null,h('thead',null,h('tr',null,['Number','Ticket','Status','Cost','Actions'].map(x=>h('th',{key:x},x)))),h('tbody',null,items.map(x=>h('tr',{key:x.id},h('td',null,x.code||x.part_no||x.name),h('td',null,b(rows.find(t=>t.id===x.ticket_id)?.code||'Case',()=>{Detail(x.ticket_id);Tab(kind==='repair'?'Repair':kind==='claim'?'Claim':'Parts');})),h('td',null,badge(title(x.status||'used'))),h('td',null,money(x.cost??Number(x.quantity)*Number(x.unit_cost))),h('td',null,can('edit')&&b('แก้ไข / Edit',()=>{Detail(x.ticket_id);open(kind,x);})))))));}
  function info(record,keys){return h('dl',{className:'svc-info'},keys.map(([key,label])=>h(React.Fragment,{key},h('dt',null,label),h('dd',null,formatNumericField(key,record?.[key])))));}

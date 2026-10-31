@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: pagination
+            suites: pagination-smoke
           - group: ai-analytics
             suites: ai-dashboard-smoke
           - group: quotation-print

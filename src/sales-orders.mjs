@@ -1,3 +1,4 @@
+import {createPagination} from './pagination.mjs';
 import {rentalFactor} from './rental-quotation.mjs';
 import {itemPartNumber} from './item-part-number.mjs';
 import {loadSharedQuotationTemplate,demoSharedQuotationTemplate} from './quotation-template-save.mjs';
@@ -17,11 +18,13 @@ export function validatePO(value){
  return value;
 }
 export function createSalesOrders({React,client,useApp,useAccess,records}){
+ const Pagination=createPagination(React);
  const h=React.createElement,Popup=createRecordPopup(React),unwrap=async p=>{const {data,error}=await p;if(error)throw error;return data;};
  return function SalesOrders({lang,quotation,onClose,onQuotation}){
   const {demoMode,profile}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
   const canFinancial=demoMode||(access.can('quotations','view')&&(access.can('quotations','approve')||['sales_user','sales_coordinator','sales_manager','sales_director'].includes(profile?.role==='custom'?profile.custom_role_key:profile?.role)));
   const can=action=>demoMode||access.can('quotations',action),statusLabel=s=>SO_STATUS[s]?.[lang==='th'?0:1]||s;
+  const [total,Total]=React.useState(null);
   const [rows,Rows]=React.useState([]),[selected,Selected]=React.useState(null),[events,Events]=React.useState([]),[busy,Busy]=React.useState(false),[loading,Loading]=React.useState(true),[error,ErrorText]=React.useState(''),[page,Page]=React.useState(0),[filter,Filter]=React.useState(''),[create,Create]=React.useState(false),[action,Action]=React.useState(''),[reason,Reason]=React.useState(''),[serials,Serials]=React.useState({});
   const [approval,Approval]=React.useState(null),[approvalRows,ApprovalRows]=React.useState({});
   const [po,PO]=React.useState({po_number:'',po_date:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),expected_delivery_date:'',delivery_details:{ship_to_name:quotation?.customer_name||'',bill_to_name:quotation?.customer_name||'',billing_location:quotation?.counterparty_address||'',recipient_name:quotation?.contact_name||''},note:'',po_file_key:'',po_file_name:''});
@@ -37,9 +40,9 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
   async function readList(){
    const revision=++requestRevision.current;Loading(true);
    try{
-    let list;if(demoMode)list=(records.native_sales_orders||[]).filter(s=>!filter||s.status===filter).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(page*50,page*50+50);
-    else {let q=client.from('crm_sales_orders').select('id,code,quotation_id,quotation_code,customer_name,po_number,status,total,currency,created_at,expected_delivery_date').order('created_at',{ascending:false}).order('id',{ascending:false}).range(page*50,page*50+49);if(filter)q=q.eq('status',filter);list=await unwrap(q);}
-    if(revision===requestRevision.current){Rows(list);if(demoMode){ApprovalRows(Object.fromEntries(list.map(v=>[v.id,v.so_approval||null])));}else if(list.length){const ids=list.map(v=>v.id);const approvals=await unwrap(client.from('crm_so_approvals').select('sales_order_id,status,requested_at,reviewed_at,review_note').in('sales_order_id',ids));if(revision===requestRevision.current)ApprovalRows(Object.fromEntries(approvals.map(v=>[v.sales_order_id,v])));}else ApprovalRows({});}
+    let list,count;if(demoMode){list=(records.native_sales_orders||[]).filter(s=>!filter||s.status===filter).sort((a,b)=>b.created_at.localeCompare(a.created_at));count=list.length;list=list.slice(page*50,page*50+50);}
+    else {let q=client.from('crm_sales_orders').select('id,code,quotation_id,quotation_code,customer_name,po_number,status,total,currency,created_at,expected_delivery_date',{count:'exact'}).order('created_at',{ascending:false}).order('id',{ascending:false}).range(page*50,page*50+49);if(filter)q=q.eq('status',filter);const response=await q;if(response.error)throw response.error;list=response.data;count=response.count;}
+    if(revision===requestRevision.current){Total(count);Rows(list);if(demoMode){ApprovalRows(Object.fromEntries(list.map(v=>[v.id,v.so_approval||null])));}else if(list.length){const ids=list.map(v=>v.id);const approvals=await unwrap(client.from('crm_so_approvals').select('sales_order_id,status,requested_at,reviewed_at,review_note').in('sales_order_id',ids));if(revision===requestRevision.current)ApprovalRows(Object.fromEntries(approvals.map(v=>[v.sales_order_id,v])));}else ApprovalRows({});}
    }catch(e){if(revision===requestRevision.current)ErrorText(describe(e));}finally{if(revision===requestRevision.current)Loading(false);}
   }
   async function openOrder(id){
@@ -137,7 +140,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
   return h(Popup,{lang,title:t('ใบสั่งขาย (Sales Orders)','Sales Orders'),busy,error,onClose},h('style',null,styles),h('div',{className:'crm-so'},!can('view')?h('p',{role:'alert'},t('ไม่มีสิทธิ์เข้าถึง','Access denied')):h(React.Fragment,null,
    form||detail||h(React.Fragment,null,h('p',null,t('สร้าง SO จากใบเสนอราคาที่ผ่านอนุมัติ รายการใหม่อยู่ด้านบน','Create an SO from an approved quotation. Newest orders appear first.')),h('div',{className:'crm-actions'},h('label',null,t('สถานะ ','Status '),h('select',{value:filter,onChange:e=>{Filter(e.target.value);Page(0);}},h('option',{value:''},t('ทั้งหมด','All')),...Object.keys(SO_STATUS).map(s=>h('option',{key:s,value:s},statusLabel(s))))),button(t('โหลดใหม่','Refresh'),readList)),
    loading?h('p',{role:'status'},t('กำลังโหลด…','Loading…')):h('div',{className:'crm-so-cards'},rows.map(row=>h('article',{key:row.id},h('div',null,h('strong',null,row.code),h('span',{'data-status':row.status},statusLabel(row.status))),h('p',null,row.customer_name),h('small',null,'PO: '+row.po_number+' · '+date(row.created_at)),h('p',null,money(row.total,row.currency)),h('small',null,t('อนุมัติ SO: ','SO approval: ')+(approvalRows[row.id]?.status||t('ยังไม่ส่งอนุมัติ','Not submitted'))),button(t('เปิด SO','Open SO'),()=>run(()=>openOrder(row.id)))))),!loading&&!rows.length&&h('p',null,t('ยังไม่มี SO ในมุมมองนี้','No orders in this view')),
-   h('div',{className:'crm-actions'},button(t('ก่อนหน้า','Previous'),()=>Page(v=>v-1),{disabled:busy||page===0}),h('span',null,page+1),button(t('ถัดไป','Next'),()=>Page(v=>v+1),{disabled:busy||rows.length<50}))))));
+   h(Pagination,{lang,page,total,onChange:Page,busy:busy||loading})))));
  };
 }
 const styles=`.crm-so-approval{margin:15px 0;padding:14px;border:1px solid #d6b658;background:#fff9e7;border-radius:12px}.crm-so-approval small{display:block;margin-top:6px;color:#64748b}.crm-so{min-width:0}.crm-so-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.crm-so dt{font-size:12px;color:#64748b}.crm-so dd{margin:3px 0;overflow-wrap:anywhere}.crm-so input,.crm-so textarea,.crm-so select{max-width:100%;box-sizing:border-box}.crm-so input[type=file]{width:100%}.crm-so-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.crm-so-cards article{padding:14px;border:1px solid #dbe3ec;border-radius:12px}.crm-so-cards article>div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.crm-so [data-status]{font-size:12px;border-radius:20px;padding:3px 8px;background:#e0f2fe;color:#075985}.crm-so [data-status=cancelled]{background:#fee2e2;color:#991b1b}.crm-so [data-status=completed]{background:#dcfce7;color:#166534}.crm-so-table{overflow:auto;margin:16px 0}.crm-so table{width:100%;border-collapse:collapse}.crm-so th,.crm-so td{padding:9px;text-align:start;border-bottom:1px solid #e2e8f0}.crm-so .crm-actions{flex-wrap:wrap;margin:14px 0}.crm-so p,.crm-so li{overflow-wrap:anywhere}.crm-so button{min-height:40px}.crm-so-form details{margin:15px 0}@media(max-width:640px){.crm-so-grid,.crm-so-cards{grid-template-columns:1fr}.crm-so .crm-actions button{flex:1 1 auto}.crm-so table{font-size:12px}}`;

@@ -1,3 +1,4 @@
+import {createPagination} from './pagination.mjs';
 import {createDecisionReports} from './decision-reports.mjs';
 import {shortSalesName} from './sales-name.mjs';
 import {ENTITIES,summarizePipeline} from './internal-model.mjs';
@@ -7,6 +8,7 @@ import {toCSV} from './settings-model.mjs';
 import {filterReportRows,groupReportRows,reportTone,REPORT_VALUE_KEYS,REPORT_DATE_KEYS} from './report-view-model.mjs?v=20261028-enterprise';
 
 export function createInternalReports({React,client,useApp,TargetSummary}){
+ const Pagination=createPagination(React);
  const h=React.createElement,DecisionReports=createDecisionReports({React,client,useApp});
  function Records({lang,tabs}){
   const {demoMode,profile,navigate}=useApp(),t=(th,en)=>lang==='th'?th:en;
@@ -88,7 +90,7 @@ export function createInternalReports({React,client,useApp,TargetSummary}){
        valueKey&&h('td',{className:'is-number'},currency(r[valueKey]||0)),h('td',{className:'kc-report-status-cell'},badge(r.status)),h('td',{className:'kc-report-action-cell'},details(r))
       )),!filtered.length&&h('tr',null,h('td',{colSpan:valueKey?5:4,className:'kc-report-empty'},t('ไม่พบข้อมูลตามตัวกรอง','No records match your filters'),h('button',{onClick:reset},t('ล้างตัวกรอง','Reset filters')))))
      )),
-     h('footer',{className:'kc-report-pagination'},h('span',null,t('แสดง ','Showing ')+(filtered.length?start+1:0)+'–'+Math.min(start+pageSize,filtered.length)+t(' จาก ',' of ')+format(filtered.length)),h('nav',{'aria-label':t('หน้ารายงาน','Report pages')},h('button',{disabled:currentPage===0,onClick:()=>Page(currentPage-1)},t('ก่อนหน้า','Previous')),h('span',null,(currentPage+1)+' / '+totalPages),h('button',{disabled:currentPage+1>=totalPages,onClick:()=>Page(currentPage+1)},t('ถัดไป','Next'))))
+     h(Pagination,{lang,page:currentPage,total:filtered.length,pageSize,onChange:Page,busy})
     )
    ),
    h('p',{className:'kc-report-note'},t('คำนวณจากข้อมูลที่คุณมีสิทธิ์เห็น • มูลค่าโอกาสขายไม่ใช่รายได้ทางบัญชี','Computed from records you can access • Opportunity values are not recognized accounting revenue'))
