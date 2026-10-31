@@ -1,0 +1,3 @@
+export const COMPANY_PROVIDERS=[['unconfigured','ยังไม่เลือกผู้ให้บริการ','Not selected'],['dbd_bdex','DBD BDEX','DBD BDEX'],['other_licensed','ผู้ให้บริการที่ได้รับสิทธิ์อื่น','Other licensed provider']];
+export function juristicTaxId(value){const raw=String(value??'').trim();if(!/^[0-9\s-]+$/.test(raw))return null;const id=raw.replace(/[\s-]/g,'');if(!/^0\d{12}$/.test(id)||id==='0000000000000')return null;let sum=0;for(let i=0;i<12;i++)sum+=Number(id[i])*(13-i);return (11-sum%11)%10===Number(id[12])?id:null;}
+export function validateCompanyProvider(provider){if(!COMPANY_PROVIDERS.some(([value])=>value===provider))throw Error('Invalid provider');return provider;}

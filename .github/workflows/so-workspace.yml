@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/sales-order*'
       - 'src/customer360*'
+      - 'src/company-financial*'
+      - 'tests/company-financial*'
       - 'tests/customer360-journey*'
       - 'tests/sales-order-redesign-smoke.mjs'
       - '.github/workflows/so-workspace.yml'
@@ -24,6 +26,7 @@ jobs:
           sleep 2
           node tests/sales-order-redesign-smoke.mjs
           node tests/customer360-journey-smoke.mjs
+          node tests/company-financial-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
