@@ -9,7 +9,7 @@ import {createCustomer360Dialog} from './customer360-dialog.mjs';
 import {createApprovalCenter} from './approval-center.mjs';
 import {createActivityDetail,activityLeadTarget} from './activity-detail.mjs';
 import {createMenuControls} from './menu-controls.mjs';
-import {createStatusSummary} from './status-summary.mjs';
+import {createStatusSummary} from './status-summary.mjs?v=20261031-qualified-hidden';
 import {quotationSummary} from './quotation-summary.mjs';
 import {createApprovalSignature} from './quotation-approval-signature.mjs';
 import {shortSalesName} from './sales-name.mjs';

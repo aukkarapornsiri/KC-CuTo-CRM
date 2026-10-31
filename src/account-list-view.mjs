@@ -1,6 +1,6 @@
 import {createPagination} from './pagination.mjs';
 import {createMenuControls} from './menu-controls.mjs';
-import {createStatusSummary} from './status-summary.mjs';
+import {createStatusSummary} from './status-summary.mjs?v=20261031-qualified-hidden';
 import {shortSalesName} from './sales-name.mjs';
 import {compareRecordsNewest} from './record-order.mjs';
 export const ACCOUNT_VIEWS=Object.freeze([
