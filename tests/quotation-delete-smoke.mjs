@@ -13,7 +13,7 @@ try {
    const source=await(await fetch([...document.scripts].find(s=>s.src.includes('app-C2ITSffc')).src)).text();
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
-   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
+   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',quotation_kind:i>=2&&i<=5?'recurring':'standard',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{billing_period:i>=2&&i<=5?['day','month','year','once'][i-2]:undefined,name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
   else {
@@ -23,6 +23,12 @@ try {
    await nav.getByText('Quotations',{exact:true}).click();
    await nav.getByText('Quotation List',{exact:true}).click();
   }
+  const type=page.getByLabel('Quotation type',{exact:true}),cycle=page.getByLabel('Rental / Service cycle',{exact:true}),summary=page.getByRole('region',{name:'Quotation summary'});
+  await type.selectOption('recurring');assert.equal(await summary.locator('p').first().innerText(),'4');
+  for(const period of ['day','month','year','once']){await cycle.selectOption(period);assert.equal(await summary.locator('p').first().innerText(),'1');assert.match(await summary.locator('p').nth(1).innerText(),/2,247,000/);}
+  await type.selectOption('standard');assert.equal(await cycle.count(),0);assert.equal(await summary.locator('p').first().innerText(),'46');
+  await type.selectOption('recurring');assert.equal(await cycle.inputValue(),'');assert.equal(await summary.locator('p').first().innerText(),'4');
+  await type.selectOption('');assert.equal(await summary.locator('p').first().innerText(),'50');
   for(const [code,entry] of [['QA-QUOTE-0','Details '],['QA-QUOTE-1','Open Quotation ']]){
    await page.getByRole('button',{name:entry+code,exact:true}).click();
    const dialog=page.getByRole('dialog',{name:'Quotation details',exact:true});
