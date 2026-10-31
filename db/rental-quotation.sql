@@ -31,14 +31,20 @@ begin
   clean:=clean||jsonb_build_array(item||jsonb_build_object('cycle_count',cycles,'service_end',ends::text));
  end loop;
  if new.recurring ? 'rental' then
-  if new.recurring#>>'{rental,version}' is distinct from '1' or coalesce(new.recurring#>>'{rental,payment}','') not in ('full','advance_months','cycle') then raise exception 'Invalid rental payment terms';end if;
+  if new.recurring#>>'{rental,version}' is distinct from '1' or coalesce(new.recurring#>>'{rental,payment}','') not in ('full','partial','advance_months','cycle') then raise exception 'Invalid rental payment terms';end if;
   if coalesce(new.recurring#>>'{rental,advance_months}','') !~ '^[0-9]+$' or (new.recurring#>>'{rental,advance_months}')::int not between 1 and 1200 then raise exception 'Invalid advance months';end if;
   for period in select unnest(array['deposit','bw_rate','color_rate']) loop
    if coalesce(new.recurring->'rental'->>period,'') !~ '^[0-9]+([.][0-9]+)?$' or (new.recurring->'rental'->>period)::numeric>=1e12 then raise exception 'Invalid rental amount';end if;
   end loop;
+  if new.recurring#>>'{rental,payment}'='partial' and (coalesce(new.recurring#>>'{rental,partial_amount}','') !~ '^[0-9]+([.][0-9]+)?$' or (new.recurring#>>'{rental,partial_amount}')::numeric<=0 or (new.recurring#>>'{rental,partial_amount}')::numeric>=1e12) then raise exception 'Invalid partial rental amount';end if;
+  if length(coalesce(new.recurring#>>'{rental,balance_terms}',''))>2000 then raise exception 'Invalid rental balance terms';end if;
+  if new.recurring->'rental' ? 'deposit_enabled' then
+   if jsonb_typeof(new.recurring#>'{rental,deposit_enabled}')<>'boolean' then raise exception 'Invalid deposit switch';end if;
+   if new.recurring#>>'{rental,deposit_enabled}'='false' then new.recurring:=jsonb_set(new.recurring,'{rental,deposit}','0');end if;
+  end if;
   if length(coalesce(new.recurring#>>'{rental,deposit_terms}',''))>2000 or coalesce(new.recurring#>>'{rental,usage_enabled}','') not in ('true','false') then raise exception 'Invalid rental terms';end if;
   if new.recurring#>>'{rental,payment}'='advance_months' and exists(select 1 from jsonb_array_elements(clean) i where i->>'billing_period'<>'month' or (i->>'cycle_count')::int<(new.recurring#>>'{rental,advance_months}')::int) then raise exception 'Advance months require monthly lines within contract';end if;
-  if exists(select 1 from jsonb_array_elements(clean) i where i->>'billing_period'='once') and new.recurring#>>'{rental,payment}'<>'full' then raise exception 'Lump sum requires full upfront payment';end if;
+  if exists(select 1 from jsonb_array_elements(clean) i where i->>'billing_period'='once') and new.recurring#>>'{rental,payment}' not in ('full','partial') then raise exception 'Lump sum requires full or partial upfront payment';end if;
  end if;
  new.items:=clean;return new;
 end $function$
@@ -130,6 +136,7 @@ begin
   net_before_tax:=round(new.subtotal-new.discount,2);new.vat:=round(net_before_tax*new.tax_rate/100,2);
   new.total:=round(net_before_tax+new.vat,2);new.withholding_tax:=round(net_before_tax*new.wht_rate/100,2);
   new.net_total:=round(new.total-new.withholding_tax,2);
+  if new.recurring#>>'{rental,payment}'='partial' and round((new.recurring#>>'{rental,partial_amount}')::numeric,2)>new.net_total then raise exception 'Partial payment exceeds net rental';end if;
   actual_gp:=round(net_before_tax-total_cost,2);
   actual_margin:=case when net_before_tax=0 then 0 else round(actual_gp/net_before_tax*100,2) end;
 

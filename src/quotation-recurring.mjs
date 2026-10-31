@@ -1,4 +1,5 @@
-import {rentalTerms} from './rental-quotation.mjs';
+import {quoteTotals} from './internal-model.mjs';
+import {rentalTerms,validateRentalPayment} from './rental-quotation.mjs';
 export const BILLING_PERIODS=['day','month','year','once'];
 export const periodLabel=(period,lang='th')=>({day:lang==='th'?'รายวัน':'Daily',month:lang==='th'?'รายเดือน':'Monthly',year:lang==='th'?'รายปี':'Yearly',once:lang==='th'?'ระยะสั้น / เหมาจ่าย':'Short-term / Lump sum'}[period]||'');
 export function recurringLine(item){
@@ -22,6 +23,7 @@ export function validateRecurring(quote){
  const r=quote.recurring||{},valid=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')&&serviceEnd(s,'day',1)===s;
  if(!valid(r.start_date)||!valid(r.end_date)||r.end_date<r.start_date||!['advance','arrears','advance_once'].includes(r.billing_timing))throw Error('กรุณาตรวจสอบระยะสัญญาและเงื่อนไขเรียกเก็บ / Check contract dates and billing timing');
  for(const item of quote.items||[]){const line=recurringLine(item);if(!line.billing_period||!valid(line.service_end)||!valid(line.service_start)||line.service_end<line.service_start||line.service_start<r.start_date||line.service_end>r.end_date)throw Error('ช่วงบริการทุกรายการต้องอยู่ภายในสัญญา / Every service period must be within the contract');}
+ if(r.rental?.payment==='partial')validateRentalPayment(quote,quoteTotals(quote.items,{taxRate:quote.tax_rate??7,withholdingRate:quote.wht_rate??0,documentDiscount:quote.document_discount??0,requireName:false}));
  return {start_date:r.start_date,end_date:r.end_date,billing_timing:r.billing_timing,...rentalTerms(r,quote.items)};
 }
 export function defaultRecurring(start){return {start_date:start,end_date:serviceEnd(start,'year',1),billing_timing:'advance'};}
