@@ -50,7 +50,7 @@ begin
  select id into eid from public.crm_lead_resolutions where actor_id=auth.uid() and request_id=p_request;if found then return eid;end if;
  if p_action='review' then
   if not coalesce(private.crm_lead_assigner_eligible(p_reviewer),false) then raise exception 'Authorized reviewer required';end if;
-  select * into target from public.leads l where l.id is distinct from p_source and cardinality(private.crm_lead_match(p_incoming,to_jsonb(l)))>0 order by l.created_at desc limit 1;
+  select * into target from public.leads l where l.id is distinct from p_source and cardinality(private.crm_lead_match(p_incoming,to_jsonb(l)))>0 and not exists(select 1 from public.crm_lead_resolutions r where r.action='merge' and r.source_id=l.id) order by l.created_at desc limit 1;
   if not found then raise exception 'Match changed; check again';end if;
  else
   if not private.crm_can('leads','view') then raise insufficient_privilege;end if;
@@ -84,7 +84,7 @@ declare e public.crm_lead_resolutions;l public.leads;
 begin
  if auth.uid() is null or not private.crm_active_user() or not private.crm_can('leads','view') then raise insufficient_privilege;end if;
  select * into e from public.crm_lead_resolutions where id=p_id for update;select * into l from public.leads where id=e.target_id;
- if not found or not (e.reviewer_id=auth.uid() or l.owner_id=auth.uid() or (private.crm_can('leads','assign') and private.crm_can('leads','edit'))) then raise insufficient_privilege;end if;
+ if not found or not coalesce((e.reviewer_id=auth.uid() or l.owner_id=auth.uid() or (private.crm_can('leads','assign') and private.crm_can('leads','edit'))),false) then raise insufficient_privilege;end if;
  update public.crm_lead_resolutions set resolved_at=coalesce(resolved_at,now()) where id=p_id;
  update public.notifications set resolved_at=coalesce(resolved_at,now()),resolution='completed' where event_key='lead-duplicate:'||p_id::text;
 end $$;

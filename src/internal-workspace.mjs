@@ -133,7 +133,7 @@ export function createInternalWorkspace({React,client,useApp,useAccess}){
    if(action==='activity')navigate('activities','act-my',{create:true,leadId:row.id,sourceCustomerId:row.customer_id||'',sourceSubject:t('ติดตามการติดต่อซ้ำ: ','Returning enquiry: ')+reason});
    else if(action==='opportunity')navigate('opportunities','opp-all',{create:true,sourceLeadId:row.id,sourceCustomerId:row.customer_id||'',sourceContactId:row.converted_contact_id||'',sourceName:reason});
    else if(action==='contact')navigate('contacts','contact-list',{create:true,sourceCustomerId:row.customer_id});
-   else {await read(true);if(action!=='review')await detail(rows.find(x=>x.id===row.id)||row,true);Message(t('บันทึกการดำเนินการและประวัติแล้ว','Resolution and history saved'));}
+   else {const fresh=await read(true);if(action!=='review')await detail(fresh.find(x=>x.id===row.id)||row,true);Message(t('บันทึกการดำเนินการและประวัติแล้ว','Resolution and history saved'));}
   });}
   async function save(event){event.preventDefault();const saveNew=event.nativeEvent?.submitter?.value==='save-new';if(!editing)return;await run(async()=>{const patch={...validateRecord(entity,editing),...leadLinkPatch(entity,editing)};if(entity==='leads'){
       const signature=JSON.stringify(editing);
