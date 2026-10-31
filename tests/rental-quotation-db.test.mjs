@@ -18,5 +18,13 @@ test('migration leaves existing data byte-for-byte intact; database agrees on ne
  await db.query("update quotations set items=jsonb_set(items,'{0,qty}','100') where id=$1",[row.id]);assert.equal((await db.query('select total::float8 from quotations where id=$1',[row.id])).rows[0].total,12840);assert.equal((await db.query('select cost_total::float8 from crm_quotation_financials where quotation_id=$1',[row.id])).rows[0].cost_total,8000);
  await assert.rejects(db.query("update quotations set items=jsonb_set(items,'{0,cycle_count}','7') where id=$1",[row.id]),/lump-sum/);
  await assert.rejects(db.query("update quotations set recurring=jsonb_set(recurring,'{rental,deposit}','-1') where id=$1",[row.id]),/rental amount/);
+ const partial={...recurring,rental:{...recurring.rental,payment:'partial',partial_amount:6000,balance_terms:'Before collection'}};
+ await db.query('update quotations set recurring=$1 where id=$2',[JSON.stringify(partial),row.id]);
+ assert.equal((await db.query('select recurring from quotations where id=$1',[row.id])).rows[0].recurring.rental.partial_amount,6000);
+ await assert.rejects(db.query("update quotations set recurring=jsonb_set(recurring,'{rental,partial_amount}','12841') where id=$1",[row.id]),/exceeds net rental/);
+ await assert.rejects(db.query("update quotations set recurring=jsonb_set(recurring,'{rental,partial_amount}','0') where id=$1",[row.id]),/partial rental amount/);
+ await assert.rejects(db.query('update quotations set document_discount=10000 where id=$1',[row.id]),/exceeds net rental/);
+ await db.query("update quotations set recurring=jsonb_set(recurring,'{rental,deposit_enabled}','false') where id=$1",[row.id]);
+ assert.equal((await db.query('select recurring from quotations where id=$1',[row.id])).rows[0].recurring.rental.deposit,0);
  assert.deepEqual((await db.query("select to_jsonb(q) as row from quotations q where quotation_kind='standard'")).rows,before);
  }finally{await db.close();}});
