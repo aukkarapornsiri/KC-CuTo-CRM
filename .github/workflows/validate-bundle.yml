@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate AI analytics rules
-        run: node --test tests/quotation-list-filter.test.mjs tests/ai-dashboard.test.mjs tests/status-summary.test.mjs tests/lead-quotation-summary.test.mjs tests/pagination.test.mjs tests/lead-period.test.mjs tests/lead-source.test.mjs
+        run: node --test tests/lead-sales-outcome.test.mjs tests/quotation-list-filter.test.mjs tests/ai-dashboard.test.mjs tests/status-summary.test.mjs tests/lead-quotation-summary.test.mjs tests/pagination.test.mjs tests/lead-period.test.mjs tests/lead-source.test.mjs
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

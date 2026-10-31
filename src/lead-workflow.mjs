@@ -1,5 +1,5 @@
 import {sortRecordsNewest} from './record-order.mjs';
-export const LEAD_STATUS_LABELS={new:['ใหม่','New'],review:['รอตรวจสอบ','Review'],assign:['มอบหมายแล้ว','Assigned'],proposed:['เสนอราคาแล้ว','Proposed'],contacted:['ติดต่อแล้ว','Contacted'],qualified:['ผ่านการคัดกรอง','Qualified'],disqualified:['ไม่ผ่านการคัดกรอง','Disqualified'],'follow':['กำลังติดตาม','Follow-up'],converted:['แปลงเป็นลูกค้าแล้ว','Converted']};
+export const LEAD_STATUS_LABELS={won:['ปิดการขายสำเร็จ (Won)','Closed Won'],new:['ใหม่','New'],review:['รอตรวจสอบ','Review'],assign:['มอบหมายแล้ว','Assigned'],proposed:['เสนอราคาแล้ว','Proposed'],contacted:['ติดต่อแล้ว','Contacted'],qualified:['ผ่านการคัดกรอง','Qualified'],disqualified:['ไม่ผ่านการคัดกรอง','Disqualified'],'follow':['กำลังติดตาม','Follow-up'],converted:['แปลงเป็นลูกค้าแล้ว','Converted']};
 export const leadStatusLabel=(status,lang='th')=>LEAD_STATUS_LABELS[status]?.[lang==='th'?0:1]||status||'—';
 export const sortLeadsNewest=sortRecordsNewest;
 

@@ -72,3 +72,5 @@
 /* Retire the qualified lead summary even if an older summary module is cached. */
 .kc-app .crm-internal[data-entity="leads"] .crm-status-metrics [data-summary-status="qualified" i],
 .kc-app .crm-internal[data-entity="leads"] .crm-status-metrics [data-summary-status="ผ่านการคัดกรอง"]{display:none!important}
+
+.crm-lead-outcome{display:block;margin-top:4px;font-size:11px;color:#64748b}.crm-lead-outcome[data-won=true]{color:#047857;font-weight:700}
