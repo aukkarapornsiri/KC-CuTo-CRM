@@ -1,0 +1,9 @@
+import {OPTIONS} from './internal-options.mjs';
+export const STAKEHOLDER_ROLES=OPTIONS.contacts.role,INFLUENCE_LEVELS=OPTIONS.contacts.influence_level;
+export function stakeholderGraph(contacts){const active=contacts.filter(c=>String(c.status||'').toLowerCase()!=='inactive'),ids=new Map(active.map(c=>[c.id,c])),edges=[],issues=[];
+ for(const c of active){if(!c.reports_to_id)continue;const parent=ids.get(c.reports_to_id);if(!parent){issues.push({id:c.id,reason:'missing_parent'});continue;}if(parent.customer_id!==c.customer_id){issues.push({id:c.id,reason:'cross_customer'});continue;}
+ const path=new Set([c.id]);let next=parent,cycle=false;while(next){if(path.has(next.id)){cycle=true;break;}path.add(next.id);next=ids.get(next.reports_to_id);}if(cycle){issues.push({id:c.id,reason:'cycle'});continue;}edges.push({from:c.id,to:parent.id});}
+ return {contacts:active,edges,issues,decisionMakers:active.filter(c=>['decision maker','approver','executive'].includes(String(c.role||'').trim().toLowerCase()))};
+}
+export function validateStakeholder(contact,patch,contacts){if(patch.role&&patch.role!==contact.role&&!STAKEHOLDER_ROLES.includes(patch.role))throw Error('INVALID_ROLE');if(patch.influence_level&&patch.influence_level!==contact.influence_level&&!INFLUENCE_LEVELS.includes(patch.influence_level))throw Error('INVALID_INFLUENCE');
+ const parent=patch.reports_to_id?contacts.find(c=>c.id===patch.reports_to_id):null;if(patch.reports_to_id&&(!parent||parent.customer_id!==contact.customer_id||parent.id===contact.id))throw Error('INVALID_MANAGER');const merged=contacts.map(c=>c.id===contact.id?{...c,...patch}:c),byId=new Map(merged.map(c=>[c.id,c])),seen=new Set([contact.id]);let next=parent;while(next){if(seen.has(next.id))throw Error('REPORTING_CYCLE');seen.add(next.id);next=byId.get(next.reports_to_id);}return {role:patch.role||null,influence_level:patch.influence_level||null,reports_to_id:patch.reports_to_id||null};}
