@@ -1,22 +1,19 @@
-# Company financial data — connection preparation
+# MOC company registry integration
 
-The production system is prepared, not connected to DBD or another provider. No external HTTP requests, automatic sync, jobs, billing or credentials are enabled. Only Super Admin can select a planned provider in Customer 360 → Company financials. Changing this selection does not activate a connection.
+MOC Open Data is configured for manual company-profile lookups in Customer 360 → Company financials. Only the documented fixed HTTPS endpoint `https://dataapi.moc.go.th/juristic?juristic_id=...` is used. This source provides registry information and capital, not annual profit/loss statements. DBD and other licensed annual-statement adapters remain unconfigured. No automatic jobs are enabled.
 
-## Data contract
+## Access and flow
 
-- `crm_company_profiles`: one profile per valid Thai juristic ID (13 digits, leading zero, checksum), registered capital, THB currency, mandatory provider/reference/source date.
-- `crm_company_financial_statements`: unique `(tax_id, fiscal_year, statement_scope)`. Gregorian fiscal year; separate standalone and consolidated statements. Period start/end, THB baht base units, revenue, expenses, net profit/loss, assets, liabilities, equity. Null is unknown; zero is a reported zero. Loss/equity may be negative.
-- `crm_company_data_sync_logs`: unique provider request key, start/finish timestamps and sanitized error codes. Do not store tokens, raw provider responses or personal documents here.
-- `crm_company_data_settings`: planned provider only; connection and automatic sync are constrained off until an actual adapter is reviewed and deployed.
+The `crm-moc-company` Edge Function requires a valid user JWT, active profile, customer and quotation view permissions, and a customer readable through the caller's RLS. It accepts only `customer_id`; tax ID is derived from that customer on the server. Customer masters, quotations, SOs and annual statements are never overwritten by this integration.
 
-Provider data is separate from CRM receivable references and does not overwrite customer masters, quotations or SOs. Readers need both customer and quotation view permission and visibility of a customer with the matching tax ID. Only the backend service role can write provider profiles, statements or sync logs. Clients have no insert/update/delete privileges for financial snapshots.
+Service-only claim/finish RPCs deduplicate the tax ID, reuse successful MOC results for 24 hours, throttle failed IDs for five minutes, and limit initiating users to ten lookup attempts per minute. Claims expire for retry after 60 seconds. The fixed 15-second timeout, no redirects and JSON/schema/ID/amount validation prevent malformed responses from becoming company data. Failed refreshes preserve previous snapshots. The function uses platform server secrets only and forwards no CRM token or secret to MOC.
 
-## Future provider adapter
+MOC does not provide a source as-of field in this contract; `source_as_of` stays null and `fetched_at` is shown separately. Profile/statement numeric columns are read as strings to preserve exact decimals.
 
-1. Obtain the licensed API documentation and access approval. Define expected endpoints and response mapping; do not scrape website sessions or infer private endpoints.
-2. Store credentials in server secret management, never in these tables, client code or chat. No secret is needed for the preparation release.
-3. Derive the expected tax ID from a permission-checked customer, not arbitrary request input. Reject mismatched entity IDs, ambiguous fiscal calendars, currency/scale and invalid payloads with `normalizeCompanyFinancialPayload` in `supabase/functions/_shared/company-financial-payload.mjs`. Decimal amounts must be canonical strings; convert provider thousand-baht units explicitly before normalization.
-4. Implement bounded requests, rate limits and provider-specific retries; deduplicate by tax ID. Validate before writes and store profile/statements transactionally, with request-key idempotency and a guard against replacing newer source versions with older ones. Preserve per-year provenance. These ingestion/queue operations are NOT enabled in this preparation release.
-5. Test with the provider sandbox and real-role RLS before an additive migration enables the reviewed adapter. Show source as-of and last fetch date; never label prepared/cached data as live.
+## Verification and upstream limitation
 
-Manual snapshots are not editable through the CRM UI. Missing data is displayed as unknown. Company statements use Gregorian year labels on both Thai and English pages to avoid mixing calendars.
+On 31 October 2026 the documented MOC endpoint returned a Web Page Blocked HTML page from the execution environment. A separate public-endpoint connectivity probe from the CRM database timed out after 15 seconds. These are failures, not successful imports. No alternative/private endpoint, header disguise, proxy rotation or scraping fallback is used. The installed connector reports MOC_BLOCKED/MOC_TIMEOUT and does not claim a successful source connection. Provider-side access/availability must be resolved before live JSON retrieval can be verified.
+
+## Annual statement extension
+
+The provider-neutral `crm_company_financial_statements` contract remains keyed by `(tax_id, fiscal_year, statement_scope)`: Gregorian year, standalone/consolidated scope, THB baht units, nullable revenue/expenses/profit/assets/liabilities/equity, source reference and source as-of. `normalizeCompanyFinancialPayload` validates future licensed provider payloads. Future annual ingestion must validate provenance and IDs, use transactional writes and reject stale source versions. No annual data or ingestion job is fabricated by the MOC profile integration.
