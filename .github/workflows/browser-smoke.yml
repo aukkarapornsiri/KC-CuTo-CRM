@@ -26,7 +26,7 @@ jobs:
           - group: quotation-print
             suites: quotation-print-smoke
           - group: lead-duplicates
-            suites: lead-duplicates-smoke lead-field-rules-smoke
+            suites: lead-duplicates-smoke lead-field-rules-smoke lead-summary-smoke
           - group: quotation-followup
             suites: quotation-followup-smoke
           - group: customer360-popup
