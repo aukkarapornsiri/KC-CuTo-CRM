@@ -28,3 +28,5 @@ test('stakeholder lines preserve contacts and reject cycles or cross-company man
  assert.equal(validateStakeholder(contacts[1],{role:'Influencer',influence_level:'high',reports_to_id:'a'},contacts).role,'Influencer');
 });
 test('role defaults are presentation choices, never new permissions',()=>{assert.equal(defaultCustomerView({role:'sales_user'}),'sales');assert.equal(defaultCustomerView({role:'sales_manager'}),'manager');assert.equal(defaultCustomerView({is_super_admin:true}),'executive');assert.equal(defaultCustomerView({role:'custom',custom_role_key:'staff'}),'sales');});
+
+test('legacy role casing does not disagree with the health decision coverage',()=>{const contacts=[{id:'a',role:'decision maker',status:'active'}];assert.equal(stakeholderGraph(contacts).decisionMakers.length,1);assert.equal(customerHealth({created_at:'2026-10-30'},{...base,contacts},now).dimensions.find(d=>d.key==='stakeholders').penalty,0);});
