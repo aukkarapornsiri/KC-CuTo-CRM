@@ -31,6 +31,7 @@ jobs:
           node tests/customer360-journey-smoke.mjs
           node tests/company-financial-smoke.mjs
           node tests/customer-health-smoke.mjs
+          node tests/customer360-completeness-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

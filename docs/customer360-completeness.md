@@ -1,0 +1,20 @@
+# Customer 360 completeness: SO, statements, communication and portfolio
+
+## Delivered
+
+- `crm_customer_sales_orders` is a security-invoker view combining native SOs and external sales facts. Native SOs match mirrored facts ONLY by `source_system='KC CuTo CRM'` and source SO UUID. Native subtotal minus discount is authoritative before VAT; cancellations remain excluded. Missing, orphan and mismatched facts remain visible. No document, stock or old source data is overwritten. Overview/health/reconciliation use the same source; Sales journey still opens the original SO.
+- `crm_customer_health_signals` supplies a permission-scoped, paginated portfolio from the Accounts list. Filters: account name, owner, mine, high/watch/incomplete and reconciliation. Score deductions match the six operational health dimensions. Missing module access is incomplete coverage, never a healthy zero. This retains existing module/RLS scope; it does not introduce new department/team grants. Rows are individual accounts, while an explicitly linked Customer 360 account group can aggregate its members.
+- Hourly private reminders cover follow-up, contact gaps, aged cases, renewal gaps, purchase decline and decision coverage. Each recipient needs access to the contributing modules. Stable per-customer/owner/dimension keys deduplicate, clear and reopen notices. No new emails. Existing legacy follow-up key is retained.
+- Unified communication timeline combines CRM activities with separately recorded/imported communication. Manual phone/other records require Activities create. Outlook fetch is Super Admin only, limited to central CuToCRM@kai-com.com, 30 days/latest 100 messages and exact unique customer email. It is a manual bounded snapshot, not a complete mailbox sync. Stored previews are plain text; source IDs deduplicate. LINE incoming text webhook validates HMAC-SHA256 before parsing and requires an explicit Super Admin LINE user/customer mapping. Group messages and unmapped users are ignored.
+- Annual statement JSON import requires Super Admin, valid matching tax ID, fiscal year/scope, period, source HTTPS reference and source as-of. Preview/confirmation precede replace-by-year/scope. Decimal strings remain numeric(24,2); negative profit/equity and missing values remain distinct. Audit trail records imports. New company profiles can come from an explicitly declared authorized source; MOC is not falsely claimed.
+- MOC shows the latest admin sync attempt. Manual connector remains unchanged; the official public sample endpoint timed out after 15 seconds from the production server during verification on 1 November 2026. No successful registry or P&L retrieval is asserted. MOC registry does not supply P&L.
+
+## External activation still required
+
+- Outlook needs existing server `CRM_MAIL_*` application credentials AND Microsoft Graph application Mail.Read consent (send-mail permission is insufficient). UI connection check reports credential presence, not consent success. No secrets are exposed. Individual employee mailboxes are not read.
+- LINE needs `CRM_LINE_CHANNEL_SECRET`, a Messaging API webhook pointing to `/functions/v1/crm-customer-communications`, and authorized LINE user/customer links. The function has gateway JWT verification disabled because it verifies LINE signatures itself; browser operations independently verify Supabase JWT, active profile, customer access and role.
+- Automatic annual financial data needs an authorized provider/API. Manual verified-source import is available independently. Provider credentials/rights cannot be manufactured.
+
+## Verification
+
+Unit tests cover canonical sales, explicit source linkage, invalid statements, financial precision, mail matching and valid/tampered LINE signatures. Transactional SQL tests verify portfolio score parity, row boundaries, audit import precision, notification dimension dedup/clear and denial for inactive users, then roll back all synthetic writes. Public Edge requests without JWT or with an invalid LINE signature return 401. Desktop/mobile smoke covers portfolio filters, reconciliation, communication persistence and statement import in TH/EN.
