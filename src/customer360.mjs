@@ -1,3 +1,4 @@
+import {readIdentity} from './read-coordinator.mjs';
 import {createReconciliation} from './customer360-reconciliation.mjs';
 import {createCustomerCommunications} from './customer360-communications.mjs';
 import {customerHealth,defaultCustomerView} from './customer-health-model.mjs';
@@ -21,33 +22,34 @@ export function createCustomer360({React,client,useApp,records}){
   const [state,State]=React.useState(null),[busy,Busy]=React.useState(false),[error,ErrorText]=React.useState(''),[tab,Tab]=React.useState('overview'),[detail,Detail]=React.useState(null),[filter,Filter]=React.useState(''),[search,Search]=React.useState(''),[review,Review]=React.useState(null),[reason,Reason]=React.useState(''),[confirmed,Confirmed]=React.useState(false),[reload,Reload]=React.useState(0);
   const [workView,WorkView]=React.useState(()=>{try{const v=localStorage.getItem('kc-c360-view:'+profile?.id);return ['sales','manager','executive'].includes(v)?v:defaultCustomerView(profile);}catch{return defaultCustomerView(profile);}});
   const saving=React.useRef(false),isAdmin=demoMode||profile?.is_super_admin===true;
-  React.useEffect(()=>{let active=true;State(null);ErrorText('');Busy(true);Review(null);Detail(null);
+  React.useEffect(()=>{let active=true;const controller=new AbortController();State(null);ErrorText('');Busy(true);Review(null);Detail(null);
    (async()=>{try{
-    let rights=[];if(!demoMode&&!isAdmin)rights=await unwrap(client.from('role_permissions').select('module,can_view,can_create,can_edit,can_approve').eq('role_key',profile?.role==='custom'?profile.custom_role_key:profile?.role||''));
+    let rights=[];if(!demoMode&&!isAdmin)rights=await unwrap(client.from('role_permissions').select('module,can_view,can_create,can_edit,can_approve').eq('role_key',profile?.role==='custom'?profile.custom_role_key:profile?.role||'').abortSignal(controller.signal));
     const can=(m,action='view')=>demoMode||isAdmin||rights.some(x=>x.module===m&&x['can_'+action]);
     if(!can('customers'))throw Error(t('ไม่มีสิทธิ์ดูลูกค้า','Customer access denied'));
-    const {group,links,members}=await customerGroup({client,demoMode,records,recordId:record.id});
+    const {group,links,members}=await customerGroup({client,demoMode,records,recordId:record.id,signal:controller.signal});
     if(!members.some(c=>c.id===record.id))throw Error(t('ไม่พบลูกค้าหรือไม่มีสิทธิ์','Customer unavailable'));
-    const core=await loadCustomerSources(CORE_SOURCES,{client,demoMode,records,ids:group.ids,can});
+    const core=await loadCustomerSources(CORE_SOURCES,{client,demoMode,records,ids:group.ids,can,signal:controller.signal});
     if(active)State({customers:members,links,group,members,data:{...emptyCustomerData(),...core.data},issues:core.issues,events:[],history:[],unmapped:null,emailDeliveries:null,sections:[],can,canCreateActivity:can('activities','create'),canEditCustomer:can('customers','edit'),canReadFinance:can('quotations'),canWriteFinance:can('quotations','approve'),createModules:['contacts','opportunities','quotations','tickets','contracts','assets'].filter(m=>can(m,'create')),canCreateBranch:can('customers','create'),asOf:new Date().toISOString()});
 
-   }catch(e){if(active)ErrorText(e.message);}finally{if(active)Busy(false);}})();return()=>{active=false;};
-  },[record.id,profile?.id,profile?.role,profile?.custom_role_key,demoMode,reload,lang]);
-  React.useEffect(()=>{if(!state||state.sections.includes(tab)||!['records','identity','timeline','communications'].includes(tab))return;let active=true;
+   }catch(e){if(active)ErrorText(e.message);}finally{if(active)Busy(false);}})();return()=>{active=false;controller.abort();};
+  },[record.id,readIdentity(profile),demoMode,reload,lang]);
+  React.useEffect(()=>{const invalidate=()=>{State(null);Review(null);Detail(null);Reload(n=>n+1);};window.addEventListener('crm-access-changed',invalidate);return()=>window.removeEventListener('crm-access-changed',invalidate);},[]);
+  React.useEffect(()=>{if(!state||state.sections.includes(tab)||!['records','identity','timeline','communications'].includes(tab))return;let active=true;const controller=new AbortController();
    (async()=>{const patch={},issues=[];
     try{
-     if(tab==='records'||tab==='timeline'){const extra=await loadCustomerSources(['branches','assets','documents'],{client,demoMode,records,ids:state.group.ids,can:state.can});patch.data={...state.data,...extra.data};issues.push(...extra.issues);}
-     if(tab==='timeline'){patch.events=demoMode?(records.customer360_events||[]).filter(e=>state.group.ids.includes(e.customer_id)):await pages('crm_customer360_events','id,module,record_id,customer_id,action,title,status,created_at',q=>q.in('customer_id',state.group.ids));}
+     if(tab==='records'||tab==='timeline'){const extra=await loadCustomerSources(['branches','assets','documents'],{client,demoMode,records,ids:state.group.ids,can:state.can,signal:controller.signal});patch.data={...state.data,...extra.data};issues.push(...extra.issues);}
+     if(tab==='timeline'){patch.events=demoMode?(records.customer360_events||[]).filter(e=>state.group.ids.includes(e.customer_id)):await pages('crm_customer360_events','id,module,record_id,customer_id,action,title,status,created_at',q=>q.in('customer_id',state.group.ids),controller.signal);}
      if(tab==='identity'){
-      patch.customers=demoMode?records.customers:await pages('customers',CUSTOMER_COLUMNS);
+      patch.customers=demoMode?records.customers:await pages('customers',CUSTOMER_COLUMNS,undefined,controller.signal);
       // Load identity links only for the candidate list, not on initial account open.
-      patch.links=demoMode?(records.customer360_links||[]):await pages('crm_customer_identity_links','id,customer_id,canonical_id,linked_at');
-      patch.history=demoMode?[]:await pages('crm_customer_identity_events','id,customer_id,canonical_id,action,reason,actor_id,created_at',q=>q.in('canonical_id',state.group.ids));
+      patch.links=demoMode?(records.customer360_links||[]):await pages('crm_customer_identity_links','id,customer_id,canonical_id,linked_at',undefined,controller.signal);
+      patch.history=demoMode?[]:await pages('crm_customer_identity_events','id,customer_id,canonical_id,action,reason,actor_id,created_at',q=>q.in('canonical_id',state.group.ids),controller.signal);
      }
-     if(tab==='communications'&&state.can('activities')){const emails=[...new Set([...state.members,...(state.data.contacts||[])].map(r=>String(r.email||'').trim().toLowerCase()).filter(Boolean))];patch.emailDeliveries=demoMode?(records.emailDeliveries||[]).filter(r=>emails.includes(String(r.email||'').toLowerCase())):emails.length?await pages('crm_email_recipients','id,email,status,sent_at,campaign_id',q=>q.in('email',emails)):[];}
+     if(tab==='communications'&&state.can('activities')){const emails=[...new Set([...state.members,...(state.data.contacts||[])].map(r=>String(r.email||'').trim().toLowerCase()).filter(Boolean))];patch.emailDeliveries=demoMode?(records.emailDeliveries||[]).filter(r=>emails.includes(String(r.email||'').toLowerCase())):emails.length?await pages('crm_email_recipients','id,email,status,sent_at,campaign_id',q=>q.in('email',emails),controller.signal):[];}
     }catch(e){issues.push(tab+': '+e.message);}
     if(active)State(old=>old?.asOf===state.asOf?{...old,...patch,sections:[...old.sections,tab],issues:[...old.issues,...issues]}:old);
-   })();return()=>{active=false;};
+   })();return()=>{active=false;controller.abort();};
   },[tab,state?.asOf]);
   const button=(name,fn,extra={})=>h('button',{type:'button',onClick:fn,...extra},name),cash=n=>new Intl.NumberFormat(th?'th-TH':'en-GB',{maximumFractionDigits:2,minimumFractionDigits:2}).format(n),date=v=>v?new Date(v).toLocaleString(th?'th-TH':'en-GB',{timeZone:'Asia/Bangkok'}):'—';
   const label=k=>SOURCES[k]?.[th?0:1]||k;
