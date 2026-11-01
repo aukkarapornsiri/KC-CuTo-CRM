@@ -1,0 +1,19 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createCustomer360} from '../src/customer360.mjs';
+import {createCustomerPortfolio} from '../src/customer360-portfolio.mjs';
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function harness({core=false}={}){
+ const oldWindow=globalThis.window,oldDocument=globalThis.document,win=new EventTarget(),doc=new EventTarget();doc.visibilityState='visible';win.navigator={onLine:true};globalThis.window=win;globalThis.document=doc;
+ const slots=[],effects=[],requests=[];let cursor=0,pending=[],authCallback;const profile={id:'alice',role:'sales_manager'};
+ const React={Fragment:'fragment',createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity)}),useState(initial){const id=cursor++;if(!(id in slots))slots[id]=typeof initial==='function'?initial():initial;return [slots[id],v=>{slots[id]=typeof v==='function'?v(slots[id]):v;}];},useRef(initial){const id=cursor++;if(!(id in slots))slots[id]={current:initial};return slots[id];},useEffect(fn,deps){const id=cursor++,prev=effects[id];if(!prev||deps.some((v,i)=>!Object.is(v,prev.deps[i]))){prev?.cleanup?.();effects[id]={deps};pending.push(()=>{effects[id].cleanup=fn();});}}};
+ const client={auth:{getSession:async()=>({data:{session:{user:{id:profile.id}}}}),onAuthStateChange(fn){authCallback=fn;return {data:{subscription:{unsubscribe(){authCallback=null;}}}};}},from(){const request={signal:null,resolve:null};requests.push(request);const promise=new Promise(resolve=>request.resolve=resolve);const query={then:(yes,no)=>promise.then(yes,no),abortSignal(signal){request.signal=signal;return this;}};for(const method of ['select','order','range','ilike','eq','lt','gt'])query[method]=()=>query;return query;}};
+ const Component=(core?createCustomer360:createCustomerPortfolio)({React,client,useApp:()=>({demoMode:core,profile,navigate(){}}),records:core?{customers:[{id:'c',name:'Core private account',code:'C1'}]}:{}});
+ const render=()=>{cursor=0;const tree=Component({lang:'en',record:{id:'c'}});const run=pending;pending=[];for(const effect of run)effect();return tree;};
+ const open=()=>{render().props.onToggle({currentTarget:{open:true}});return render();};
+ const text=node=>typeof node==='object'&&node?node.children.map(text).join(' '):String(node??'');
+ return {requests,profile,open,render,text,fire:()=>win.dispatchEvent(new Event('crm-access-changed')),close(){for(const effect of effects)effect?.cleanup?.();globalThis.window=oldWindow;globalThis.document=oldDocument;},signOut(){authCallback?.('SIGNED_OUT',null);}};
+}
+test('portfolio aborts an obsolete filter read instead of occupying the REST queue',async()=>{const x=harness();try{x.open();await wait(330);assert.equal(x.requests.length,1);const first=x.requests[0];assert.ok(first.signal,'portfolio must attach a cancellation signal');x.render().props.onToggle({currentTarget:{open:false}});x.render();assert.equal(first.signal.aborted,true);}finally{x.close();}});
+test('permission invalidation removes displayed portfolio data and rejects stale results',async()=>{const x=harness();try{x.open();await wait(330);x.requests[0].resolve({data:[{customer_id:'c',code:'C1',name:'Private account',score:90,coverage:100}],count:1});await wait(10);assert.match(x.text(x.render()),/Private account/);x.fire();assert.doesNotMatch(x.text(x.render()),/Private account/);await wait(10);assert.equal(x.requests.length,2);x.signOut();assert.equal(x.requests[1].signal.aborted,true);}finally{x.close();}});
+
+test('Customer 360 clears the open account on an access-change event',async()=>{const x=harness({core:true});try{x.render();await wait(10);assert.match(x.text(x.render()),/Core private account/);x.fire();assert.doesNotMatch(x.text(x.render()),/Core private account/);}finally{x.close();}});

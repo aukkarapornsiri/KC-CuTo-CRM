@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {readCustomerPages} from '../src/customer360-loader.mjs';
+test('cancelled Customer 360 pagination never fetches the next page',async()=>{const controller=new AbortController();let calls=0;const client={from(){calls++;return {select(){return this;},order(){return this;},range(){return this;},abortSignal(signal){assert.equal(signal,controller.signal);return this;},then(resolve){controller.abort();return Promise.resolve({data:Array.from({length:500},(_,id)=>({id})),error:null}).then(resolve);}};}};await assert.rejects(()=>readCustomerPages(client,'customers','id',q=>q,controller.signal),e=>e.name==='AbortError');assert.equal(calls,1);});
