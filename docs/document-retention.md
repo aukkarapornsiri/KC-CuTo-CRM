@@ -1,0 +1,15 @@
+# CRM document inventory and retention
+
+Location: Settings → Organization → Documents & Auto Deletion. Requires an active Super Admin on both the route and server. The inventory covers actual objects in `crm-documents`, `crm-sales-orders`, and `crm-quotation-assets`; it does not enumerate unrelated applications, external-provider files, or PDFs that are generated only when printed.
+
+The inventory is newest first, paged by 50, and filters upload dates inclusively in Asia/Bangkok. It shows size, bucket, reference protection, and eligible-for-deletion preview. Rules specify 7–3650 retention days and a Bangkok run hour. All rules initially disabled, with 365 days / 02:00 defaults. The worker checks every five minutes during that hour, up to 25 candidates per invocation.
+
+Both manual and automatic deletion permanently remove only unreferenced objects. Current documents, quotation snapshots, SO PO files, profile signatures, approval signatures, templates and asset attachments are conservatively checked for references. Manual deletion also protects uploads younger than 24 hours. Remove a business reference through its owning workflow before deleting the file. No business document, sales order, quotation, customer, or accounting record is deleted by this feature.
+
+A database deletion claim rechecks references while fencing writes to reference-owning tables, and records an immutable object/key tombstone. Reference triggers reject new use of a claimed or deleted key. Locks have a three-second timeout; unavailable claims fail without removing the file. The worker then uses the Storage API; it never deletes directly from `storage.objects`. Failures remain visible and retryable; a success is logged only after the API succeeds. Already-completed claims are idempotent. The deletion log includes actor, manual/scheduled source, timestamps, state and failure. Policy edits also enter the existing audit log.
+
+The scheduled worker authenticates its dedicated Vault secret. Interactive requests validate the user through Auth and recheck active Super Admin privileges; worker RPCs are service-role only. The Edge Function performs its own authentication for both paths. No service credential enters the client or repository.
+
+Validation: model/handler/route tests, isolated PGlite SQL tests covering ordinary-user denial, foreign-bucket exclusion, linked-file protection, disabled schedules, reference fence, retry, and completion. Existing role/settings/navigation tests pass. Production verification checks rules remain disabled, no deletion jobs were created, service RPCs deny anon/authenticated, and RLS is enabled. Actual file deletion is tested with mocks/isolated data, never by deleting production files. Live browser visual QA remains unverified in this environment.
+
+Recovery: permanent file deletion requires an independent Storage backup to restore. This feature is not a backup system. Disable rules to pause automatic deletion. Frontend rollback does not remove the database reference fences or retention worker; disable rules before rollback. Do not drop the tombstones if deleted keys could be reused.

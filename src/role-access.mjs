@@ -15,7 +15,7 @@ export function pageAction(page=''){
 }
 export function permitsPage(access,module,page){
  if(!effectiveRole(access.profile))return false;
- if(['set-users','set-roles','set-permissions','set-dashboard-access'].includes(page))return access.profile.is_super_admin===true;
+ if(['set-users','set-roles','set-permissions','set-dashboard-access','set-document-retention'].includes(page))return access.profile.is_super_admin===true;
  if(page==='set-inventory'||page==='quot-pricebook')return access.can('inventory','view');
  if(page==='set-sales-targets')return access.can('reports','view');
  if(['set-ai','set-api','set-package','set-lead-fields'].includes(page))return access.can('settings','manage_settings');
