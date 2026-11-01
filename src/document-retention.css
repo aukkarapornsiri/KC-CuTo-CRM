@@ -1,0 +1,20 @@
+/* Compact top rules; preserve each CRM document group's own retention schedule. */
+.crm-settings.kc-retention-page{max-width:none;width:100%;min-width:0;margin:0;font-family:'IBM Plex Sans Thai',sans-serif;container:kc-retention / inline-size}
+.kc-retention-rules{padding:18px;margin:16px 0 20px;border:1px solid #dce5ed;border-radius:12px;background:#fff;color:#173651}
+.kc-retention-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.kc-retention-page .kc-retention-head h2{font-size:17px;font-weight:600;line-height:25px;margin:0}
+.kc-retention-summary{color:#688095;font-size:12px;line-height:20px;white-space:nowrap}
+.kc-retention-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.kc-retention-rule{min-width:0;display:flex;flex-direction:column;gap:8px}
+.kc-retention-category{display:flex;align-items:center;gap:8px;min-height:24px;font-size:14px;line-height:22px;cursor:pointer}
+.kc-retention-page .kc-retention-category input[type=checkbox]{margin:0;width:16px;min-height:16px;height:16px;flex:none;accent-color:#087f8c}
+.kc-retention-category span{overflow-wrap:anywhere}
+.kc-retention-inputs{display:grid;grid-template-columns:minmax(52px,1fr) auto minmax(78px,1.15fr) auto;align-items:center;gap:8px}
+.kc-retention-page .kc-retention-inputs input,.kc-retention-page .kc-retention-inputs select{box-sizing:border-box;width:100%;min-width:0;height:36px;padding:6px 10px;border:1px solid #dce5ed;border-radius:8px;background:#fff;color:#173651;font-family:inherit;font-size:14px;line-height:22px}
+.kc-retention-page .kc-retention-save{height:36px;min-height:36px;padding:6px 12px;border:1px solid #087f8c;border-radius:8px;background:#087f8c;color:#fff;font-family:inherit;font-size:13px;line-height:22px;white-space:nowrap}
+.kc-retention-save:hover{background:#076d78}
+.kc-retention-unit{font-size:12px;line-height:20px;color:#688095}
+.kc-retention-foot{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-top:10px;color:#688095;font-size:12px;line-height:20px}
+.kc-retention-foot p{margin:0}.kc-retention-foot details{max-width:350px;flex-shrink:0}.kc-retention-foot summary{color:#087f8c;cursor:pointer;white-space:nowrap}.kc-retention-foot details[open] p{margin-top:8px}
+@container kc-retention (max-width:850px){.kc-retention-controls{grid-template-columns:minmax(0,1fr)}.kc-retention-rule{display:grid;grid-template-columns:minmax(160px,1fr) minmax(270px,1.3fr);gap:12px;align-items:center}.kc-retention-foot{flex-direction:column;gap:6px}}
+@container kc-retention (max-width:520px){.kc-retention-rules{padding:14px}.kc-retention-rule{display:flex;gap:6px;align-items:stretch}.kc-retention-controls{gap:14px}.kc-retention-category{font-size:14px}.kc-retention-foot details{max-width:100%}.kc-retention-inputs{grid-template-columns:minmax(60px,1fr) auto minmax(88px,1fr) auto}}
