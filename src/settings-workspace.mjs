@@ -1,3 +1,4 @@
+import {createDocumentRetention} from './document-retention.mjs';
 import {createPagination} from './pagination.mjs';
 import {loadLeadRules,missingLeadFields} from './lead-field-rules.mjs';
 import {createLeadFieldSettings} from './lead-field-settings.mjs';
@@ -285,5 +286,6 @@ function Permissions({lang,mode='permissions',revision=0,onCreate,onEdit}){
  }
  const AIStatus=createAISettings({React,client,useApp});
  const LeadFields=createLeadFieldSettings({React,client,useApp,useAccess});
- return {Company,DataEditor,Permissions,Feed,Transfer,Security,AIStatus,LeadFields};
+ const Documents=createDocumentRetention({React,client,useApp});
+ return {Company,DataEditor,Permissions,Feed,Transfer,Security,AIStatus,LeadFields,Documents};
 }

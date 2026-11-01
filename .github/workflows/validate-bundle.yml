@@ -51,6 +51,7 @@ jobs:
           node --check src/customer360.mjs
           node --test tests/customer360-loader-cancel.test.mjs tests/customer360-portfolio-lifecycle.test.mjs tests/customer360-completeness.test.mjs tests/moc-company.test.mjs tests/company-financial.test.mjs tests/customer-health.test.mjs tests/customer360-journey.test.mjs tests/customer360.test.mjs tests/customer360-followup.test.mjs tests/customer360-readiness.test.mjs tests/customer360-finance.test.mjs
           node --check src/inventory.mjs
+          node --test tests/document-retention.test.mjs
           node --test tests/role-access.test.mjs tests/permission-matrix-exhaustive.test.mjs tests/delete-user.test.mjs tests/experience-access.test.mjs tests/inventory-permission-controls.test.mjs tests/user-status-actions.test.mjs
           node --test tests/inventory-model.test.mjs tests/inventory-api.test.cjs
           node --check src/service-desk.mjs
@@ -97,6 +98,7 @@ jobs:
       - name: Test assignment email summaries in isolated Postgres
         run: |
           npm install --no-save --no-package-lock @electric-sql/pglite@0.3.14
+          node --test tests/document-retention-db.test.mjs
           node --test tests/quotation-followup.test.mjs tests/quotation-followup-db.test.mjs
           node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs tests/rental-quotation-db.test.mjs tests/lead-duplicates-db.test.mjs tests/lead-field-rules.test.mjs
       - name: Parse Edge Function TypeScript
