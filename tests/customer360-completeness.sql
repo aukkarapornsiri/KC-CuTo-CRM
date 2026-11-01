@@ -1,0 +1,27 @@
+begin;
+do $$declare aid uuid; cid uuid:=gen_random_uuid(); task uuid:=gen_random_uuid(); n int; stmt jsonb; begin
+ select id into aid from public.profiles where is_super_admin and is_active and deleted_at is null limit 1;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',aid,'role','authenticated')::text,true);
+ insert into public.customers(id,code,name,status,owner_id,tax_id,created_at) values(cid,'C360-QA-'||cid,'Synthetic completeness QA','Active',aid,'0105537004444',now()-interval '70 days');
+ insert into public.activities(id,type,subject,customer_id,owner_id,status,scheduled_at) values(task,'Call','Synthetic QA overdue',cid,aid,'planned',now()-interval '2 days');
+ execute 'set local role authenticated';
+ if not exists(select 1 from public.crm_customer_health_signals where customer_id=cid and coverage=100 and engagement_penalty=15 and followup_penalty=15 and stakeholder_penalty=10 and score=60) then raise exception 'Portfolio score mismatch';end if;
+ insert into public.crm_customer_communications(customer_id,provider,external_id,direction,subject,occurred_at,created_by) values(cid,'phone','qa','inbound','QA',now(),aid);
+ begin insert into public.crm_customer_communications(customer_id,provider,external_id,direction,subject,occurred_at,created_by) values(cid,'phone','wrong-actor','inbound','QA',now(),gen_random_uuid());raise exception 'BAD_ACTOR_ALLOWED';exception when insufficient_privilege then null;end;
+ begin insert into public.crm_customer_communications(customer_id,provider,external_id,direction,subject,occurred_at,created_by) values(cid,'outlook','fake-provider','inbound','QA',now(),aid);raise exception 'FAKE_PROVIDER_ALLOWED';exception when insufficient_privilege then null;end;
+ execute 'reset role';
+ perform private.crm_customer_health_reminders();perform private.crm_customer_health_reminders();
+ select count(*) into n from public.notifications where related_id=cid and event_kind like 'customer_health%' and resolved_at is null;
+ if n<>3 then raise exception 'Risk dimensions or dedup mismatch: %',n;end if;
+ update public.activities set status='completed',scheduled_at=now() where id=task;perform private.crm_customer_health_reminders();
+ if exists(select 1 from public.notifications where related_id=cid and event_kind in ('customer_health','customer_health_engagement') and resolved_at is null) then raise exception 'Risk resolution failed';end if;
+ stmt:=jsonb_build_object('tax_id','0105537004444','company_name','Synthetic QA company','fiscal_year',2025,'statement_scope','standalone','period_start','2025-01-01','period_end','2025-12-31','revenue','123456789012345.67','net_profit','-5.25','assets','10','liabilities','15','equity','-5','source_provider','Synthetic QA','source_reference','https://example.com/qa','source_as_of','2026-01-01');
+ perform public.crm_import_company_statement(cid,stmt);perform public.crm_import_company_statement(cid,stmt);
+ if not exists(select 1 from public.crm_company_financial_statements where tax_id='0105537004444' and fiscal_year=2025 and revenue=123456789012345.67 and net_profit=-5.25) then raise exception 'Statement precision/import failed';end if;
+ begin perform public.crm_import_company_statement(cid,stmt||'{"tax_id":"0100000000000"}'::jsonb);raise exception 'BAD_TAX_ALLOWED';exception when others then if sqlerrm<>'TAX_ID_MISMATCH' then raise;end if;end;
+ perform set_config('request.jwt.claims','{"role":"anon"}',true);execute 'set local role authenticated';
+ begin perform public.crm_import_company_statement(cid,stmt);raise exception 'UNAUTH_IMPORT_ALLOWED';exception when others then if sqlerrm<>'ACCESS_DENIED' then raise;end if;end;
+ if exists(select 1 from public.crm_customer_health_signals) or exists(select 1 from public.crm_customer_communications) then raise exception 'Inactive user could read data';end if;
+ execute 'reset role';
+end $$;
+rollback;

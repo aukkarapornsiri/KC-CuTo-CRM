@@ -1,0 +1,2 @@
+revoke all on public.crm_customer_sales_orders,public.crm_customer_health_signals from authenticated;
+grant select on public.crm_customer_sales_orders,public.crm_customer_health_signals to authenticated;
