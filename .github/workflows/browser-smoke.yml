@@ -21,6 +21,8 @@ jobs:
         include:
           - group: microsoft-settings
             suites: ""
+          - group: brand-master
+            suites: master-data-smoke
           - group: pagination
             suites: pagination-smoke
           - group: ai-analytics
