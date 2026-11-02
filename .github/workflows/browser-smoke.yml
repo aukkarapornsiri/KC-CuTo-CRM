@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: microsoft-settings
+            suites: ""
           - group: pagination
             suites: pagination-smoke
           - group: ai-analytics
@@ -87,6 +89,9 @@ jobs:
             cat test-artifacts/$suite.log
           done
           exit "$task_status"
+      - name: Validate Microsoft settings form
+        if: matrix.group == 'microsoft-settings'
+        run: node tests/microsoft-integration-settings-browser.cjs
       - name: Validate decision report dashboard
         if: matrix.group == 'decision-report'
         run: node tests/decision-reports-browser.cjs
