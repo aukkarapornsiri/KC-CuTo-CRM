@@ -1,3 +1,4 @@
+import {isCurrentApprover} from './approval-route.mjs';
 import {createRecordPopup} from './record-popup.mjs';
 import {assignmentTarget} from './assignment-links.mjs';
 import {loadProfileSignature} from './profile-signature.mjs';
@@ -23,12 +24,12 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
       readAll(()=>{let q=client.from('crm_so_approvals').select('*').order('requested_at',{ascending:false}).order('sales_order_id');return tab==='pending'?q.eq('status','pending'):tab==='sent'?q.eq('requested_by',profile.id):q.neq('status','pending');})]);
      const relevant=requests.filter(r=>tab==='pending'?canReviewQuotation(r,profile.id,can('approve')):tab==='sent'?r.submitted_by===profile.id:r.status!=='pending'&&(r.submitted_by===profile.id||r.approver_ids?.includes(profile.id)));
      for(const a of relevant)list.push({kind:'quotation',key:'q:'+a.id,id:a.quotation_id,request:a,...a.snapshot,created_at:a.created_at,status:a.status});
-     const visibleSO=soRequests.filter(a=>tab==='pending'?a.status==='pending'&&can('approve'):tab==='sent'?a.requested_by===profile.id:a.status!=='pending'&&(a.requested_by===profile.id||a.reviewed_by===profile.id));
+     const visibleSO=soRequests.filter(a=>tab==='pending'?a.status==='pending'&&can('approve')&&isCurrentApprover(a,profile.id):tab==='sent'?a.requested_by===profile.id:a.status!=='pending'&&(a.requested_by===profile.id||a.reviewed_by===profile.id));
      if(visibleSO.length){const orders=demoMode?records.native_sales_orders||[]:await unwrap(client.from('crm_sales_orders').select('*').in('id',visibleSO.map(a=>a.sales_order_id)));for(const a of visibleSO){const s=orders.find(s=>s.id===a.sales_order_id);if(s)list.push({...s,kind:'so',key:'so:'+s.id,request:a,status:a.status,orderStatus:s.status,created_at:a.requested_at});}}
     }
     if(can('view')){
      const changes=demoMode?records.so_amendments||[]:await readAll(()=>{let q=client.from('crm_so_amendments').select('*').order('requested_at',{ascending:false}).order('id');return tab==='pending'?q.eq('status','pending'):tab==='sent'?q.eq('requested_by',profile.id):q.in('status',['approved','rejected','cancelled','applied']);});
-     for(const a of changes){if(tab==='pending'&&(!can('approve')||a.requested_by===profile.id))continue;const s=a.after_snapshot||a.before_snapshot;list.push({...s,id:a.sales_order_id,kind:'amendment',key:'amendment:'+a.id,request:a,status:a.status,orderStatus:s.status,created_at:a.requested_at,summary:a.reason});}
+     for(const a of changes){if(tab==='pending'&&(!can('approve')||a.requested_by===profile.id||!isCurrentApprover(a,profile.id)))continue;const s=a.after_snapshot||a.before_snapshot;list.push({...s,id:a.sales_order_id,kind:'amendment',key:'amendment:'+a.id,request:a,status:a.status,orderStatus:s.status,created_at:a.requested_at,summary:a.reason});}
     }
     // Other workflows keep their own permissions and decision handlers at the source.
     if(!demoMode&&tab!=='sent'){
@@ -91,7 +92,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
   const summary=r=>r.kind==='amendment'?r.request.reason:r.summary||r.note||(r.items||[]).slice(0,2).map(x=>(x.name||'')+' × '+(x.qty||x.quantity||1)).join(' · ')||t('เปิดดูรายละเอียดเพื่อพิจารณา','Open details to review');
   const requester=r=>r.request?.requested_by===profile?.id||r.request?.submitted_by===profile?.id?t('คุณ','You'):r.requester_name||((r.request?.requested_by===r.owner_id||r.request?.submitted_by===r.owner_id)?r.owner_name:'')||t('ผู้ใช้ในระบบ','CRM user');
   const requestedDate=r=>r.created_at&&Number.isFinite(Date.parse(r.created_at))?new Intl.DateTimeFormat(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(r.created_at)):'—';
-  const actionable=selected?.status==='pending'&&can('approve')&&(selected.kind==='quotation'?canReviewQuotation(selected.request,profile?.id,true):selected.kind==='amendment'?selected.request.requested_by!==profile?.id:selected.kind==='so'&&selected.orderStatus!=='cancelled');
+  const actionable=selected?.status==='pending'&&can('approve')&&isCurrentApprover(selected.request,profile?.id)&&(selected.kind==='quotation'?canReviewQuotation(selected.request,profile?.id,true):selected.kind==='amendment'?selected.request.requested_by!==profile?.id:selected.kind==='so'&&selected.orderStatus!=='cancelled');
   const button=(label,fn,props={})=>h('button',{type:'button',onClick:fn,disabled:busy,...props},label);
   return h('section',{className:'kc-approval-app','aria-label':t('ศูนย์อนุมัติ','Approval center')},
    h('header',{className:'kc-approval-top'},h('div',null,h('h1',null,t('ศูนย์อนุมัติ','Approval center')),h('p',null,t('งานที่ต้องตัดสินใจของคุณวันนี้','Your requests to review today'))),button(h('img',{src:'./assets/approval/refresh.svg',width:20,height:20,alt:''}),()=>void load(),{disabled:busy||loading,'aria-label':t('โหลดใหม่','Refresh'),className:'kc-approval-refresh'})),

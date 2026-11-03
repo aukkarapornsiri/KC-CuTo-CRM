@@ -3,7 +3,7 @@ export const MODULE_LABELS={inventory:['สินค้าและคลัง'
 export const ACTION_LABELS={view:['ดู','View'],create:['สร้าง','Create'],edit:['แก้ไข','Edit'],delete:['ลบ / ยกเลิก','Delete'],export:['ส่งออก','Export'],approve:['อนุมัติ','Approve'],assign:['มอบหมาย','Assign'],import:['นำเข้า','Import'],manage_settings:['ตั้งค่าระบบ','Manage settings']};
 export const DASHBOARD_LABELS={my:['ของฉัน','My dashboard'],sales:['ฝ่ายขาย','Sales'],manager:['ผู้จัดการ','Manager'],exec:['ผู้บริหาร','Executive'],service:['งานบริการ','Service'],renewal:['ต่ออายุสัญญา','Renewals'],admin:['ผู้ดูแลระบบ','Administration'],ai:['ผู้ช่วย AI','AI assistant']};
 
-export function createAccessManagement({React,RecordEditor,Permissions,Feed,client,useApp,demoStats}){
+export function createAccessManagement({React,RecordEditor,ApprovalFlow,Permissions,Feed,client,useApp,demoStats}){
  const h=React.createElement;
  const tabs=[['users','ผู้ใช้','Users'],['roles','บทบาทและสิทธิ์','Roles and permissions'],['dashboards','การมองเห็นแดชบอร์ด','Dashboard visibility'],['workflow','ขั้นตอนอนุมัติ','Approval workflow'],['audit','บันทึกการตรวจสอบ','Audit log']];
  return function AccessManagement({lang}){
@@ -22,7 +22,7 @@ export function createAccessManagement({React,RecordEditor,Permissions,Feed,clie
    statsError&&h('p',{role:'alert'},statsError),
    h('div',{className:'crm-access-card'},h('div',{className:'crm-access-tabs',role:'tablist','aria-label':tr('การจัดการสิทธิ์','Access management')},tabs.map(([id,th,en])=>h('button',{key:id,id:'access-tab-'+id,type:'button',role:'tab','aria-selected':tab===id,'aria-controls':'access-panel-'+id,tabIndex:tab===id?0:-1,onKeyDown:onKey,onClick:()=>change(id)},tr(th,en)))),
     tabs.filter(([id])=>visited.includes(id)).map(([id,th,en])=>h('div',{key:id,id:'access-panel-'+id,role:'tabpanel','aria-labelledby':'access-tab-'+id,hidden:tab!==id,className:'crm-access-panel'},
-     id==='users'?h(RecordEditor,{lang,kind:'users',active:tab===id}):id==='workflow'?h(RecordEditor,{lang,kind:'workflow',active:tab===id}):id==='audit'?(tab==='audit'?h(Feed,{lang,audit:true}):null):id==='dashboards'?h(Permissions,{lang,mode:'dashboards'}):h(React.Fragment,null,
+     id==='users'?h(RecordEditor,{lang,kind:'users',active:tab===id}):id==='workflow'?h(ApprovalFlow,{lang,active:tab===id}):id==='audit'?(tab==='audit'?h(Feed,{lang,audit:true}):null):id==='dashboards'?h(Permissions,{lang,mode:'dashboards'}):h(React.Fragment,null,
       editor&&h('section',{className:'crm-access-role-editor','aria-label':tr('จัดการบทบาท','Manage role')},h(RecordEditor,{lang,kind:'roles',active:tab===id,initialEdit:editor.row,initialCreate:!editor.row,onSaved:()=>{E(null);R(v=>v+1);},onCancel:()=>E(null),hidePermissions:true})),
       h(Permissions,{lang,revision,onCreate:()=>E({row:null}),onEdit:row=>E({row})}))))));
  };
