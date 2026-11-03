@@ -1,3 +1,4 @@
+import {canReviewSO} from './approval-policy.mjs';
 import {createSalesOrderDetailLayout} from './sales-order-detail-layout.mjs';
 import {createQuotationDocumentComponents} from './quotation-document.mjs';
 import {createSOAmendments} from './so-amendments.mjs';
@@ -142,8 +143,8 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
      approval?.review_note&&h('small',null,approval.review_note),
      h('div',{className:'crm-actions'},
        selected.status!=='cancelled'&&(!approval||approval.status==='rejected')&&(can('create')||can('approve'))&&button(t('ส่งขออนุมัติ SO','Request SO approval'),()=>changeApproval('request')),
-       selected.status!=='cancelled'&&approval?.status==='pending'&&can('approve')&&button(t('อนุมัติ SO','Approve SO'),()=>changeApproval('approve')),
-       selected.status!=='cancelled'&&approval?.status==='pending'&&can('approve')&&button(t('ไม่อนุมัติ','Reject SO'),()=>changeApproval('reject'))
+       selected.status!=='cancelled'&&canReviewSO(approval,profile?.id,can('approve'))&&button(t('อนุมัติ SO','Approve SO'),()=>changeApproval('approve')),
+       selected.status!=='cancelled'&&canReviewSO(approval,profile?.id,can('approve'))&&button(t('ไม่อนุมัติ','Reject SO'),()=>changeApproval('reject'))
      )
    ),
    h(SOAmendments,{order:selected,lang,profile,can,canFinancial,demoMode,records,onSaved:async id=>{await readList();await openOrder(id);}}),
