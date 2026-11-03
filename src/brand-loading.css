@@ -1,0 +1,6 @@
+.kc-brand-loading{box-sizing:border-box;min-height:100vh;min-height:100dvh;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:32px 24px;background:radial-gradient(ellipse at center,#fff 35%,#f2f8f8 100%)}
+.kc-brand-loading__logo{display:block;width:min(360px,80vw);height:auto;object-fit:contain}
+.kc-brand-loading__track{display:block;width:144px;height:4px;overflow:hidden;border-radius:99px;background:#dceeed}
+.kc-brand-loading__track>span{display:block;width:45%;height:100%;border-radius:inherit;background:#08a498;animation:kc-brand-loading-progress 1.4s ease-in-out infinite}
+@keyframes kc-brand-loading-progress{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}
+@media(prefers-reduced-motion:reduce){.kc-brand-loading__track>span{animation:none;width:100%;opacity:.65}}

@@ -1,3 +1,4 @@
+import {renderBrandLoading} from './brand-loading.mjs';
 import {observeRead,readIdentity} from './read-coordinator.mjs';
 export const ACCESS_CHANGED='crm-access-changed';
 export function effectiveRole(profile){return profile?.is_active===true&&!profile.deleted_at&&!profile.deletion_requested_at&&profile.access_active!==false?(profile.role==='custom'?profile.custom_role_key:profile.role):null;}
@@ -57,7 +58,7 @@ export function createRoleAccess({React,client,useApp}){
  function Gate({module,page,render}){
   const access=useAccess(),{lang,demoMode,navParams}=useApp();
   if(demoMode)return render();
-  if(access.loading)return h('p',{role:'status'},lang==='th'?'กำลังตรวจสอบสิทธิ์…':'Checking access…');
+  if(access.loading)return renderBrandLoading(React,lang);
   if(access.error||!permitsPage(access,module,page)||(navParams?.create&&!access.can(module,'create')))return h('section',{className:'crm-settings'},h('h2',null,lang==='th'?'ไม่มีสิทธิ์เข้าถึงหน้านี้':'Access denied'),h('p',null,access.error||(lang==='th'?'กรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์':'Contact your administrator to request access')),h('button',{onClick:access.refresh},lang==='th'?'ตรวจสอบสิทธิ์อีกครั้ง':'Check access again'));
   return h(React.Fragment,{key:JSON.stringify([effectiveRole(access.profile),access.rows,access.dashboards])},render());
  }
