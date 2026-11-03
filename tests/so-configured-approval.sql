@@ -1,0 +1,60 @@
+-- Rollback-only integration: no documents, policies or notifications persist.
+begin;
+do $$
+declare admin_id uuid;second_id uuid;other_id uuid;s public.crm_sales_orders;a public.crm_so_approvals;m public.crm_so_amendments;pid uuid;k text;begin
+ select id into admin_id from public.profiles where is_super_admin and is_active and deleted_at is null limit 1;
+ select p.id into second_id from public.profiles p join public.role_permissions r on r.role_key=case when p.role='custom' then p.custom_role_key else p.role end and r.module='quotations' and r.can_approve where p.is_active and p.deleted_at is null and p.id<>admin_id order by p.id limit 1;
+ select p.id into other_id from public.profiles p join public.role_permissions r on r.role_key=case when p.role='custom' then p.custom_role_key else p.role end and r.module='quotations' and r.can_approve where p.is_active and p.deleted_at is null and p.id not in(admin_id,second_id) order by p.id limit 1;
+ select o.* into s from public.crm_sales_orders o join public.profiles p on p.id=o.owner_id join public.role_permissions r on r.role_key=case when p.role='custom' then p.custom_role_key else p.role end and r.module='quotations' and r.can_edit and r.can_create where o.status='confirmed' and p.is_active and p.deleted_at is null and o.owner_id not in(admin_id,second_id,other_id) and not exists(select 1 from public.crm_so_amendments x where x.sales_order_id=o.id and x.status in('pending','approved','applying')) limit 1;
+ if s.id is null or second_id is null or other_id is null then raise exception 'Independent test actors and SO required';end if;
+ perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ update public.crm_approval_policies set is_active=false where is_active;
+ insert into public.crm_approval_policies(name,minimum_amount,approver_ids,is_active) values('Rollback SO routing test',0,array[admin_id,second_id],true) returning id into pid;
+ -- A threshold above the order must not be selected.
+ insert into public.crm_approval_policies(name,minimum_amount,approver_ids,is_active) values('Rollback higher threshold',s.total+1,array[other_id],true);
+ foreach second_id in array array[admin_id,second_id] loop
+  k:=second_id||'/seller-signature-policy-test.png';
+  insert into storage.objects(bucket_id,name,owner_id,metadata) values('crm-quotation-assets',k,second_id::text,'{"mimetype":"image/png","size":1}');
+  insert into public.crm_sales_signature_defaults(user_id,storage_key) values(second_id,k) on conflict(user_id) do update set storage_key=excluded.storage_key;
+ end loop;
+ select approver_ids[2] into second_id from public.crm_approval_policies where id=pid;
+ delete from public.crm_so_approvals where sales_order_id=s.id;
+ perform set_config('request.jwt.claim.sub',s.owner_id::text,true);
+ a:=public.crm_so_approval_action(s.id,'request','Policy test');
+ if a.approval_policy_id<>pid or a.current_step<>1 or a.approver_ids<>array[admin_id,second_id] then raise exception 'Wrong configured route';end if;
+ if (select count(*) from public.notifications where resolved_at is null and event_key like 'so-approval:'||s.id||':%' and user_id<>admin_id)>0 then raise exception 'SO sent to non-current approvers';end if;
+ perform set_config('request.jwt.claim.sub',other_id::text,true);
+ begin perform public.crm_so_approval_action(s.id,'approve','Unauthorized');raise exception 'Non-policy approver accepted';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',second_id::text,true);
+ begin perform public.crm_so_approval_action(s.id,'approve','Out of order');raise exception 'Out of order accepted';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ a:=public.crm_so_approval_action(s.id,'approve','First step');
+ if a.status<>'pending' or a.current_step<>2 or jsonb_array_length(a.approval_history)<>1 then raise exception 'First step incorrectly completed SO';end if;
+ if not exists(select 1 from public.notifications where resolved_at is null and user_id=second_id and event_key like 'so-approval:'||s.id||':%') or exists(select 1 from public.notifications where resolved_at is null and user_id<>second_id and event_key like 'so-approval:'||s.id||':%') then raise exception 'Second-step notification misrouted';end if;
+ perform set_config('request.jwt.claim.sub',second_id::text,true);
+ a:=public.crm_so_approval_action(s.id,'approve','Final step');
+ if a.status<>'approved' or jsonb_array_length(a.approval_history)<>2 or a.signature_storage_key is null then raise exception 'Final step/signature missing';end if;
+ perform set_config('request.jwt.claim.sub',s.owner_id::text,true);
+ m:=public.crm_so_amendment_action(s.id,'request','Rollback policy amendment',s.updated_at,null);
+ if m.approval_policy_id<>pid or m.current_step<>1 then raise exception 'Amendment policy missing';end if;
+ perform set_config('request.jwt.claim.sub',other_id::text,true);
+ begin perform public.crm_so_amendment_action(s.id,'approve','Unauthorized',null,m.id);raise exception 'Non-policy amendment approver accepted';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ m:=public.crm_so_amendment_action(s.id,'approve','First step',null,m.id);
+ if m.status<>'pending' or m.current_step<>2 then raise exception 'Amendment approved prematurely';end if;
+ if not exists(select 1 from public.notifications where resolved_at is null and user_id=second_id and event_key like 'so-amendment:'||m.id||':pending:%') or exists(select 1 from public.notifications where resolved_at is null and user_id<>second_id and event_key like 'so-amendment:'||m.id||':pending:%') then raise exception 'Amendment notice misrouted';end if;
+ perform set_config('request.jwt.claim.sub',second_id::text,true);
+ m:=public.crm_so_amendment_action(s.id,'approve','Final step',null,m.id);
+ if m.status<>'approved' or jsonb_array_length(m.approval_history)<>2 then raise exception 'Amendment final step missing';end if;
+ perform set_config('request.jwt.claim.sub',s.owner_id::text,true);
+ perform public.crm_so_amendment_action(s.id,'cancel','',null,m.id);
+ m:=public.crm_so_amendment_action(s.id,'request','Reject policy test',s.updated_at,null);
+ perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ m:=public.crm_so_amendment_action(s.id,'reject','Rejected for test',null,m.id);
+ if m.status<>'rejected' then raise exception 'Rejection did not stop route';end if;
+ begin perform public.crm_so_amendment_action(s.id,'request','Self policy test',s.updated_at,null);raise exception 'Configured requester self approval accepted';exception when insufficient_privilege then null;end;
+ update public.crm_approval_policies set is_active=false where is_active;
+ perform set_config('request.jwt.claim.sub',s.owner_id::text,true);
+ begin perform public.crm_so_amendment_action(s.id,'request','Missing policy test',s.updated_at,null);raise exception 'Missing policy accepted';exception when others then if sqlerrm='Missing policy accepted' then raise;end if;end;
+end $$;
+rollback;
