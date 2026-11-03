@@ -27,3 +27,15 @@ test('direct amendment link loads the request by ID and renders authorization co
  const C=createApprovalCenter({React:R,client,useApp:()=>({profile:{id:'reviewer'}}),useAccess:()=>({can:()=>true}),records:{}});C({lang:'en',initialRecordId:'request',initialKind:'amendment'});effects.forEach(fn=>fn());await tick();
  assert.equal(states[4]?.kind,'amendment');assert.equal(states[4]?.request.id,'request');assert.equal(states[4]?.id,'so');assert.ok(!calls.includes('quotations'));
 });
+
+test('authorized cost draft uses the SO snapshot rather than current catalog cost',()=>{
+ const d=amendmentDraft(order,{line_financials:[{cost_total:150}]});assert.equal(d.items[0].cost,75);
+ const recurring={...order,items:[{qty:2,cycle_count:3,billing_period:'month'},{qty:10,cycle_count:1,billing_period:'once'}]};
+ const r=amendmentDraft(recurring,{line_financials:[{cost_total:180},{cost_total:500}]});assert.equal(r.items[0].cost,30);assert.equal(r.items[1].cost,500);
+});
+test('approved requester can open SO and Cost Sheet from the source quotation',async()=>{
+ const {createSOAmendmentReviewShortcut}=await import('../src/so-amendments.mjs');let opened;
+ const C=createSOAmendmentReviewShortcut({React:ReactMock([{id:'quote',request:{id:'request',status:'approved',sales_order_id:'so',requested_by:'seller'}}]),client:{}});
+ const tree=C({quotationId:'quote',profileId:'seller',lang:'en',canApprove:false,canEdit:true,onEdit:id=>opened=id});
+ walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit SO / Cost Sheet')).props.onClick();assert.equal(opened,'so');
+});

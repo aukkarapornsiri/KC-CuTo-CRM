@@ -1,0 +1,29 @@
+name: Cost Sheet Revision Review
+on:
+  pull_request:
+    paths:
+      - 'src/so-amendments.mjs'
+      - 'src/internal-workspace.mjs'
+      - 'tests/cost-sheet-revision-smoke.mjs'
+      - '.github/workflows/cost-sheet-revision.yml'
+jobs:
+  cost-sheet-revision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Verify Cost Sheet revision on mobile and desktop
+        run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/approval-http.log 2>&1 &
+          sleep 2
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/cost-sheet-revision-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cost-sheet-revision-review
+          path: test-artifacts/
