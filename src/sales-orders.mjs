@@ -1,3 +1,4 @@
+import {createQuotationDocumentComponents} from './quotation-document.mjs';
 import {createSOAmendments} from './so-amendments.mjs';
 import {filterOrders,orderMetrics} from './sales-order-view.mjs';
 import {createPagination} from './pagination.mjs';
@@ -20,7 +21,8 @@ export function validatePO(value){
  return value;
 }
 export function createSalesOrders({React,client,useApp,useAccess,records}){
- const Pagination=createPagination(React),SOAmendments=createSOAmendments({React,client});
+ const {QuotationDialog}=createQuotationDocumentComponents({React,client,useApp});
+ const Pagination=createPagination(React),SOAmendments=createSOAmendments({React,client,QuotationDialog});
  const h=React.createElement,Popup=createRecordPopup(React),unwrap=async p=>{const {data,error}=await p;if(error)throw error;return data;};
  return function SalesOrders({lang,quotation,initialOrderId,onClose,onQuotation}){
   const {demoMode,profile:appProfile,navigate}=useApp(),access=useAccess(),profile=access.profile||appProfile,t=(th,en)=>lang==='th'?th:en;
@@ -142,7 +144,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
        selected.status!=='cancelled'&&approval?.status==='pending'&&can('approve')&&button(t('ไม่อนุมัติ','Reject SO'),()=>changeApproval('reject'))
      )
    ),
-   h(SOAmendments,{order:selected,lang,profile,can,demoMode,records,onSaved:async id=>{await readList();await openOrder(id);}}),
+   h(SOAmendments,{order:selected,lang,profile,can,canFinancial,demoMode,records,onSaved:async id=>{await readList();await openOrder(id);}}),
    h('dl',{className:'crm-so-grid'},...[[t('ลูกค้า','Customer'),selected.customer_name],[t('ใบเสนอราคา','Quotation'),selected.quotation_code],[t('PO ลูกค้า','Customer PO'),selected.po_number],[t('วันที่ PO','PO date'),date(selected.po_date)],[t('กำหนดส่งมอบ','Expected delivery'),date(selected.expected_delivery_date)],[t('ที่อยู่เรียกเก็บเงิน','Billing address'),selected.billing_address],[t('เลขผู้เสียภาษี','Tax ID'),selected.tax_id],[t('ผู้รับผิดชอบ','Salesperson'),shortSalesName(selected.owner_name)]].map(([label,value])=>h('div',{key:label},h('dt',null,label),h('dd',null,value||'—')))),
    button(t('เปิดไฟล์ PO','Open PO attachment'),()=>run(async()=>{if(demoMode){ErrorText(t('โหมดทดลอง ไม่มีไฟล์จริง','Demo mode: no real attachment'));return;}const result=await unwrap(client.storage.from('crm-sales-orders').createSignedUrl(selected.po_file_key,120));const a=document.createElement('a');a.href=result.signedUrl;a.target='_blank';a.rel='noopener';a.click();})),
    itemTable(selected),
