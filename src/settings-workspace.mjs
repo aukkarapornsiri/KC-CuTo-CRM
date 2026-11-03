@@ -1,3 +1,4 @@
+import {createApprovalFlowSettings} from './approval-flow-settings.mjs';
 import {createRolePicker} from './role-groups.mjs';
 import {createDocumentRetention} from './document-retention.mjs';
 import {createPagination} from './pagination.mjs';
@@ -167,7 +168,8 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
   roles:{table:'custom_roles',title:['บทบาทและสิทธิ์','Roles and permissions'],key:'role_key',create:true,fields:[['role_key','รหัสบทบาท','Role key','text',true],['label_th','ชื่อภาษาไทย','Thai name','text',true],['label_en','ชื่อภาษาอังกฤษ','English name','text',true],['description','รายละเอียด','Description','textarea']]},
   workflow:{table:'crm_approval_policies',title:['Workflow การอนุมัติ','Approval workflow'],key:'id',create:true,fields:[['name','ชื่อนโยบาย','Policy name','text',true],['minimum_amount','ยอดขั้นต่ำ','Minimum amount','number',true],['approver_ids','ผู้อนุมัติตามลำดับที่เลือก','Approvers in selection order','members'],['is_active','ใช้งานอยู่','Active','checkbox']]}
  };
- const AccessManagement=createAccessManagement({React,RecordEditor,Permissions,Feed,client,useApp,demoStats:()=>[demo.profiles.filter(p=>p.is_active&&!p.deleted_at).length,0,demo.custom_roles.length,(demo.crm_approval_policies||[]).filter(p=>p.is_active).length]});
+ const ApprovalFlow=createApprovalFlowSettings({React,client,useApp,demo});
+ const AccessManagement=createAccessManagement({React,RecordEditor,ApprovalFlow,Permissions,Feed,client,useApp,demoStats:()=>[demo.profiles.filter(p=>p.is_active&&!p.deleted_at).length,0,demo.custom_roles.length,(demo.crm_approval_policies||[]).filter(p=>p.is_active).length]});
  function DataEditor(props){return ['users','roles'].includes(props.kind)?h(AccessManagement,{lang:props.lang}):h(RecordEditor,props);}
  function RecordEditor({lang,kind,active=true,initialEdit=null,initialCreate=false,onSaved,onCancel,hidePermissions=false}){
   const def=definitions[kind],{demoMode,profile}=useApp(),task=useTask(),tr=(a,b)=>lang==='th'?a:b,access=useAccess(),canEdit=demoMode||(['users','roles'].includes(kind)?profile?.is_super_admin===true:access.can('settings',kind==='workflow'?'manage_settings':'edit')),canCreate=demoMode||(['users','roles'].includes(kind)?profile?.is_super_admin===true:access.can('settings',kind==='workflow'?'manage_settings':'create'));
