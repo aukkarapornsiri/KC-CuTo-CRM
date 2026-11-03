@@ -182,7 +182,7 @@ export function createInternalWorkspace({React,client,useApp,useAccess}){
       // Keep the saved ID and version before the remote call. Retry edits the same activity.
       Edit({...saved});Message(t('บันทึกกิจกรรมแล้ว กำลังส่งไป Microsoft 365…','Activity saved. Sending to Microsoft 365…'));
       let result;try{result=await sendActivityCalendar(client,saved.id);}
-      catch(err){try{const fresh=await read();Edit(fresh.find(x=>x.id===saved.id)||saved);}catch{}throw Error(t('บันทึกกิจกรรมแล้ว แต่ส่งนัดหมายไม่สำเร็จ: ','Activity saved, but calendar delivery failed: ')+err.message);}
+      catch(err){Message(t('กิจกรรมบันทึกแล้ว · ยังไม่ได้เพิ่มใน Outlook กรุณาลองส่งจากรายการเดิมหลังแก้การเชื่อมต่อ','Activity saved · Not added to Outlook. Retry this same activity after fixing the connection.'));try{const fresh=await read();Edit(fresh.find(x=>x.id===saved.id)||saved);}catch{}throw Error(t('บันทึกกิจกรรมแล้ว แต่ส่งนัดหมายไม่สำเร็จ: ','Activity saved, but calendar delivery failed: ')+err.message);}
       Edit(null);Select(null);Page(0);Message(result.warning||t('ส่งนัดหมายสำเร็จ · ผู้รับคำเชิญ ','Meeting sent · Invitees: ')+(result.invited??0));
       await read();return;
     }
