@@ -22,7 +22,7 @@ export function createApprovalFlowSettings({React,client,useApp,demo}){
    Policies(v=>id?v.map(p=>p.id===id?row:p):[...v,row]);start(row);Message(t('บันทึก Flow Approve แล้ว','Approval flow saved'));window.dispatchEvent(new Event('crm-records-refresh'));
   }catch(e){ErrorText(e.message);}finally{lock.current=false;Busy(false);}}
   const button=(label,fn,disabled=false,props={})=>h('button',{type:'button',onClick:fn,disabled:busy||disabled,...props},label);
-  const field=(label,child)=>h('label',{className:'kc-flow-field'},h('span',null,label),child);
+  const field=(label,child)=>h('label',{className:'kc-flow-field'},h('span',null,label),React.cloneElement(child,{'aria-label':label}));
   const move=(i,delta)=>Ids(v=>{const a=[...v];[a[i],a[i+delta]]=[a[i+delta],a[i]];return a;});
   if(!allowed)return h('p',{role:'alert'},t('เฉพาะ Super Admin เท่านั้น','Super Admin access required'));
   const valid=ready&&validFlow(ids,people),selected=ids.filter(Boolean).length;
