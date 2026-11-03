@@ -1,2 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {validFlow} from '../src/approval-flow-settings.mjs';
+import {test} from 'node:test';import assert from 'node:assert/strict';import {validFlow,thresholdConflict} from '../src/approval-flow-settings.mjs';
 test('A flow requires distinct eligible users in every step',()=>{const p=[{id:'a'},{id:'b'}];assert.ok(validFlow(['b','a'],p));for(const ids of [[],['a','a'],[''],['a','inactive']])assert.equal(validFlow(ids,p),false)});
+
+test('Active thresholds conflict only within the same request type and exclude the edited policy',()=>{const rows=[{id:'a',request_type:'amendment',minimum_amount:0,is_active:true},{id:'b',request_type:'amendment',minimum_amount:100,is_active:false}];assert.equal(thresholdConflict(rows,'amendment','',0).id,'a');assert.equal(thresholdConflict(rows,'so','',0),undefined);assert.equal(thresholdConflict(rows,'amendment','a',0),undefined);assert.equal(thresholdConflict(rows,'amendment','',100),undefined);assert.equal(thresholdConflict(rows,'amendment','',0,false),false);});
