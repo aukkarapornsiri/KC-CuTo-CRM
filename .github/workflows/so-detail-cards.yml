@@ -2,10 +2,10 @@ name: SO Detail Cards Review
 on:
   pull_request:
     paths:
-      - 'src/so-detail-layout.mjs'
+      - 'src/sales-order-detail-layout.mjs'
       - 'src/sales-orders.mjs'
       - 'src/so-amendments.mjs'
-      - 'tests/so-details-smoke.mjs'
+      - 'tests/so-detail-cards-smoke.mjs'
       - '.github/workflows/so-detail-cards.yml'
 jobs:
   so-detail:
@@ -22,7 +22,7 @@ jobs:
           mkdir -p test-artifacts
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/so-detail-http.log 2>&1 &
           sleep 2
-          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/so-details-smoke.mjs
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/so-detail-cards-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
