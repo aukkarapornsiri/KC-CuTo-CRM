@@ -1,0 +1,30 @@
+name: Grouped Role Picker Review
+on:
+  pull_request:
+    paths:
+      - 'src/role-groups.mjs'
+      - 'src/settings-workspace.mjs'
+      - 'src/access-management.css'
+      - 'tests/role-groups-smoke.mjs'
+      - '.github/workflows/role-groups.yml'
+jobs:
+  grouped-roles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Verify grouped role selection on mobile and desktop
+        run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/approval-http.log 2>&1 &
+          sleep 2
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/role-groups-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grouped-roles-review
+          path: test-artifacts/
