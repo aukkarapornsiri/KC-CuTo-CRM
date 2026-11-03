@@ -1,0 +1,30 @@
+name: SO Detail Cards Review
+on:
+  pull_request:
+    paths:
+      - 'src/so-detail-layout.mjs'
+      - 'src/sales-orders.mjs'
+      - 'src/so-amendments.mjs'
+      - 'tests/so-details-smoke.mjs'
+      - '.github/workflows/so-detail-cards.yml'
+jobs:
+  so-detail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Verify SO cards and existing actions
+        run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/so-detail-http.log 2>&1 &
+          sleep 2
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/so-details-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: so-detail-cards
+          path: test-artifacts/
