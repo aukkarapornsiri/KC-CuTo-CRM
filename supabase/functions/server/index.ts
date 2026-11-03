@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { microsoftMailbox, microsoftExternalId, microsoftCredentials } from "./microsoft-calendar.mjs";
+import { microsoftMailbox, microsoftExternalId, microsoftCredentials, microsoftEventBody } from "./microsoft-calendar.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -235,10 +235,10 @@ async function handleIntune(req:Request){
 }
 async function pullMicrosoftCalendar(start:string,end:string,calendarUser:string){
   const token=await msToken();if(!token)throw new Error("Microsoft Calendar is not configured");
-  const params=new URLSearchParams({startDateTime:start,endDateTime:end,"$top":"500","$select":"id,subject,bodyPreview,start,end,organizer,location,isOnlineMeeting,onlineMeeting,webLink,isCancelled,lastModifiedDateTime"});
+  const params=new URLSearchParams({startDateTime:start,endDateTime:end,"$top":"500","$select":"id,subject,bodyPreview,start,end,organizer,location,isOnlineMeeting,onlineMeeting,webLink,isCancelled,lastModifiedDateTime,attendees,reminderMinutesBeforeStart"});
   let next:string|null=`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(calendarUser)}/calendarView?${params.toString()}`;
   const rows:any[]=[];let pages=0;
-  while(next&&pages<5){const r=await fetch(next,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json"}});if(!r.ok)throw new Error(`Microsoft Calendar pull failed (${r.status})`);const d=await r.json();rows.push(...(d.value??[]));next=d["@odata.nextLink"]??null;pages++;}
+  while(next&&pages<5){const r=await fetch(next,{headers:{Authorization:`Bearer ${token}`,Accept:"application/json",Prefer:'outlook.timezone="UTC"'}});if(!r.ok)throw new Error(`Microsoft Calendar pull failed (${r.status})`);const d=await r.json();rows.push(...(d.value??[]));next=d["@odata.nextLink"]??null;pages++;}
   return rows;
 }
 async function pullGoogleCalendar(start:string,end:string){
@@ -252,10 +252,10 @@ function externalCalendarActivity(provider:string,event:any,calendarId:string){
   const now=new Date().toISOString();
   if(provider==="microsoft_calendar"){
     const start=event.start?.dateTime;if(!event.id||!start)return null;
-    return{external_provider:provider,external_id:String(event.id),external_url:event.webLink??event.onlineMeeting?.joinUrl??null,external_synced_at:now,external_payload:event,calendar_provider:provider,external_event_id:String(event.id),external_calendar_id:calendarId,meeting_url:event.onlineMeeting?.joinUrl??null,sync_status:"synced",sync_error:null,type:event.isOnlineMeeting?"Online Meeting":"Meeting",subject:String(event.subject??"Microsoft 365 Meeting"),owner_name:String(event.organizer?.emailAddress?.name??event.organizer?.emailAddress?.address??""),scheduled_at:start,status:event.isCancelled?"cancelled":"planned",priority:"medium",description:[event.bodyPreview,event.location?.displayName,event.onlineMeeting?.joinUrl].filter(Boolean).join(" — ")||null,has_attachment:false,updated_at:now};
+    return{external_provider:provider,external_id:String(event.id),external_url:event.webLink??event.onlineMeeting?.joinUrl??null,external_synced_at:now,external_payload:event,calendar_provider:provider,external_event_id:String(event.id),external_calendar_id:calendarId,meeting_url:event.onlineMeeting?.joinUrl??null,sync_status:"synced",sync_error:null,type:event.isOnlineMeeting?"Online Meeting":"Meeting",subject:String(event.subject??"Microsoft 365 Meeting"),owner_name:String(event.organizer?.emailAddress?.name??event.organizer?.emailAddress?.address??""),scheduled_at:/Z$|[+-]\d\d:\d\d$/.test(start)?start:start+"Z",ended_at:event.end?.dateTime?(/Z$|[+-]\d\d:\d\d$/.test(event.end.dateTime)?event.end.dateTime:event.end.dateTime+"Z"):null,attendee_emails:(event.attendees??[]).map((p:any)=>p.emailAddress?.address).filter(Boolean).slice(0,100),teams_enabled:!!event.isOnlineMeeting,location:event.location?.displayName||"",reminder_minutes:event.reminderMinutesBeforeStart??15,status:event.isCancelled?"cancelled":"planned",priority:"medium",description:[event.bodyPreview,event.location?.displayName,event.onlineMeeting?.joinUrl].filter(Boolean).join(" — ")||null,has_attachment:false,updated_at:now};
   }
   const start=event.start?.dateTime??event.start?.date;if(!event.id||!start)return null;
-  return{external_provider:provider,external_id:String(event.id),external_url:event.htmlLink??event.hangoutLink??null,external_synced_at:now,external_payload:event,calendar_provider:provider,external_event_id:String(event.id),external_calendar_id:calendarId,meeting_url:event.hangoutLink??null,sync_status:"synced",sync_error:null,type:event.hangoutLink||event.conferenceData?"Online Meeting":"Meeting",subject:String(event.summary??"Google Calendar Meeting"),owner_name:String(event.organizer?.displayName??event.organizer?.email??""),scheduled_at:start,status:event.status==="cancelled"?"cancelled":"planned",priority:"medium",description:[event.description,event.location,event.hangoutLink].filter(Boolean).join(" — ")||null,has_attachment:false,updated_at:now};
+  return{external_provider:provider,external_id:String(event.id),external_url:event.htmlLink??event.hangoutLink??null,external_synced_at:now,external_payload:event,calendar_provider:provider,external_event_id:String(event.id),external_calendar_id:calendarId,meeting_url:event.hangoutLink??null,sync_status:"synced",sync_error:null,type:event.hangoutLink||event.conferenceData?"Online Meeting":"Meeting",subject:String(event.summary??"Google Calendar Meeting"),owner_name:String(event.organizer?.displayName??event.organizer?.email??""),scheduled_at:start,ended_at:event.end?.dateTime??event.end?.date??null,status:event.status==="cancelled"?"cancelled":"planned",priority:"medium",description:[event.description,event.location,event.hangoutLink].filter(Boolean).join(" — ")||null,has_attachment:false,updated_at:now};
 }
 async function handleCalendarPull(req:Request){
   const access=await requirePermission(req,"activities","create");if("error"in access)return access.error;
@@ -277,17 +277,16 @@ async function handleCalendarPull(req:Request){
   }catch(e){const message=e instanceof Error?e.message:"Calendar pull failed";await setStatus(provider,message.includes("not configured")?"not_configured":"error",message);await finishRun(run,"failed",{}, {},message);return json({error:message,provider},message.includes("not configured")?409:502);}
 }
 function times(a:any){const start=new Date(a.scheduled_at),end=new Date(start.getTime()+3600000);return{start,end};}
-async function pushMicrosoft(a:any,calendarUser:string){
+async function pushMicrosoft(a:any,calendarUser:string,sendInvitations=false){
   const token=await msToken();if(!token)throw new Error("Microsoft Calendar is not configured");
-  const {start,end}=times(a),body:any={subject:a.subject,body:{contentType:"Text",content:a.description||""},start:{dateTime:start.toISOString().replace("Z",""),timeZone:"UTC"},end:{dateTime:end.toISOString().replace("Z",""),timeZone:"UTC"},isOnlineMeeting:a.type==="Online Meeting"};
-  if(a.type==="Online Meeting")body.onlineMeetingProvider="teamsForBusiness";
+  const body:any=microsoftEventBody(a,sendInvitations);
   const linked=a.calendar_provider==="microsoft_calendar"&&a.external_event_id;
   if(linked&&a.external_calendar_id!==calendarUser)throw new Error("Calendar owner changed; unlink the previous event before syncing");
   if(!linked)body.transactionId=`cuto-${a.id}`;
   const endpoint=`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(calendarUser)}/calendar/events`+(linked?`/${encodeURIComponent(a.external_event_id)}`:"");
   const r=await fetch(endpoint,{method:linked?"PATCH":"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(body)});
   if(!r.ok)throw new Error(`Microsoft Calendar sync failed (${r.status})`);
-  const event=await r.json();return{id:event.id,calendarId:calendarUser,webUrl:event.webLink??null,meetingUrl:event.onlineMeeting?.joinUrl??null};
+  const event=await r.json();return{id:event.id,calendarId:calendarUser,webUrl:event.webLink??null,meetingUrl:event.onlineMeeting?.joinUrl??null,invited:sendInvitations?(body.attendees?.length??0):0,warning:body.isOnlineMeeting&&!event.onlineMeeting?.joinUrl?'นัดหมายถูกบันทึกแล้ว แต่ยังไม่ได้รับลิงก์ Teams กรุณาตรวจใน Outlook / Meeting saved; Teams link is not available yet. Check Outlook.':null};
 }
 async function pushGoogle(a:any){
   const token=await googleToken();if(!token)throw new Error("Google Calendar is not configured");
@@ -303,7 +302,8 @@ async function handleCalendarPush(req:Request){
   const access=await requirePermission(req,"activities","edit");if("error"in access)return access.error;
   const body=await req.json().catch(()=>({})),provider=String(body.provider??""),activityId=String(body.activity_id??"");
   if(!["microsoft_calendar","google_calendar"].includes(provider)||!activityId)return json({error:"provider and activity_id are required"},400);
-  const {data:a}=await adminClient.from("activities").select("*").eq("id",activityId).maybeSingle();if(!a)return json({error:"Activity not found"},404);
+  const scoped=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:req.headers.get("Authorization")||""}},auth:{persistSession:false,autoRefreshToken:false}});
+  const {data:a}=await scoped.from("activities").select("*").eq("id",activityId).maybeSingle();if(!a)return json({error:"Activity not found"},404);
   let calendarUser="";
   if(provider==="microsoft_calendar"){
     if(!a.owner_id)return json({error:"Set an activity owner before syncing"},409);
@@ -315,7 +315,9 @@ async function handleCalendarPush(req:Request){
   }
   const run=await startRun(provider,"calendar_event","push",access.user.id);
   try{
-    const event=provider==="microsoft_calendar"?await pushMicrosoft(a,calendarUser):await pushGoogle(a);
+    // A remote event can exist even if the activity update failed. Reuse its durable link on retry.
+    if(provider==="microsoft_calendar"&&!a.external_event_id){const {data:link}=await adminClient.from("calendar_event_links").select("external_event_id,external_calendar_id").eq("activity_id",activityId).eq("provider",provider).maybeSingle();if(link)Object.assign(a,link,{calendar_provider:provider});}
+    const event=provider==="microsoft_calendar"?await pushMicrosoft(a,calendarUser,body.send_invitations===true):await pushGoogle(a);
     const {error:linkError}=await adminClient.from("calendar_event_links").upsert({activity_id:activityId,provider,external_event_id:event.id,external_calendar_id:event.calendarId,web_url:event.webUrl,sync_status:"synced",last_error:null,last_synced_at:new Date().toISOString()},{onConflict:"activity_id,provider"});
     if(linkError)throw new Error("Calendar event saved remotely; local link failed. Retry sync.");
     const {error:activityError}=await adminClient.from("activities").update({calendar_provider:provider,external_event_id:event.id,external_calendar_id:event.calendarId,meeting_url:event.meetingUrl,sync_status:"synced",sync_error:null,external_provider:provider,external_id:provider==="microsoft_calendar"?microsoftExternalId(event.calendarId,event.id):event.id,external_url:event.webUrl,external_synced_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",activityId);

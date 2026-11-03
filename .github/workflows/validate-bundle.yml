@@ -45,6 +45,7 @@ jobs:
       - name: Validate integration contracts
         run: |
           node tests/integration-contract.mjs
+          node --test tests/activity-calendar.test.mjs
           node --test tests/microsoft-integration-settings.test.mjs
       - name: Validate shared notification polling
         run: node --test tests/notification-center.test.mjs tests/notification-store.test.mjs tests/read-coordinator.test.mjs tests/rest-read-policy.test.mjs

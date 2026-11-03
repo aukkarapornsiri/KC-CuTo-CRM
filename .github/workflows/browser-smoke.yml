@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - group: activity-calendar
+            suites: ""
           - group: microsoft-settings
             suites: ""
           - group: brand-master
@@ -79,6 +81,9 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 --directory . > /tmp/kuto-http.log 2>&1 &
           echo $! > /tmp/kuto-http.pid
           sleep 2
+      - name: Validate activity calendar scheduling
+        if: matrix.group == 'activity-calendar'
+        run: node tests/activity-calendar-browser.cjs
       - name: Run desktop and mobile smoke tests
         env:
           SMOKE_SUITES: ${{ matrix.suites }}

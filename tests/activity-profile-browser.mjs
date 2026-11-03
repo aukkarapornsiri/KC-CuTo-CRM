@@ -8,6 +8,8 @@ const values={
 const field=(form,name)=>form.getByLabel(name,{exact:true});
 export async function fillActivityProfile(form,page,width){
  const dialog=form.locator('..');
+ await form.getByText('Status, priority and linked work',{exact:true}).click();
+ await form.getByText('More options',{exact:true}).click();
  assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true,'Activity must open as a native modal');
  assert.equal(await field(form,'Subject').getAttribute('required'),'');
  assert.equal(await field(form,'Scheduled at').getAttribute('required'),'');
