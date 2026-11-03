@@ -1,0 +1,6 @@
+/* Restore native modal centering after the application's global margin reset.
+   Keep each dialog's size, internal scrolling and closed/open display behavior. */
+dialog:modal{position:fixed!important;inset:0!important;margin:auto!important}
+/* Auto margins center short panels and become zero for tall, scrollable panels. */
+.kc-lead-detail-overlay{align-items:center}
+.kc-lead-detail-overlay>.kc-lead-detail-modal{margin-block:auto;flex-shrink:0}
