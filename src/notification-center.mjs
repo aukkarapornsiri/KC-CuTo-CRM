@@ -3,6 +3,8 @@ import {observeRead} from './read-coordinator.mjs';
 import {toCSV} from './settings-model.mjs';
 import {assignmentTarget,emailDestination} from './assignment-links.mjs';
 export function notificationTarget(row,can=()=>true){
+ const amendment=/^so-amendment:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):/i.exec(row.event_key||'');
+ if(amendment&&row.event_kind==='approval_requested')return can('quotations','view')&&can('quotations','approve')?{module:'quotations',page:'quot-approval',params:{approvalRecordId:amendment[1],approvalKind:'amendment'}}:null;
  const match=/^so-approval:([0-9a-f-]{36}):/i.exec(row.event_key||'');
  if(match)return emailDestination({module:'sales_orders',record:match[1]},can);
  if(row.related_module==='quotations'&&(row.event_kind==='approval_request'||row.title?.startsWith('Quotation approval:')))return emailDestination({module:'quotations',record:row.related_id},can);

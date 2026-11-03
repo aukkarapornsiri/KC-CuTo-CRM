@@ -14,3 +14,11 @@ test('SO notification opens its own approval, never its already-approved source 
  assert.deepEqual(notificationTarget({...row,event_key:null,event_kind:'approval_request'}).params,{approvalRecordId:quote,approvalKind:'quotation'});
  assert.equal(notificationTarget({...row,event_key:null,event_kind:'assignment'}).page,'quot-list');
 });
+test('SO amendment notice opens the exact edit authorization instead of the source quotation',async()=>{
+ const {notificationTarget}=await import('../src/notification-center.mjs'),id='19e8185a-e1df-40cb-b019-3e1e8fe8a3bb';
+ const row={event_kind:'approval_requested',event_key:`so-amendment:${id}:pending:user`,related_module:'quotations',related_id:'1204ac21-7183-4fca-a9b1-b510b73513ef'};
+ assert.deepEqual(notificationTarget(row),{module:'quotations',page:'quot-approval',params:{approvalRecordId:id,approvalKind:'amendment'}});
+ assert.equal(notificationTarget(row,(_m,a)=>a!=='approve'),null);
+ assert.equal(notificationTarget(row,(_m,a)=>a!=='view'),null);
+ assert.equal(notificationTarget({...row,event_kind:'approval_resolved'}).page,'quot-list');
+});
