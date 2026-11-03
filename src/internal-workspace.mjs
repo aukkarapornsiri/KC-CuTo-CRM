@@ -178,12 +178,15 @@ export function createInternalWorkspace({React,client,useApp,useAccess}){
     if(demoMode&&hasPrimary)demo.contacts.push({...primaryContact,id:crypto.randomUUID(),name:primaryContact.first_name+' '+primaryContact.last_name,customer_id:saved.id,company:saved.name,owner_id:saved.owner_id,owner_name:saved.owner_name,is_primary:true,status:'active',created_at:saved.created_at,updated_at:saved.updated_at});
     if(demoMode&&['activities','opportunities'].includes(entity)){const leadId=entity==='activities'?saved.related_id:saved.lead_id;const lead=demo.leads.find(x=>x.id===leadId);if(lead){const next=nextLeadStatus(lead.status,entity,saved);if(next!==lead.status)Object.assign(lead,{status:next,updated_at:new Date().toISOString()});}}
     if(entity==='activities'&&sendCalendar){
-      if(demoMode){Edit({...saved});Message(t('บันทึกกิจกรรมตัวอย่างแล้ว · ไม่ได้ส่งคำเชิญจริง','Demo activity saved · No real invitations sent'));await read();return;}
+      if(demoMode){Edit(null);Select(null);Page(0);Message(t('บันทึกกิจกรรมตัวอย่างแล้ว · ไม่ได้ส่งคำเชิญจริง','Demo activity saved · No real invitations sent'));await read();return;}
       // Keep the saved ID and version before the remote call. Retry edits the same activity.
       Edit({...saved});Message(t('บันทึกกิจกรรมแล้ว กำลังส่งไป Microsoft 365…','Activity saved. Sending to Microsoft 365…'));
-      try{const result=await sendActivityCalendar(client,saved.id);const fresh=await read();Edit(fresh.find(x=>x.id===saved.id)||{...saved,meeting_url:result.meetingUrl,external_url:result.webUrl,sync_status:'synced'});Message(result.warning||t('ส่งนัดหมายสำเร็จ · ผู้รับคำเชิญ ','Meeting sent · Invitees: ')+(result.invited??0));return;}
+      let result;try{result=await sendActivityCalendar(client,saved.id);}
       catch(err){try{const fresh=await read();Edit(fresh.find(x=>x.id===saved.id)||saved);}catch{}throw Error(t('บันทึกกิจกรรมแล้ว แต่ส่งนัดหมายไม่สำเร็จ: ','Activity saved, but calendar delivery failed: ')+err.message);}
+      Edit(null);Select(null);Page(0);Message(result.warning||t('ส่งนัดหมายสำเร็จ · ผู้รับคำเชิญ ','Meeting sent · Invitees: ')+(result.invited??0));
+      await read();return;
     }
+    if(entity==='activities'&&!saveNew){Edit(null);Select(null);Page(0);Message(t('บันทึกแล้ว','Saved'));await read();return;}
     const fresh=await read();Page(0);if(entity==='contacts')Lookup(v=>({...v,contacts:[...(v.contacts||[]).filter(x=>x.id!==saved.id),saved]}));Edit(saveNew?defaults():null);Select(saveNew?null:fresh.find(x=>x.id===saved.id)||saved);if(!saveNew)await detail(fresh.find(x=>x.id===saved.id)||saved,true);Message(t('บันทึกแล้ว','Saved'));if(saveNew){if(entity==='opportunities')OpportunityRevision(v=>v+1);Message(t('บันทึกแล้ว','Saved'));requestAnimationFrame(()=>document.querySelector('dialog[open] input')?.focus());}});}
   async function detail(row,withinAction=false){if(entity==='contacts'){const recent=addRecentContact(recentIds,row.id);RecentIds(recent);try{localStorage.setItem(contactKey,JSON.stringify({pinned:pinnedView,recent}));}catch{}}Select(row);Edit(null);Related({});Approval([]);Events([]);Versions([]);await (withinAction?async fn=>fn():run)(async()=>{const result={};if(entity==='leads'){
     result.resolutions=demoMode?(demo.lead_resolutions||[]).filter(x=>x.target_id===row.id||x.source_id===row.id):await unwrap(client.from('crm_lead_resolutions').select('*').or('target_id.eq.'+row.id+',source_id.eq.'+row.id).order('created_at',{ascending:false}).limit(100));
