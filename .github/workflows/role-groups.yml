@@ -7,6 +7,7 @@ on:
       - 'src/access-management.css'
       - 'tests/role-groups-smoke.mjs'
       - 'tests/role-cards-smoke.mjs'
+      - 'tests/role-delete-smoke.mjs'
       - '.github/workflows/role-groups.yml'
 jobs:
   grouped-roles:
@@ -25,6 +26,7 @@ jobs:
           sleep 2
           SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/role-groups-smoke.mjs
           SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/role-cards-smoke.mjs
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/role-delete-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
