@@ -23,6 +23,7 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/quotation-detail-http.log 2>&1 &
           sleep 2
           SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/quotation-details-smoke.mjs
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/quotation-delete-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
