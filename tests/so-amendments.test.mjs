@@ -57,3 +57,21 @@ test('opening an approved draft does not invalidate or refresh the request mid-e
  const original=globalThis.window;let refreshes=0;globalThis.window={dispatchEvent:()=>refreshes++};
  try{await walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit SO / Cost Sheet')).props.onClick();assert.ok(draft);assert.equal(draft.items[0].name,'Original');assert.equal(refreshes,0);}finally{globalThis.window=original;}
 });
+
+test('source quotation form is read-only before independent approval and cannot save',async()=>{
+ const calls=[],draft={...amendmentDraft(order),id:'quote',code:'SQ-1'},Dialog=()=>null;
+ const R=ReactMock([[],false,'',true,'',draft,[],'','',true,{id:'quote',code:'SQ-1'}]);
+ const C=createSOAmendments({React:R,client:clientMock(calls),QuotationDialog:Dialog});
+ const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true,canFinancial:true,records:{},onSaved:()=>{}});
+ const editor=walk(tree).find(n=>n.type===Dialog);assert.ok(editor);assert.equal(editor.props.editing.id,'quote');assert.equal(editor.props.revision.readOnly,true);
+ await editor.props.onSave({preventDefault(){}});assert.equal(calls.length,0);
+ assert.ok(walk(editor.props.revision.banner).find(n=>n.children.includes('Request SO amendment')));
+});
+test('source quotation form saves approved SO revision without writing the original quotation',async()=>{
+ const calls=[],request={id:'request',status:'approved',requested_by:'seller'},draft={...amendmentDraft(order),id:'quote',code:'SQ-1',customer_id:'customer',template_snapshot:{test:true}},Dialog=()=>null;
+ const R=ReactMock([[request],false,'',true,'',draft,[],'','',true,{id:'quote',code:'SQ-1'}]);
+ const C=createSOAmendments({React:R,client:clientMock(calls),QuotationDialog:Dialog});
+ const editor=walk(C({order,lang:'en',profile:{id:'seller'},can:()=>true,canFinancial:true,records:{},onSaved:()=>{}})).find(n=>n.type===Dialog);
+ assert.equal(editor.props.revision.readOnly,false);const original=globalThis.window;globalThis.window={dispatchEvent(){}};
+ try{await editor.props.onSave({preventDefault(){}});assert.equal(calls[0].name,'crm_save_so_amendment');assert.equal(calls[0].args.p_patch.id,undefined);assert.equal(calls[0].args.p_patch.template_snapshot,undefined);assert.equal(calls[0].args.p_patch.items[0].original_index,0);}finally{globalThis.window=original;}
+});
