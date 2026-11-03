@@ -35,7 +35,7 @@ try {
    const dialog=page.getByRole('dialog',{name:'Quotation details',exact:true});
    await dialog.waitFor();assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
    const box=await dialog.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=901&&box.x>=0&&box.x+box.width<=width+1);
-   const hero=await dialog.locator('.kc-quote-hero h2').evaluate(n=>({color:getComputedStyle(n).color,border:getComputedStyle(n).borderBottomWidth,font:getComputedStyle(n).fontFamily}));assert.equal(hero.color,'rgb(255, 255, 255)');assert.equal(hero.border,'0px');assert.match(hero.font,/IBM Plex Sans Thai/);
+   const hero=await dialog.locator('.kc-quote-hero h2').evaluate(n=>({color:getComputedStyle(n).color,border:getComputedStyle(n).borderBottomWidth,font:getComputedStyle(n).fontFamily}));assert.equal(hero.color,'rgb(255, 255, 255)');assert.equal(hero.border,'0px');assert.match(hero.font,/IBM Plex Sans Thai/);assert.match(hero.font,/sans-serif/);
    const cards=dialog.locator('.kc-quote-card-grid>.kc-quote-card');assert.equal(await cards.count(),6);
    const sizes=await cards.evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,sw:n.scrollWidth,cw:n.clientWidth})));
    assert.ok(sizes.every(b=>b.sw<=b.cw+1),JSON.stringify(sizes));if(width>760)assert.ok(sizes.every(b=>Math.abs(b.w-sizes[0].w)<1&&Math.abs(b.h-sizes[0].h)<1),JSON.stringify(sizes));
