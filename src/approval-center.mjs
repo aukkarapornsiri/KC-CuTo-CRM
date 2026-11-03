@@ -10,7 +10,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
   const {profile,demoMode,navigate,refreshNotifications}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
   const [rows,Rows]=React.useState([]),[tab,Tab]=React.useState('pending'),[category,Category]=React.useState('all'),[search,Search]=React.useState(''),[selected,Selected]=React.useState(null),[comment,Comment]=React.useState(''),[busy,Busy]=React.useState(false),[loading,Loading]=React.useState(true),[error,ErrorText]=React.useState(''),[message,Message]=React.useState('');
   const generation=React.useRef(0),lock=React.useRef(false);
-  const can=action=>access.can('quotations',action),labels={quotation:t('ใบเสนอราคา','Quotation'),so:t('เปิด SO','Open SO'),service:t('งานบริการ','Service'),lead:t('ลีด','Lead'),other:t('งานอื่น','Other work')};
+  const can=action=>access.can('quotations',action),labels={quotation:t('ใบเสนอราคา','Quotation'),so:t('เปิด SO','Open SO'),amendment:t('ขอแก้ไข SO','SO amendment'),service:t('งานบริการ','Service'),lead:t('ลีด','Lead'),other:t('งานอื่น','Other work')};
   const money=r=>new Intl.NumberFormat(lang==='th'?'th-TH':'en-US',{style:'currency',currency:r.currency||'THB'}).format(Number(r.total||0));
   async function load(){
    const token=++generation.current;Loading(true);ErrorText('');
@@ -25,6 +25,10 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
      for(const a of relevant)list.push({kind:'quotation',key:'q:'+a.id,id:a.quotation_id,request:a,...a.snapshot,created_at:a.created_at,status:a.status});
      const visibleSO=soRequests.filter(a=>tab==='pending'?a.status==='pending'&&can('approve'):tab==='sent'?a.requested_by===profile.id:a.status!=='pending'&&(a.requested_by===profile.id||a.reviewed_by===profile.id));
      if(visibleSO.length){const orders=demoMode?records.native_sales_orders||[]:await unwrap(client.from('crm_sales_orders').select('*').in('id',visibleSO.map(a=>a.sales_order_id)));for(const a of visibleSO){const s=orders.find(s=>s.id===a.sales_order_id);if(s)list.push({...s,kind:'so',key:'so:'+s.id,request:a,status:a.status,orderStatus:s.status,created_at:a.requested_at});}}
+    }
+    if(can('view')){
+     const changes=demoMode?records.so_amendments||[]:await readAll(()=>{let q=client.from('crm_so_amendments').select('*').order('requested_at',{ascending:false}).order('id');return tab==='pending'?q.eq('status','pending'):tab==='sent'?q.eq('requested_by',profile.id):q.in('status',['approved','rejected','cancelled','applied']);});
+     for(const a of changes){if(tab==='pending'&&(!can('approve')||a.requested_by===profile.id))continue;const s=a.after_snapshot||a.before_snapshot;list.push({...s,id:a.sales_order_id,kind:'amendment',key:'amendment:'+a.id,request:a,status:a.status,orderStatus:s.status,created_at:a.requested_at,summary:a.reason});}
     }
     // Other workflows keep their own permissions and decision handlers at the source.
     if(!demoMode&&tab!=='sent'){
@@ -50,6 +54,8 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
      const order=demoMode?(records.native_sales_orders||[]).find(s=>initialKind==='so'?s.id===initialRecordId:s.quotation_id===initialRecordId):await unwrap(client.from('crm_sales_orders').select('*').eq(initialKind==='so'?'id':'quotation_id',initialRecordId).maybeSingle());
      if(order){const a=demoMode?order.so_approval:await unwrap(client.from('crm_so_approvals').select('*').eq('sales_order_id',order.id).maybeSingle());if(a&&(!selectedTask||a.status==='pending'))selectedTask={...order,kind:'so',key:'so:'+order.id,request:a,status:a.status,orderStatus:order.status,created_at:a.requested_at};}
     }
+    const amendments=demoMode?(records.so_amendments||[]):await unwrap(client.from('crm_so_amendments').select('*').eq(initialKind==='so'?'sales_order_id':'before_snapshot->>quotation_id',initialRecordId).eq('status','pending').order('requested_at',{ascending:false}).limit(1));
+    const amendment=amendments.find(a=>a.requested_by!==profile.id);if(amendment)selectedTask={...amendment.before_snapshot,id:amendment.sales_order_id,kind:'amendment',key:'amendment:'+amendment.id,request:amendment,status:amendment.status,summary:amendment.reason,created_at:amendment.requested_at};
     if(!active)return;
     if(selectedTask){Selected(selectedTask);Comment('');}
     else ErrorText(t('ไม่พบคำขออนุมัติของรายการนี้ หรือไม่มีสิทธิ์เข้าถึง','Approval request not found or access denied'));
@@ -63,17 +69,17 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
    try{
     if(!can('approve')||selected.status!=='pending'||(selected.kind==='quotation'&&!canReviewQuotation(selected.request,profile.id,true)))throw Error(t('ไม่มีสิทธิ์อนุมัติขั้นตอนนี้','You cannot review this step'));
     if(demoMode)throw Error(t('การอนุมัติต้องใช้บัญชีจริง','Approval requires a signed-in account'));
-    if(action==='approve'){const signature=await loadProfileSignature(client,profile.id,false);if(!signature.seller_signature_storage_key)throw Error(t('กรุณาบันทึกลายเซ็นใน Profile ก่อนอนุมัติ','Save your signature in Profile before approving'));}
-    await unwrap(selected.kind==='quotation'?client.rpc('crm_quotation_transition',{p_quotation:selected.id,p_action:action,p_comment:comment}):client.rpc('crm_so_approval_action',{p_sales_order_id:selected.id,p_action:action,p_note:comment}));
+    if(action==='approve'&&selected.kind!=='amendment'){const signature=await loadProfileSignature(client,profile.id,false);if(!signature.seller_signature_storage_key)throw Error(t('กรุณาบันทึกลายเซ็นใน Profile ก่อนอนุมัติ','Save your signature in Profile before approving'));}
+    await unwrap(selected.kind==='amendment'?client.rpc('crm_so_amendment_action',{p_sales_order_id:selected.id,p_action:action,p_note:comment,p_request_id:selected.request.id}):selected.kind==='quotation'?client.rpc('crm_quotation_transition',{p_quotation:selected.id,p_action:action,p_comment:comment}):client.rpc('crm_so_approval_action',{p_sales_order_id:selected.id,p_action:action,p_note:comment}));
     Selected(null);Comment('');Message(t('บันทึกผลการอนุมัติแล้ว','Decision saved'));window.dispatchEvent(new Event('crm-records-refresh'));void load();void refreshNotifications?.();
    }catch(e){ErrorText(e.message||String(e));}finally{lock.current=false;Busy(false);}
   }
   const open=r=>{Selected(r);Comment('');ErrorText('');Message('');};
-  const source=r=>{Selected(null);onSource?.();if(r.target)navigate(r.target.module,r.target.page,r.target.params);else navigate('quotations','quot-list',{recordId:r.kind==='so'?r.quotation_id:r.id});};
-  const title=r=>r.title||r.subject||r.name||(r.kind==='so'?t('เปิดคำสั่งขาย ','Open sales order '):'')+(r.items?.[0]?.name||r.code||labels[r.kind]);
+  const source=r=>{Selected(null);onSource?.();if(r.kind==='amendment'){navigate('quotations','quot-list',{recordId:r.quotation_id});return;}if(r.target)navigate(r.target.module,r.target.page,r.target.params);else navigate('quotations','quot-list',{recordId:r.kind==='so'?r.quotation_id:r.id});};
+  const title=r=>r.kind==='amendment'?t('ขอแก้ไข ','Amend ')+r.code:r.title||r.subject||r.name||(r.kind==='so'?t('เปิดคำสั่งขาย ','Open sales order '):'')+(r.items?.[0]?.name||r.code||labels[r.kind]);
   const statusLabel=s=>({pending:t('รออนุมัติ','Pending'),approved:t('อนุมัติแล้ว','Approved'),rejected:t('ไม่อนุมัติ','Rejected'),cancelled:t('ถอนคำขอแล้ว','Withdrawn'),completed:t('ดำเนินการแล้ว','Completed')}[s]||s);
-  const visible=rows.filter(r=>(category==='all'||(category==='other'?!['quotation','so'].includes(r.kind):r.kind===category))&&[title(r),r.code,r.customer_name,r.summary].join(' ').toLowerCase().includes(search.toLowerCase()));
-  const actionable=selected?.status==='pending'&&can('approve')&&(selected.kind==='quotation'?canReviewQuotation(selected.request,profile?.id,true):selected.kind==='so'&&selected.orderStatus==='confirmed');
+  const visible=rows.filter(r=>(category==='all'||(category==='other'?!['quotation','so','amendment'].includes(r.kind):category==='so'?['so','amendment'].includes(r.kind):r.kind===category))&&[title(r),r.code,r.customer_name,r.summary].join(' ').toLowerCase().includes(search.toLowerCase()));
+  const actionable=selected?.status==='pending'&&can('approve')&&(selected.kind==='quotation'?canReviewQuotation(selected.request,profile?.id,true):selected.kind==='amendment'?selected.request.requested_by!==profile?.id:selected.kind==='so'&&selected.orderStatus!=='cancelled');
   const button=(label,fn,props={})=>h('button',{type:'button',onClick:fn,disabled:busy,...props},label);
   return h('section',{className:'kc-approval-app','aria-label':t('ศูนย์อนุมัติ','Approval center')},
    h('header',{className:'kc-approval-top'},h('h1',null,t('ศูนย์อนุมัติ','Approval center')),button(t('โหลดใหม่','Refresh'),()=>void load(),{disabled:busy||loading})),
@@ -87,11 +93,12 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
     h('section',{className:'kc-approval-panel'},h('small',null,(selected.code||'')+' · '+statusLabel(selected.status)),h('h2',null,title(selected)),h('p',null,selected.customer_name||selected.summary),h('small',null,selected.prepared_by||selected.owner_name||'')),
     selected.total!=null&&h('section',{className:'kc-approval-amount'},h('span',null,t('ยอดรวม VAT','Total including VAT')),h('strong',null,money(selected))),
     selected.kind==='quotation'&&h('section',{className:'kc-approval-policy'},h('strong',null,t('ลำดับอนุมัติตาม Policy ที่ส่งคำขอ','Approval sequence from submitted policy')),h('p',null,t('ขั้นที่ ','Step ')+selected.request.current_step+'/'+selected.request.approver_ids.length),h('p',null,selected.request.approver_ids.map((id,i)=>(i+1<selected.request.current_step?'✓ ':i+1===selected.request.current_step?'● ':'○ ')+(i+1)+(id===profile.id?t(' คุณ',' You'):'')).join(' → '))),
+    selected.kind==='amendment'&&h('section',{className:'kc-approval-policy'},h('strong',null,t('เหตุผลที่ขอแก้ไข','Reason for amendment')),h('p',null,selected.request.reason),h('p',null,t('อนุมัติให้ผู้ขอแก้ไขได้หนึ่งครั้ง หลังบันทึกจะขออนุมัติ SO ฉบับใหม่','Authorize one save by the requester. The revised SO will require approval again.'))),
     selected.kind==='so'&&h('section',{className:'kc-approval-policy'},h('strong',null,t('ขออนุมัติเปิดใบสั่งขาย','Sales order approval')),h('p',null,selected.quotation_code),h('p',null,'PO: '+(selected.po_number||'—')),selected.po_file_key&&button(t('ดูไฟล์ PO ↗','View PO ↗'),async()=>{try{const data=await unwrap(client.storage.from('crm-sales-orders').createSignedUrl(selected.po_file_key,120));const a=document.createElement('a');a.href=data.signedUrl;a.target='_blank';a.rel='noopener';a.click();}catch(e){ErrorText(e.message);}})),
     h('section',{className:'kc-approval-panel'},h('strong',null,t('รายละเอียดเบื้องต้น','Essential details')),selected.items?.map((item,i)=>h('p',{key:i},(item.name||'')+' × '+(item.qty||item.quantity||1),item.part_number&&h('small',null,' · '+item.part_number))),selected.expected_delivery_date&&h('p',null,t('กำหนดส่ง ','Delivery ')+selected.expected_delivery_date),selected.note&&h('p',null,selected.note),button(t('ดูเอกสารต้นทาง ›','View source document ›'),()=>source(selected))),
     actionable&&h('label',{className:'kc-approval-panel'},t('ความเห็น (ต้องระบุเมื่อไม่อนุมัติ)','Comment (required for rejection)'),h('textarea',{value:comment,maxLength:2000,onChange:e=>Comment(e.target.value),rows:2,'aria-label':t('ความเห็นการอนุมัติ','Approval comment')})),
-    actionable&&h('p',{className:'kc-approval-signature'},t('ใช้ลายเซ็นจากโปรไฟล์ของคุณ','Uses your Profile signature')),
-    h('footer',{className:'kc-approval-bottom'},selected.total!=null&&h('strong',null,money(selected)),actionable?h('div',null,button(t('ไม่อนุมัติ','Reject'),()=>void decide('reject'),{className:'kc-approval-reject'}),button(t(selected.kind==='quotation'?'อนุมัติขั้นนี้':'อนุมัติเปิด SO',selected.kind==='quotation'?'Approve this step':'Approve SO'),()=>void decide('approve'),{className:'kc-approval-confirm'})):selected.target?button(t('เปิดงานเพื่อดำเนินการ','Open workflow'),()=>source(selected),{className:'kc-approval-confirm'}):h('span',null,statusLabel(selected.status))))));
+    actionable&&selected.kind!=='amendment'&&h('p',{className:'kc-approval-signature'},t('ใช้ลายเซ็นจากโปรไฟล์ของคุณ','Uses your Profile signature')),
+    h('footer',{className:'kc-approval-bottom'},selected.total!=null&&h('strong',null,money(selected)),actionable?h('div',null,button(t('ไม่อนุมัติ','Reject'),()=>void decide('reject'),{className:'kc-approval-reject'}),button(t(selected.kind==='amendment'?'อนุมัติให้แก้ไข':selected.kind==='quotation'?'อนุมัติขั้นนี้':'อนุมัติ SO',selected.kind==='amendment'?'Authorize editing':selected.kind==='quotation'?'Approve this step':'Approve SO'),()=>void decide('approve'),{className:'kc-approval-confirm'})):selected.target?button(t('เปิดงานเพื่อดำเนินการ','Open workflow'),()=>source(selected),{className:'kc-approval-confirm'}):h('span',null,statusLabel(selected.status))))));
  };
 }
 

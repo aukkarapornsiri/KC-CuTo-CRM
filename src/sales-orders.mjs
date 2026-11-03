@@ -1,3 +1,4 @@
+import {createSOAmendments} from './so-amendments.mjs';
 import {filterOrders,orderMetrics} from './sales-order-view.mjs';
 import {createPagination} from './pagination.mjs';
 import {rentalFactor} from './rental-quotation.mjs';
@@ -19,7 +20,7 @@ export function validatePO(value){
  return value;
 }
 export function createSalesOrders({React,client,useApp,useAccess,records}){
- const Pagination=createPagination(React);
+ const Pagination=createPagination(React),SOAmendments=createSOAmendments({React,client});
  const h=React.createElement,Popup=createRecordPopup(React),unwrap=async p=>{const {data,error}=await p;if(error)throw error;return data;};
  return function SalesOrders({lang,quotation,initialOrderId,onClose,onQuotation}){
   const {demoMode,profile,navigate}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
@@ -95,7 +96,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
   }
   async function changeApproval(kind){
    await run(async()=>{
-    if(!selected||selected.status!=='confirmed')throw Error(t('SO นี้ไม่สามารถขออนุมัติได้','SO not eligible for approval'));
+    if(!selected||selected.status==='cancelled')throw Error(t('SO นี้ไม่สามารถขออนุมัติได้','SO not eligible for approval'));
     let note='';
     if(kind==='reject'){
       note=window.prompt(t('ระบุเหตุผลที่ไม่อนุมัติ SO','Enter the SO rejection reason'))||'';
@@ -136,11 +137,12 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
      h('strong',null,t('อนุมัติ SO: ','SO approval: ')+(approval?.status==='approved'?t('อนุมัติแล้ว','Approved'):approval?.status==='pending'?t('รออนุมัติ','Pending'):approval?.status==='rejected'?t('ไม่อนุมัติ','Rejected'):t('ยังไม่ส่งอนุมัติ','Not submitted'))),
      approval?.review_note&&h('small',null,approval.review_note),
      h('div',{className:'crm-actions'},
-       selected.status==='confirmed'&&(!approval||approval.status==='rejected')&&(can('create')||can('approve'))&&button(t('ส่งขออนุมัติ SO','Request SO approval'),()=>changeApproval('request')),
-       selected.status==='confirmed'&&approval?.status==='pending'&&can('approve')&&button(t('อนุมัติ SO','Approve SO'),()=>changeApproval('approve')),
-       selected.status==='confirmed'&&approval?.status==='pending'&&can('approve')&&button(t('ไม่อนุมัติ','Reject SO'),()=>changeApproval('reject'))
+       selected.status!=='cancelled'&&(!approval||approval.status==='rejected')&&(can('create')||can('approve'))&&button(t('ส่งขออนุมัติ SO','Request SO approval'),()=>changeApproval('request')),
+       selected.status!=='cancelled'&&approval?.status==='pending'&&can('approve')&&button(t('อนุมัติ SO','Approve SO'),()=>changeApproval('approve')),
+       selected.status!=='cancelled'&&approval?.status==='pending'&&can('approve')&&button(t('ไม่อนุมัติ','Reject SO'),()=>changeApproval('reject'))
      )
    ),
+   h(SOAmendments,{order:selected,lang,profile,can,demoMode,records,onSaved:async id=>{await readList();await openOrder(id);}}),
    h('dl',{className:'crm-so-grid'},...[[t('ลูกค้า','Customer'),selected.customer_name],[t('ใบเสนอราคา','Quotation'),selected.quotation_code],[t('PO ลูกค้า','Customer PO'),selected.po_number],[t('วันที่ PO','PO date'),date(selected.po_date)],[t('กำหนดส่งมอบ','Expected delivery'),date(selected.expected_delivery_date)],[t('ที่อยู่เรียกเก็บเงิน','Billing address'),selected.billing_address],[t('เลขผู้เสียภาษี','Tax ID'),selected.tax_id],[t('ผู้รับผิดชอบ','Salesperson'),shortSalesName(selected.owner_name)]].map(([label,value])=>h('div',{key:label},h('dt',null,label),h('dd',null,value||'—')))),
    button(t('เปิดไฟล์ PO','Open PO attachment'),()=>run(async()=>{if(demoMode){ErrorText(t('โหมดทดลอง ไม่มีไฟล์จริง','Demo mode: no real attachment'));return;}const result=await unwrap(client.storage.from('crm-sales-orders').createSignedUrl(selected.po_file_key,120));const a=document.createElement('a');a.href=result.signedUrl;a.target='_blank';a.rel='noopener';a.click();})),
    itemTable(selected),
