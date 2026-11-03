@@ -49,7 +49,7 @@ try {
   }
   page.once('dialog',dialog=>dialog.dismiss());await page.getByRole('button',{name:'Delete quotation QA-QUOTE-49',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Details QA-QUOTE-49',exact:true}).count(),1);
   page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Delete quotation QA-QUOTE-49',exact:true}).click();await page.getByRole('button',{name:'Details QA-QUOTE-49',exact:true}).waitFor({state:'hidden'});
-  await page.getByRole('button',{name:'Details QA-QUOTE-48',exact:true}).click();page.once('dialog',dialog=>dialog.accept());await page.getByRole('dialog',{name:'Quotation details',exact:true}).getByRole('button',{name:'Delete quotation',exact:true}).click();await page.getByRole('button',{name:'Details QA-QUOTE-48',exact:true}).waitFor({state:'hidden'});
+  await page.getByRole('button',{name:'Details QA-QUOTE-48',exact:true}).click();page.once('dialog',dialog=>dialog.accept());await page.getByRole('dialog',{name:'Quotation details',exact:true}).locator('.kc-quote-more summary').click();await page.getByRole('dialog',{name:'Quotation details',exact:true}).getByRole('button',{name:'Delete quotation',exact:true}).click();await page.getByRole('button',{name:'Details QA-QUOTE-48',exact:true}).waitFor({state:'hidden'});
   assert.deepEqual(errors,[]);
   console.log(`PASS quotation details ${width}px: 50-row list, pending/approved, Details/code links, modal viewport, Escape/close/reopen, delete confirmation cancel/accept from list and detail`);
   await page.close();

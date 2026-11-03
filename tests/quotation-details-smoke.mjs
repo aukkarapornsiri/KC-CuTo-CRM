@@ -13,7 +13,7 @@ try {
    const source=await(await fetch([...document.scripts].find(s=>s.src.includes('app-C2ITSffc')).src)).text();
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
-   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',prepared_by:i?'Monchai Aukkarapornsiri':'',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
+   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',issue_date:'2026-11-03',valid_until:'2026-11-06',payment_terms:0,payment_term_code:'cash',counterparty_tax_id:'0125568016470',counterparty_address:'119/531 Rattanathibet Road, Nonthaburi',prepared_by_email:'sales@example.test',prepared_by_phone:'021234567',project_name:'Sales',payment_instructions:'50% deposit before delivery',document_language:'en',currency:'THB',prepared_by:i?'Monchai Aukkarapornsiri':'',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
   else {
@@ -35,6 +35,15 @@ try {
    const dialog=page.getByRole('dialog',{name:'Quotation details',exact:true});
    await dialog.waitFor();assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
    const box=await dialog.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=901&&box.x>=0&&box.x+box.width<=width+1);
+   const hero=await dialog.locator('.kc-quote-hero h2').evaluate(n=>({color:getComputedStyle(n).color,border:getComputedStyle(n).borderBottomWidth,font:getComputedStyle(n).fontFamily}));assert.equal(hero.color,'rgb(255, 255, 255)');assert.equal(hero.border,'0px');assert.match(hero.font,/IBM Plex Sans Thai/);assert.match(hero.font,/sans-serif/);
+   const cards=dialog.locator('.kc-quote-card-grid>.kc-quote-card');assert.equal(await cards.count(),6);
+   const sizes=await cards.evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,sw:n.scrollWidth,cw:n.clientWidth})));
+   assert.ok(sizes.every(b=>b.sw<=b.cw+1),JSON.stringify(sizes));if(width>760)assert.ok(sizes.every(b=>Math.abs(b.w-sizes[0].w)<1&&Math.abs(b.h-sizes[0].h)<1),JSON.stringify(sizes));
+   assert.ok((await dialog.innerText()).includes('119/531 Rattanathibet Road'));
+   assert.ok((await dialog.innerText()).includes('50% deposit before delivery'));
+   assert.ok(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Detail has no horizontal overflow');
+   await dialog.screenshot({path:'test-artifacts/quotation-detail-cards-'+code+'-'+width+'.png'});
+   await dialog.getByRole('button',{name:'Items and services',exact:true}).click();
    assert.ok((await dialog.innerText()).includes('HCI Node'));
    await dialog.locator('tfoot').getByText('600,000.00',{exact:true}).waitFor();
    assert.equal(await dialog.locator('tbody .crm-internal-financial').first().innerText(),'600,000.00');
