@@ -1,0 +1,30 @@
+name: Quotation Detail Cards Review
+on:
+  pull_request:
+    paths:
+      - 'src/quotation-detail-layout.mjs'
+      - 'src/quotation-document.css'
+      - 'src/internal-workspace.mjs'
+      - 'tests/quotation-details-smoke.mjs'
+      - '.github/workflows/quotation-detail-cards.yml'
+jobs:
+  quotation-detail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Verify quotation cards and existing actions
+        run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/quotation-detail-http.log 2>&1 &
+          sleep 2
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/quotation-details-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quotation-detail-cards
+          path: test-artifacts/
