@@ -39,3 +39,21 @@ test('approved requester can open SO and Cost Sheet from the source quotation',a
  const tree=C({quotationId:'quote',profileId:'seller',lang:'en',canApprove:false,canEdit:true,onEdit:id=>opened=id});
  walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit SO / Cost Sheet')).props.onClick();assert.equal(opened,'so');
 });
+
+test('live request projection includes the status needed to expose approved editing',async()=>{
+ const {createSOAmendmentReviewShortcut}=await import('../src/so-amendments.mjs');
+ const request={id:'request',status:'approved',sales_order_id:'so',requested_by:'seller',reason:'Correct cost'};
+ let fields=[],state;const effects=[];
+ const R={...ReactMock([]),useEffect:fn=>effects.push(fn),useState:initial=>[initial,next=>{if(next.id)state=next;}]};
+ const client={from:()=>{const q=new Proxy({then:resolve=>resolve({data:[Object.fromEntries(fields.map(k=>[k,request[k]]))]})},{get:(t,k)=>k==='then'?t.then:(arg)=>{if(k==='select')fields=arg.split(',');return q;}});return q;}};
+ const C=createSOAmendmentReviewShortcut({React:R,client});C({quotationId:'quote',profileId:'seller',canEdit:true});effects.forEach(fn=>fn());await tick();
+ assert.equal(state.request.status,'approved');assert.equal(state.request.requested_by,'seller');
+});
+test('opening an approved draft does not invalidate or refresh the request mid-edit',async()=>{
+ const request={id:'request',status:'approved',requested_by:'seller'},calls=[];let draft;
+ const states=[[request],false,'',true,'',null,[],'',''];let index=0;
+ const R={...ReactMock([]),useState:initial=>{const i=index++;return[states[i]??initial,v=>{if(i===5)draft=v;}];}};
+ const C=createSOAmendments({React:R,client:clientMock(calls)});const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true});
+ const original=globalThis.window;let refreshes=0;globalThis.window={dispatchEvent:()=>refreshes++};
+ try{await walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit SO / Cost Sheet')).props.onClick();assert.ok(draft);assert.equal(draft.items[0].name,'Original');assert.equal(refreshes,0);}finally{globalThis.window=original;}
+});

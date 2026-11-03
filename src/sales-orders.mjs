@@ -23,7 +23,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
  const Pagination=createPagination(React),SOAmendments=createSOAmendments({React,client});
  const h=React.createElement,Popup=createRecordPopup(React),unwrap=async p=>{const {data,error}=await p;if(error)throw error;return data;};
  return function SalesOrders({lang,quotation,initialOrderId,onClose,onQuotation}){
-  const {demoMode,profile,navigate}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
+  const {demoMode,profile:appProfile,navigate}=useApp(),access=useAccess(),profile=access.profile||appProfile,t=(th,en)=>lang==='th'?th:en;
   const canFinancial=demoMode||(access.can('quotations','view')&&(access.can('quotations','approve')||['sales_user','sales_coordinator','sales_manager','sales_director'].includes(profile?.role==='custom'?profile.custom_role_key:profile?.role)));
   const can=action=>demoMode||access.can('quotations',action),statusLabel=s=>SO_STATUS[s]?.[lang==='th'?0:1]||s;
   const [allRows,AllRows]=React.useState([]),[query,Query]=React.useState(''),[scope,Scope]=React.useState('all'),[owner,Owner]=React.useState(''),[approvalFilter,ApprovalFilter]=React.useState(''),[due,Due]=React.useState(''),[activities,Activities]=React.useState([]);
