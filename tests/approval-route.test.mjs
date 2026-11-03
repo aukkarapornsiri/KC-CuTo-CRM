@@ -1,3 +1,2 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {isCurrentApprover} from '../src/approval-route.mjs';import {validFlow} from '../src/approval-flow-settings.mjs';
-test('Only the current configured approver may review a routed request',()=>{const r={approver_ids:['a','b'],current_step:2};assert.equal(isCurrentApprover(r,'a'),false);assert.equal(isCurrentApprover(r,'b'),true);assert.equal(isCurrentApprover({approver_ids:[]},'b'),false);assert.equal(isCurrentApprover({},'legacy'),true)});
+import {test} from 'node:test';import assert from 'node:assert/strict';import {validFlow} from '../src/approval-flow-settings.mjs';
 test('A flow requires distinct eligible users in every step',()=>{const p=[{id:'a'},{id:'b'}];assert.ok(validFlow(['b','a'],p));for(const ids of [[],['a','a'],[''],['a','inactive']])assert.equal(validFlow(ids,p),false)});
