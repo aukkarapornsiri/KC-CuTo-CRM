@@ -3,6 +3,7 @@ export const ROLE_GROUPS=[
 ];
 export function roleGroup(role){
  const key=role.role_key||'',label=[role.label_th,role.label_en].join(' ');
+ if(['account_manager','key_account_manager'].includes(key))return 'sales';
  if(/^(admin|super_admin|system_admin|it_admin|administrator)$/.test(key)||/ผู้ดูแลระบบ|administrator/i.test(label))return 'admin';
  if(/finance|credit_control|accountant|accounting|procure|purchas|warehouse|inventory|logistic/.test(key)||/บัญชี|การเงิน|จัดซื้อ|คลังสินค้า|ขนส่ง/.test(label))return 'operations';
  if(/service|support|helpdesk|field_engineer|ma_engineer|customer_success|renewal/.test(key)||/บริการ|สนับสนุน|ต่ออายุ/.test(label))return 'service';
