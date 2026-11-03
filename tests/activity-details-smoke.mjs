@@ -29,6 +29,8 @@ try{for(const width of [1440,390]){
  await form.getByLabel('Scheduled at',{exact:true}).fill('2026-10-29T10:30');
  await form.getByLabel('Description',{exact:true}).fill('Review the received lead');
  await form.getByRole('button',{name:'Save',exact:true}).click();
+ await form.waitFor({state:'hidden'});assert.equal(await page.locator('[data-entity=activities] dialog[open]').count(),0);
+ await page.locator('[data-entity=activities]').getByRole('button',{name:/^Details /}).first().click();
  const dialog=page.getByRole('dialog',{name:'Activity Details',exact:true});
  await dialog.waitFor();
  assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
