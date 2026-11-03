@@ -1,0 +1,20 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+fs.mkdirSync('test-artifacts',{recursive:true});
+const browser=await chromium.launch({headless:true});
+for(const width of [1440,390]){
+ const page=await browser.newPage({viewport:{width,height:820}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ let release;const hold=new Promise(r=>release=r);
+ await page.route('**/app-C2ITSffc.js*',async route=>{await hold;await route.continue()});
+ await page.route('**/*.supabase.co/**',route=>route.abort());
+ await page.goto(process.env.SITE_URL||'http://localhost:4178/',{waitUntil:'commit'});
+ await page.locator('.kc-brand-loading__logo').waitFor();await page.waitForFunction(()=>document.querySelector('.kc-brand-loading__logo')?.naturalWidth>0);
+ assert.equal(await page.locator('[role=status]').innerText(),'');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.screenshot({path:`test-artifacts/logo-loading-${width}.png`});
+ release();await page.locator('.kc-login-shell').waitFor();assert.deepEqual(errors,[]);
+ await page.evaluate(async()=>{const {renderBrandLoading}=await import('/src/brand-loading.mjs');const fake={createElement:(tag,props,...children)=>{const el=document.createElement(tag);for(const[k,v]of Object.entries(props||{}))if(k==='className')el.className=v;else el.setAttribute(k,v);children.forEach(c=>el.append(c));return el}};document.querySelector('#root').replaceChildren(renderBrandLoading(fake,'th'))});
+ await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.kc-brand-loading__track>span').evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.close();console.log(`PASS ${width}: startup logo, login handoff, accessible status, reduced motion`);
+}await browser.close();
