@@ -23,6 +23,7 @@ try{for(const width of [390,1440]){
  await assert.rejects(()=>dialog.getByRole('textbox',{name:'Tax ID',exact:true}).fill('other',{timeout:500}));
  const cost=dialog.getByRole('spinbutton',{name:'revision cost 1',exact:true});assert.equal(await cost.inputValue(),'60');await cost.fill('75');
  await dialog.getByRole('button',{name:'+ Add line',exact:true}).click();await dialog.getByRole('combobox',{name:'name 2',exact:true}).fill('Additional');await dialog.getByRole('option',{name:/Additional service/}).click();
+ await page.waitForFunction(()=>document.querySelector('input[aria-label="revision cost 2"]')?.value==='20');
  assert.equal(await dialog.getByRole('spinbutton',{name:'revision cost 2',exact:true}).inputValue(),'20');
  await dialog.screenshot({path:`test-artifacts/so-quotation-revision-${width}.png`});await dialog.getByRole('button',{name:'Save revision and request SO approval',exact:true}).click();await page.waitForFunction(()=>window.revisionPayload);
  const payload=await page.evaluate(()=>window.revisionPayload);assert.equal(payload.p_request_id,'qa-request');assert.equal(payload.p_patch.items[0].cost,75);assert.equal(payload.p_patch.items[0].original_index,0);assert.equal(payload.p_patch.items.length,2);assert.equal(payload.p_patch.items[1].cost,20);assert.equal(payload.p_patch.id,undefined);assert.deepEqual(errors,[]);await page.close();console.log('PASS SO quotation revision',width);
