@@ -1,0 +1,29 @@
+name: Mobile Approval Review
+on:
+  pull_request:
+    paths:
+      - 'src/approval-center.*'
+      - 'assets/approval/**'
+      - 'tests/mobile-approval-smoke.mjs'
+      - '.github/workflows/mobile-approval.yml'
+jobs:
+  mobile-approval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Verify mobile and desktop approval review
+        run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/approval-http.log 2>&1 &
+          sleep 2
+          node tests/mobile-approval-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-approval-review
+          path: test-artifacts/
