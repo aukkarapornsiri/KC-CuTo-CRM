@@ -27,3 +27,16 @@ export function createSOAmendments({React,client}){const h=React.createElement,u
  h('div',{className:'crm-actions'},h('button',{type:'submit',disabled:busy||!totals,className:'crm-so-primary'},t('บันทึกฉบับแก้ไขและส่งอนุมัติ SO','Save revision and request SO approval')),button(t('ปิดฉบับร่าง','Close draft'),()=>Draft(null)))),
  rows.length>0&&h('details',null,h('summary',null,t('ประวัติคำขอและฉบับก่อน–หลัง','Request history and before/after revisions')),rows.map(r=>h('article',{key:r.id},h('strong',null,amendmentStatus(r.status,lang)+' · '+new Date(r.requested_at).toLocaleString(lang==='th'?'th-TH':'en-GB')),h('p',null,r.reason),r.review_note&&h('p',null,r.review_note),r.after_snapshot&&h('details',null,h('summary',null,t('ดูฉบับก่อนและหลัง','View before and after')),h('div',{className:'crm-so-grid'},...[['ก่อนแก้ไข','Before',r.before_snapshot],['หลังแก้ไข','After',r.after_snapshot]].map(([th,en,s])=>h('section',{key:en},h('h4',null,t(th,en)),h('p',null,'PO: '+s.po_number),h('p',null,t('ยอดรวม ','Total ')+s.total+' '+s.currency),h('p',null,s.note),...(s.items||[]).map((x,i)=>h('p',{key:i},x.name+' × '+x.qty+' @ '+x.price))))))))));
 };}
+
+// Expose pending amendment review alongside the quotation reached by legacy notices.
+export function createSOAmendmentReviewShortcut({React,client}){const h=React.createElement;return function SOAmendmentReviewShortcut({quotationId,profileId,lang,canApprove,demoMode,records,onReview}){
+ const [state,State]=React.useState({}),[revision,Revision]=React.useState(0),t=(a,b)=>lang==='th'?a:b;
+ React.useEffect(()=>{let active=true;State({});if(!canApprove)return;
+  const task=demoMode?Promise.resolve({data:(records.so_amendments||[]).filter(a=>a.before_snapshot?.quotation_id===quotationId&&a.status==='pending'&&a.requested_by!==profileId)}):client.from('crm_so_amendments').select('id,reason,sales_order_id,requested_by').eq('before_snapshot->>quotation_id',quotationId).eq('status','pending').neq('requested_by',profileId).order('requested_at',{ascending:false}).limit(1);
+  Promise.resolve(task).then(({data,error})=>{if(active)State({id:quotationId,request:data?.[0],error:error?.message});}).catch(e=>{if(active)State({id:quotationId,error:e.message});});return()=>{active=false;};
+ },[quotationId,profileId,canApprove,demoMode,revision]);
+ if(!canApprove||state.id!==quotationId)return null;
+ if(state.error)return h('div',{role:'alert'},t('โหลดคำขอแก้ไข SO ไม่สำเร็จ','Unable to load SO amendment request'),h('button',{type:'button',onClick:()=>Revision(n=>n+1)},t('โหลดใหม่','Retry')));
+ if(!state.request)return null;
+ return h('aside',{className:'crm-so-amendment-review',style:{padding:'16px',margin:'12px 0',border:'1px solid #e8bd62',borderRadius:'12px',background:'#fff8e8'}},h('strong',null,t('มีคำขอแก้ไข SO รอคุณอนุมัติ','SO amendment awaits your approval')),h('p',null,state.request.reason),h('button',{type:'button',className:'crm-save',onClick:()=>onReview(state.request.id)},t('ตรวจสอบ / อนุมัติให้แก้ไข SO','Review / authorize SO editing')));
+};}

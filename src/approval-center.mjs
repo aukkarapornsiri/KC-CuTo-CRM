@@ -44,6 +44,11 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
    let active=true;
    (async()=>{try{
     if(!can('view')||!can('approve'))throw Error(t('ไม่มีสิทธิ์เข้าถึงงานอนุมัติ','Approval access denied'));
+    if(initialKind==='amendment'){
+     const a=demoMode?(records.so_amendments||[]).find(r=>r.id===initialRecordId):await unwrap(client.from('crm_so_amendments').select('*').eq('id',initialRecordId).maybeSingle());
+     if(!a)throw Error(t('ไม่พบคำขอแก้ไข SO หรือไม่มีสิทธิ์','SO amendment request not found or access denied'));
+     if(active){Selected({...a.before_snapshot,id:a.sales_order_id,kind:'amendment',key:'amendment:'+a.id,request:a,status:a.status,summary:a.reason,created_at:a.requested_at});Comment('');}return;
+    }
     let selectedTask;
     if(initialKind!=='so'){
      const requests=demoMode?(records.approval_requests||[]).filter(a=>a.quotation_id===initialRecordId):await unwrap(client.from('crm_approval_requests').select('*').eq('quotation_id',initialRecordId).order('created_at',{ascending:false}).limit(1));
