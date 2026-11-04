@@ -63,9 +63,11 @@ export function LoginLayout({React, lang, onLanguage, logo, children}) {
             ['shield','เข้าถึงตามสิทธิ์ผู้ใช้','Role-based access']
           ].map(([kind,th,en])=>h('div', {key:kind}, icon(React,kind), h('span',null,t(th,en)))))
         ),
+        h('section',{className:'kc-login-menu-showcase','aria-label':t('เมนูในระบบ','CRM features')},h('h2',null,t('ครบทุกงาน ในพื้นที่เดียว','Every task. One workspace.')),h('div',{className:'kc-login-menu-grid'},[["dashboard", "หน้าหลัก", "Home"], ["leads", "ลีด", "Leads"], ["contacts", "ผู้ติดต่อ", "Contacts"], ["customers", "ลูกค้า", "Accounts"], ["opportunities", "การขาย", "Sales"], ["tickets", "บริการ", "Service"], ["activities", "กิจกรรม", "Activities"], ["documents", "เอกสาร", "Documents"], ["reports", "วิเคราะห์", "Analytics"], ["approvals", "งานอนุมัติ", "Approvals"]].map(([key,th,en])=>h('div',{className:'kc-login-menu-tile',key},h('img',{src:'./assets/login-menu/'+key+'.svg',width:24,height:24,alt:''}),h('span',null,t(th,en))))),h('p',null,t('เข้าสู่ระบบเพื่อใช้งานเมนูตามสิทธิ์ของคุณ','Sign in to access menus available to your role'))),
         h('footer', null, h('span',null,'© '+new Date().getFullYear()+' KAI-COM'), h('span',null,t('สำหรับผู้ได้รับอนุญาตเท่านั้น','For authorized users only')))
       ),
       h('section', {className:'kc-login-access', 'aria-label':t('เข้าสู่ระบบ','Sign in')},
+        h('div', {className:'kc-login-logo kc-login-mobile-logo'}, h('svg', {viewBox:'135 76 1265 383', role:'img', 'aria-label':'KC CuTo CRM', preserveAspectRatio:'xMinYMid meet'}, h('image', {href:logo, width:1500, height:500}))),
         h('header', {className:'kc-login-top'}, h('span',null,t('KC Digital Workplace · พื้นที่ทำงานดิจิทัล','KC Digital Workplace · Digital workspace')),
           h('button', {type:'button', className:'kc-login-language', onClick:onLanguage, 'aria-label':t('เปลี่ยนเป็นภาษาอังกฤษ','Switch to Thai')}, h('span',{'aria-hidden':true},'◎'), lang === 'th' ? 'TH' : 'EN')),
         h('div', {className:'kc-login-content'},
