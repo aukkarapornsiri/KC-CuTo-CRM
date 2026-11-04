@@ -26,6 +26,10 @@ declare a public.crm_so_amendments;s public.crm_sales_orders;revised public.crm_
  from public.crm_sales_order_cost_sheets cost join public.kc_dw_sales_order_facts fact on fact.id=cost.sales_order_id where cost.sales_order_id=s.id;
  perform set_config('request.jwt.claim.sub',a.reviewed_by::text,true);
  begin perform public.crm_save_so_amendment(a.id,s.updated_at,patch);raise exception 'Reviewer edited their approved scope';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',a.requested_by::text,true);
+ begin perform public.crm_so_amendment_action(s.id,'request','Manager must not initiate editing',s.updated_at,null);raise exception 'Manager requested another salesperson SO';exception when insufficient_privilege then null;end;
+ begin perform public.crm_save_so_amendment(a.id,s.updated_at,patch);raise exception 'Manager edited another salesperson SO';exception when insufficient_privilege then null;end;
+ begin perform public.crm_so_amendment_serials(a.id);raise exception 'Manager accessed amendment editor serials';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claim.sub',s.owner_id::text,true);
  serials:=public.crm_so_amendment_serials(a.id);
  if serials is null then raise exception 'Owner cannot load authorized serials';end if;
