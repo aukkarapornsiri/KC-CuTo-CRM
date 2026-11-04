@@ -1,6 +1,8 @@
 .kc-mobile-home,.kc-mobile-bottom-nav{display:none}
 @media(max-width:640px){
-.kc-app:has(.kc-mobile-home) .kc-app-header{display:none!important}
+.kc-app:has(.kc-mobile-home) .kc-app-header{display:contents!important}
+.kc-app:has(.kc-mobile-home) .kc-app-header>*:not(dialog[open]){display:none!important}
+.kc-app:has(.kc-mobile-home) .kc-app-header>dialog[open]{display:flex!important}
 .kc-app>.flex-1>.flex-1:has(.kc-mobile-bottom-nav){padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
 .kc-app>.flex-1>.flex-1:has(.kc-mobile-home){padding:0!important;background:#0b1c28;min-width:0}
 .kc-mobile-home{display:flex;flex-direction:column;width:100%;height:calc(100dvh - 84px - env(safe-area-inset-bottom));min-height:480px;padding:0;background:#0b1c28;color:#fff;font-family:'IBM Plex Sans Thai',sans-serif;box-sizing:border-box}
