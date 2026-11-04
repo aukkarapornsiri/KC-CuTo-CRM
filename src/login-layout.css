@@ -200,3 +200,6 @@
 .kc-login-menu-tile img{display:block;flex:none;width:24px;height:24px}.kc-login-menu-tile span{font-size:9px;line-height:1.5;white-space:nowrap}
 .kc-login-menu-showcase>p{font-size:11px;color:#b9ccd7;margin:18px 0 0;line-height:1.6}
 }
+
+/* Mobile sign-in has no feature showcase. */
+@media(max-width:640px){.kc-login .kc-login-brand{display:none}.kc-login-shell{min-height:100dvh}.kc-login-access{flex:1}}
