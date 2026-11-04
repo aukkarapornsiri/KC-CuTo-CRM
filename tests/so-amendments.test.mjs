@@ -42,7 +42,7 @@ test('approved requester can open SO and Cost Sheet from the source quotation',a
 
 test('live request projection includes the status needed to expose approved editing',async()=>{
  const {createSOAmendmentReviewShortcut}=await import('../src/so-amendments.mjs');
- const request={id:'request',status:'approved',sales_order_id:'so',requested_by:'seller',reason:'Correct cost'};
+ const request={id:'request',status:'approved',sales_order_id:'so',requested_by:'seller',before_snapshot:{owner_id:'seller'},reason:'Correct cost'};
  let fields=[],state;const effects=[];
  const R={...ReactMock([]),useEffect:fn=>effects.push(fn),useState:initial=>[initial,next=>{if(next.id)state=next;}]};
  const client={from:()=>{const q=new Proxy({then:resolve=>resolve({data:[Object.fromEntries(fields.map(k=>[k,request[k]]))]})},{get:(t,k)=>k==='then'?t.then:(arg)=>{if(k==='select')fields=arg.split(',');return q;}});return q;}};
@@ -79,9 +79,15 @@ test('source quotation form saves approved SO revision without writing the origi
 test('manager-requested approved scope opens for the responsible SO owner only',()=>{
  const request={status:'approved',requested_by:'manager',reviewed_by:'reviewer',before_snapshot:{owner_id:'seller'}};
  assert.equal(canEditSOAmendment(request,order,'seller'),true);
- assert.equal(canEditSOAmendment(request,order,'manager'),true);
+ assert.equal(canEditSOAmendment(request,order,'manager'),false);
  for(const id of ['stranger','reviewer',undefined])assert.equal(canEditSOAmendment(request,order,id),false);
  assert.equal(canEditSOAmendment({...request,status:'pending'},order,'seller'),false);
  assert.equal(canEditSOAmendment(request,{...order,status:'cancelled'},'seller'),false);
  assert.equal(canEditSOAmendment(request,order,'seller',false),false);
+});
+
+test('managers can review but cannot request amendments for another salesperson',()=>{
+ const C=createSOAmendments({React:ReactMock([[],false,'',true,'Correct cost']),client:{},QuotationDialog:()=>null});
+ const tree=C({order,lang:'en',profile:{id:'manager'},can:()=>true,records:{}});
+ assert.equal(walk(tree).filter(n=>n.type==='button'&&['Request SO amendment','Amend an existing SO'].some(label=>n.children.includes(label))).length,0);
 });

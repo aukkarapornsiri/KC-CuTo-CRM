@@ -8,7 +8,7 @@ try{for(const width of [390,1440]){
  await page.evaluate(async()=>{
   const React=window.QAReact,createRoot=window.QACreateRoot;
   const {createSOAmendments,createSOAmendmentReviewShortcut}=await import('./src/so-amendments.mjs');
-  const request={id:'qa-request',status:'approved',requested_by:'seller',reason:'Correct cost and add item'};
+  const request={id:'qa-request',status:'approved',requested_by:'seller',before_snapshot:{owner_id:'seller'},reason:'Correct cost and add item'};
   const order={id:'qa-so',code:'SO-QA',owner_id:'seller',created_by:'seller',status:'confirmed',updated_at:'2026-11-03T00:00:00Z',po_number:'PO-QA',po_date:'2026-11-01',currency:'THB',subtotal:200,discount:0,vat:14,withholding_tax:0,items:[{name:'Original',qty:2,price:100,discount:0,total:200}]};
   const catalog=[{id:'new-item',status:'active',code:'NEW',name:'Additional service',price:50,cost:20,unit:'Unit'}];
   const client={rpc:async(name,args)=>{if(name==='crm_save_so_amendment'){window.revisionPayload=args;return {data:{id:order.id}};}return {data:name==='crm_price_catalog'?catalog:[]};},from:table=>{let columns='*';const q=new Proxy({then:resolve=>resolve({data:table==='crm_so_amendments'?[columns==='*'?request:Object.fromEntries(columns.split(',').map(k=>[k,request[k]]))]:{line_financials:[{cost_total:120}]}})},{get:(t,k)=>k==='then'?t.then:(value)=>{if(k==='select')columns=value;return q;}});return q;}};
