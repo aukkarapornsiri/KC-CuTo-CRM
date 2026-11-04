@@ -44,6 +44,8 @@ export function contextEntries(modules,activeModule){
         if(pageId&&!page)return null;
         return {module:item,page:page||null};
       }).filter(Boolean);
+      const quotes=byId.get('quotations');
+      if(quotes?.subs?.some(p=>p.id==='quot-list'))items.push({module:quotes,page:{id:'quot-list',navigationKey:'sales-orders',label:{th:'ใบสั่งขาย (SO)',en:'Sales Orders (SO)'},params:{openSalesOrders:true}}});
       return {title:group.label,items,extra:[]};
     }
     if(group.id==='service'){
@@ -107,7 +109,7 @@ export function createContextNavigation({React,logo,useApp,useAccess}){
     if(!title)return null;
     const go=(module,page)=>{const target=page?{moduleId:module.id,pageId:page.id}:firstPage(module);
       if(!section){const group=SIDEBAR_GROUPS.find(item=>['sales','service'].includes(item.id)&&item.modules.includes(activeModule));if(group){setSection(group.id);window.dispatchEvent(new CustomEvent('kc-crm-section',{detail:group.id}));}}
-      setOpen(null);onNavigate(target.moduleId,target.pageId);};
+      setOpen(null);onNavigate(target.moduleId,target.pageId,page?.params?{...page.params,openSalesOrders:Date.now()}:undefined);};
     const toggle=(id,event)=>{const rect=event.currentTarget.getBoundingClientRect();
       setOpen(previous=>previous?.id===id?null:{id,left:Math.max(8,Math.min(rect.left,window.innerWidth-238)),top:rect.bottom+4});};
     const menu=(id,module,pages)=>open?.id===id&&h('div',{className:'kc-context-menu',role:'menu',
@@ -118,9 +120,9 @@ export function createContextNavigation({React,logo,useApp,useAccess}){
       h('strong',{className:'kc-context-heading'},localized(title,lang)),
       h('nav',{'aria-label':lang==='th'?'เมนูของหมวด':'Section navigation',className:'kc-context-tabs'},
         items.map(({module,page,label:tabLabel})=>{
-          const id=module.id, label=localized(tabLabel||page?.label||module.label,lang), selected=activeModule===id&&(!page?!(id==='quotations'&&activeSub==='quot-pricebook')&&!(id==='tickets'&&['tk-sla','tk-kb'].includes(activeSub)):activeSub===page.id);
+          const id=module.id, label=localized(tabLabel||page?.label||module.label,lang), selected=!page?.navigationKey&&activeModule===id&&(!page?!(id==='quotations'&&activeSub==='quot-pricebook')&&!(id==='tickets'&&['tk-sla','tk-kb'].includes(activeSub)):activeSub===page.id);
           const pages=!page||page.id==='tk-overview'?(module.subs||[]):[];
-          return h('div',{key:page?.id||id,className:'kc-context-tab-wrap'},
+          return h('div',{key:page?.navigationKey||page?.id||id,className:'kc-context-tab-wrap'},
             h('button',{type:'button',className:'kc-context-tab','aria-current':selected?'page':undefined,
               'data-active':selected,onClick:()=>go(module,page)},label),
             pages.length>1&&h('button',{type:'button',className:'kc-context-more',
