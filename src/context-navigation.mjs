@@ -1,3 +1,5 @@
+let navigationModules=[];
+export const getNavigationModules=()=>navigationModules;
 import {filterModules} from './role-access.mjs?v=20261007-full-sales';
 import {SIDEBAR_GROUPS,SIDEBAR_PRIMARY_ORDER} from './grouped-navigation.mjs?v=20261007-full-sales';
 
@@ -86,6 +88,7 @@ export function createContextNavigation({React,logo,useApp,useAccess}){
   }
 
   function ContextNav({lang,activeModule,activeSub,modules,onNavigate}){
+    navigationModules=modules;
     const access=useAccess();modules=filterModules(modules,access);
     const [open,setOpen]=React.useState(null);
     const [section,setSection]=React.useState(null);
