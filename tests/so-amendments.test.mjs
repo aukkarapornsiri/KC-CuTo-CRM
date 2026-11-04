@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {amendmentDraft,createSOAmendments} from '../src/so-amendments.mjs';
+import {amendmentDraft,createSOAmendments,canEditSOAmendment} from '../src/so-amendments.mjs';
 import {createApprovalCenter} from '../src/approval-center.mjs';
 const order={id:'so',owner_id:'seller',created_by:'seller',status:'confirmed',updated_at:'2026-11-01T00:00:00Z',po_number:'PO',po_date:'2026-11-01',currency:'THB',subtotal:200,discount:30,vat:11.9,withholding_tax:5.1,items:[{name:'Original',qty:2,price:100,discount:20,total:180}]};
 const walk=n=>n&&typeof n==='object'?[n,...(n.children||[]).flat(Infinity).flatMap(walk)]:[];
@@ -74,4 +74,14 @@ test('source quotation form saves approved SO revision without writing the origi
  const editor=walk(C({order,lang:'en',profile:{id:'seller'},can:()=>true,canFinancial:true,records:{},onSaved:()=>{}})).find(n=>n.type===Dialog);
  assert.equal(editor.props.revision.readOnly,false);const original=globalThis.window;globalThis.window={dispatchEvent(){}};
  try{await editor.props.onSave({preventDefault(){}});assert.equal(calls[0].name,'crm_save_so_amendment');assert.equal(calls[0].args.p_patch.id,undefined);assert.equal(calls[0].args.p_patch.template_snapshot,undefined);assert.equal(calls[0].args.p_patch.items[0].original_index,0);}finally{globalThis.window=original;}
+});
+
+test('manager-requested approved scope opens for the responsible SO owner only',()=>{
+ const request={status:'approved',requested_by:'manager',reviewed_by:'reviewer',before_snapshot:{owner_id:'seller'}};
+ assert.equal(canEditSOAmendment(request,order,'seller'),true);
+ assert.equal(canEditSOAmendment(request,order,'manager'),true);
+ for(const id of ['stranger','reviewer',undefined])assert.equal(canEditSOAmendment(request,order,id),false);
+ assert.equal(canEditSOAmendment({...request,status:'pending'},order,'seller'),false);
+ assert.equal(canEditSOAmendment(request,{...order,status:'cancelled'},'seller'),false);
+ assert.equal(canEditSOAmendment(request,order,'seller',false),false);
 });
