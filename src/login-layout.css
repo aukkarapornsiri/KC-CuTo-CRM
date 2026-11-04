@@ -179,3 +179,24 @@
  .kc-login-features{grid-template-columns:minmax(0,1fr)}
  .kc-login-features>div{min-height:52px;flex-direction:row;align-items:center;gap:12px;font-size:12px}
 }
+
+/* Approved mobile-only sign-in. Desktop remains unchanged. */
+.kc-login-mobile-logo,.kc-login-menu-showcase{display:none}
+@media(max-width:640px){
+.kc-login{padding:0;background:#f4f8fa;--login-pad:24px;--login-field:44px;--login-button:48px;align-items:flex-start}
+.kc-login-shell{border:0;border-radius:0;max-width:none;display:flex;flex-direction:column}
+.kc-login-access{order:0;padding:28px 24px;background:white}
+.kc-login-mobile-logo{display:block;width:220px;max-width:100%;margin:0 0 16px}
+.kc-login-top{font-size:11px}.kc-login-top>span{font-size:0}.kc-login-top>span::after{content:'KC Digital Workplace';font-size:11px;color:#088a87}
+.kc-login-content{margin:20px 0 0}.kc-login-content>h2{font-size:28px;margin-bottom:20px}.kc-login-intro{font-size:13px;margin-bottom:18px}
+.kc-login-form-card form{gap:16px}.kc-login-form-card input{border-radius:10px;background:white;font-size:16px;padding:0 12px}.kc-login-form-card label{font-size:14px;color:#142c3b}
+.kc-login-form-card button[type=submit]{background:#088a87;box-shadow:none;font-size:14px}.kc-login-microsoft>button{background:#142c3b!important;color:white!important;border-color:#142c3b!important;font-size:14px}.kc-login-guest{background:#088a87;color:white;border-color:#088a87;font-size:14px}
+.kc-login-assurance,.kc-login-session-note,.kc-login-access>footer{display:none}
+.kc-login .kc-login-brand{order:1;display:block;background:#0b1c28;padding:28px 24px}
+.kc-login-brand>.kc-login-logo,.kc-login-story,.kc-login-brand>footer{display:none}
+.kc-login-menu-showcase{display:block;width:100%}.kc-login-menu-showcase h2{font-size:20px;font-weight:600;color:white;margin:0 0 18px;line-height:1.5}
+.kc-login-menu-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 8px}
+.kc-login-menu-tile{height:76px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#142d3a;border:1px solid #294450;border-radius:14px;color:#dae8ef}
+.kc-login-menu-tile img{display:block;flex:none;width:24px;height:24px}.kc-login-menu-tile span{font-size:9px;line-height:1.5;white-space:nowrap}
+.kc-login-menu-showcase>p{font-size:11px;color:#b9ccd7;margin:18px 0 0;line-height:1.6}
+}
