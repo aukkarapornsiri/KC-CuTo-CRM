@@ -12,12 +12,12 @@ try{for(const width of [1440,390]){
   const C=createSalesOrders({React,client:{},useApp:()=>({demoMode:true,profile:{id:'seller'},navigate:()=>{}}),useAccess:()=>({can:()=>true}),records});
   const host=document.createElement('div');document.body.append(host);window.QACreateRoot(host).render(React.createElement(C,{lang:'en',initialOrderId:'qa-so',onClose:()=>{window.didClose=true},onQuotation:id=>window.openedQuote=id}));
  });
- const root=page.locator('.kc-so-detail-layout');await root.waitFor();await root.getByText('Request SO amendment',{exact:true}).waitFor();
+ const root=page.locator('.kc-so-detail-layout');await root.waitFor();await root.getByText('Request edit approval',{exact:true}).waitFor();
  assert.equal(await root.locator('.kc-so-card').count(),6);
  const boxes=await root.locator('.kc-so-card').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}}));
  if(width>760){assert.ok(Math.abs(boxes[0].width-boxes[1].width)<1);for(let i=0;i<6;i+=2){assert.ok(Math.abs(boxes[i].y-boxes[i+1].y)<1);assert.ok(Math.abs(boxes[i].height-boxes[i+1].height)<1);}}else{assert.ok(boxes.every(b=>Math.abs(b.x-boxes[0].x)<1));assert.ok(await root.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'No mobile overflow');}
  await root.getByRole('button',{name:'Open quotation',exact:true}).click();assert.equal(await page.evaluate(()=>window.openedQuote),'qa-quote');
  assert.match(await root.locator('#so-approval-card').innerText(),/Rejected/);assert.match(await root.locator('#so-items').innerText(),/Original item/);
- await root.getByRole('button',{name:'Edit SO / Cost Sheet',exact:true}).click();
+ await root.getByRole('button',{name:'SO edit requests',exact:true}).click();
  await page.screenshot({path:`test-artifacts/so-detail-cards-${width}.png`,fullPage:true});assert.deepEqual(errors,[]);await page.close();console.log('PASS SO cards',width);
 }}finally{await browser.close();}

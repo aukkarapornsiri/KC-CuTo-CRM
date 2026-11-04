@@ -17,8 +17,9 @@ try{for(const width of [390,1440]){
   const host=document.createElement('div');host.id='qa-cost-root';host.style.cssText='position:fixed;inset:0;overflow:auto;background:white;z-index:99999;padding:16px';document.body.append(host);
   const C=createSOAmendments({React,client,QuotationDialog}),Shortcut=createSOAmendmentReviewShortcut({React,client});function Flow(){const [open,Open]=React.useState(false);return open?React.createElement(C,{autoOpen:true,order,lang:'en',profile:{id:'seller'},can:()=>true,canFinancial:true,demoMode:false,onSaved:()=>{},records:{}}):React.createElement(Shortcut,{quotationId:'qa-quote',profileId:'seller',lang:'en',canEdit:true,canApprove:false,demoMode:false,onEdit:id=>{if(id!==order.id)throw Error('Wrong SO');Open(true);}});}request.sales_order_id=order.id;createRoot(host).render(React.createElement(Flow));
  });
- const root=page.locator('#qa-cost-root');await root.getByRole('button',{name:'Edit SO / Cost Sheet',exact:true}).click();
+ const root=page.locator('#qa-cost-root');await root.getByRole('button',{name:'Edit',exact:true}).click();
  const dialog=page.getByRole('dialog',{name:'Quotation form',exact:true});await dialog.waitFor();
+ assert.equal(await dialog.getByRole('heading',{name:'Edit Quotation',exact:true}).count(),1);
  assert.equal(await dialog.getByRole('textbox',{name:'Document no.',exact:true}).inputValue(),'SQ-QA');
  await assert.rejects(()=>dialog.getByRole('textbox',{name:'Tax ID',exact:true}).fill('other',{timeout:500}));
  const cost=dialog.getByRole('spinbutton',{name:'revision cost 1',exact:true});assert.equal(await cost.inputValue(),'60');await cost.fill('75');

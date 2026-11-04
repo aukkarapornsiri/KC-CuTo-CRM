@@ -8,7 +8,7 @@ const tick=()=>new Promise(r=>setTimeout(r,20));
 const ReactMock=values=>{let i=0;return {createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity)}),useEffect:()=>{},useRef:v=>({current:v}),useState:v=>[values[i++]??v,()=>{}]};};
 const clientMock=calls=>({rpc:async(name,args)=>{calls.push({name,args});await tick();return {data:name==='crm_save_so_amendment'?{id:'so'}:[],error:null}},from:()=>{const q=new Proxy({then:resolve=>resolve({data:[],error:null})},{get:(t,k)=>k==='then'?t.then:()=>q});return q;}});
 test('revision draft preserves item identity and separates line/document discounts and tax rates',()=>{const d=amendmentDraft(order);assert.equal(d.document_discount,10);assert.equal(d.tax_rate,7);assert.equal(d.wht_rate,3);assert.equal(d.items[0].original_index,0);assert.notEqual(d.items[0],order.items[0]);});
-test('request form sends reason and exact SO version once',async()=>{const calls=[],R=ReactMock([[],false,'',true,'Customer changed PO']);const C=createSOAmendments({React:R,client:clientMock(calls)});const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true,records:{},onSaved:()=>{}});const b=walk(tree).find(n=>n.type==='button'&&n.children.includes('Request SO amendment'));const original=globalThis.window;globalThis.window={dispatchEvent:()=>{}};try{const a=b.props.onClick(),b2=b.props.onClick();await Promise.all([a,b2]);assert.equal(calls.length,1);assert.equal(calls[0].args.p_expected_updated_at,order.updated_at);assert.equal(calls[0].args.p_note,'Customer changed PO');}finally{globalThis.window=original;}});
+test('request form sends reason and exact SO version once',async()=>{const calls=[],R=ReactMock([[],false,'',true,'Customer changed PO']);const C=createSOAmendments({React:R,client:clientMock(calls)});const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true,records:{},onSaved:()=>{}});const b=walk(tree).find(n=>n.type==='button'&&n.children.includes('Request edit approval'));const original=globalThis.window;globalThis.window={dispatchEvent:()=>{}};try{const a=b.props.onClick(),b2=b.props.onClick();await Promise.all([a,b2]);assert.equal(calls.length,1);assert.equal(calls[0].args.p_expected_updated_at,order.updated_at);assert.equal(calls[0].args.p_note,'Customer changed PO');}finally{globalThis.window=original;}});
 test('approved requester form renders line pricing and saves through guarded RPC',async()=>{const calls=[],request={id:'request',status:'approved',requested_by:'seller',reason:'Correct price'},R=ReactMock([[request],false,'',true,'',amendmentDraft(order),[],'','']);const C=createSOAmendments({React:R,client:clientMock(calls)});let saved;const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true,records:{},onSaved:id=>saved=id});assert.ok(walk(tree).find(n=>n.props['aria-label']==='Price 1'));const form=walk(tree).find(n=>n.type==='form');const original=globalThis.window;globalThis.window={dispatchEvent:()=>{}};try{await form.props.onSubmit({preventDefault(){}});assert.equal(calls[0].name,'crm_save_so_amendment');assert.equal(calls[0].args.p_request_id,'request');assert.equal(calls[0].args.p_patch.items[0].original_index,0);assert.equal(saved,'so');}finally{globalThis.window=original;}});
 test('independent approver authorizes amendment through dedicated RPC without applying changes',async()=>{const selected={kind:'amendment',id:'so',status:'pending',request:{id:'request',requested_by:'seller',reason:'Correct price',status:'pending',approver_ids:['reviewer'],current_step:1},items:[]},calls=[],R=ReactMock([[], 'pending','all','',selected,'Allowed',false,false,'','']);const Center=createApprovalCenter({React:R,client:clientMock(calls),useApp:()=>({profile:{id:'reviewer'}}),useAccess:()=>({can:()=>true}),records:{}});const tree=Center({lang:'en'});const button=walk(tree).find(n=>n.type==='button'&&n.children.includes('Authorize editing'));assert.ok(button);const original=globalThis.window;globalThis.window={dispatchEvent:()=>{}};try{await button.props.onClick();await tick();assert.equal(calls[0].name,'crm_so_amendment_action');assert.equal(calls[0].args.p_action,'approve');assert.equal(calls[0].args.p_request_id,'request');}finally{globalThis.window=original;}});
 
@@ -37,7 +37,7 @@ test('approved requester can open SO and Cost Sheet from the source quotation',a
  const {createSOAmendmentReviewShortcut}=await import('../src/so-amendments.mjs');let opened;
  const C=createSOAmendmentReviewShortcut({React:ReactMock([{id:'quote',request:{id:'request',status:'approved',sales_order_id:'so',requested_by:'seller'}}]),client:{}});
  const tree=C({quotationId:'quote',profileId:'seller',lang:'en',canApprove:false,canEdit:true,onEdit:id=>opened=id});
- walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit SO / Cost Sheet')).props.onClick();assert.equal(opened,'so');
+ walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit')).props.onClick();assert.equal(opened,'so');
 });
 
 test('live request projection includes the status needed to expose approved editing',async()=>{
@@ -55,7 +55,7 @@ test('opening an approved draft does not invalidate or refresh the request mid-e
  const R={...ReactMock([]),useState:initial=>{const i=index++;return[states[i]??initial,v=>{if(i===5)draft=v;}];}};
  const C=createSOAmendments({React:R,client:clientMock(calls)});const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true});
  const original=globalThis.window;let refreshes=0;globalThis.window={dispatchEvent:()=>refreshes++};
- try{await walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit SO / Cost Sheet')).props.onClick();assert.ok(draft);assert.equal(draft.items[0].name,'Original');assert.equal(refreshes,0);}finally{globalThis.window=original;}
+ try{await walk(tree).find(n=>n.type==='button'&&n.children.includes('Edit')).props.onClick();assert.ok(draft);assert.equal(draft.items[0].name,'Original');assert.equal(refreshes,0);}finally{globalThis.window=original;}
 });
 
 test('source quotation form is read-only before independent approval and cannot save',async()=>{
@@ -65,7 +65,7 @@ test('source quotation form is read-only before independent approval and cannot 
  const tree=C({order,lang:'en',profile:{id:'seller'},can:()=>true,canFinancial:true,records:{},onSaved:()=>{}});
  const editor=walk(tree).find(n=>n.type===Dialog);assert.ok(editor);assert.equal(editor.props.editing.id,'quote');assert.equal(editor.props.revision.readOnly,true);
  await editor.props.onSave({preventDefault(){}});assert.equal(calls.length,0);
- assert.ok(walk(editor.props.revision.banner).find(n=>n.children.includes('Request SO amendment')));
+ assert.ok(walk(editor.props.revision.banner).find(n=>n.children.includes('Request edit approval')));
 });
 test('source quotation form saves approved SO revision without writing the original quotation',async()=>{
  const calls=[],request={id:'request',status:'approved',requested_by:'seller'},draft={...amendmentDraft(order),id:'quote',code:'SQ-1',customer_id:'customer',template_snapshot:{test:true}},Dialog=()=>null;
@@ -89,5 +89,5 @@ test('manager-requested approved scope opens for the responsible SO owner only',
 test('managers can review but cannot request amendments for another salesperson',()=>{
  const C=createSOAmendments({React:ReactMock([[],false,'',true,'Correct cost']),client:{},QuotationDialog:()=>null});
  const tree=C({order,lang:'en',profile:{id:'manager'},can:()=>true,records:{}});
- assert.equal(walk(tree).filter(n=>n.type==='button'&&['Request SO amendment','Amend an existing SO'].some(label=>n.children.includes(label))).length,0);
+ assert.equal(walk(tree).filter(n=>n.type==='button'&&['Request edit approval','Amend an existing SO'].some(label=>n.children.includes(label))).length,0);
 });
