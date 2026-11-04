@@ -94,3 +94,8 @@
 
 .crm-quotation-detail-dialog .kc-quote-detail .kc-quote-hero h2{color:#fff!important;border:0!important;padding:0!important;text-align:left;font-weight:600!important}.kc-quote-detail .kc-quote-card h3,.kc-quote-detail .kc-quote-metric strong,.kc-quote-detail .kc-quote-preparer strong{font-weight:600!important}.kc-quote-detail .kc-quote-card .crm-field>div{font-weight:500!important}
 .crm-quotation-detail-dialog .kc-quote-detail,.crm-quotation-detail-dialog .kc-quote-detail *{font-family:'IBM Plex Sans Thai',sans-serif!important}
+
+/* Party fields fill their grid cells independently of surrounding form alignment. */
+.kc-quote-party-grid .kc-quote-field{align-items:stretch;justify-content:flex-start;text-align:start;width:100%}
+.kc-quote-party-grid .kc-quote-field>div{width:100%;min-width:0}
+.kc-quote-party-grid .kc-customer-picker{width:100%}
