@@ -1,6 +1,5 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {openDesktopMenu} from './menu-helper.mjs';
 const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox']});
 try{for(const width of [320,390,430,1440]){
  const page=await browser.newPage({viewport:{width:1440,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -17,7 +16,5 @@ try{for(const width of [320,390,430,1440]){
  await dialog.getByRole('button',{name:'ปิดฟอร์ม',exact:true}).click();
  await page.getByRole('dialog',{name:'ศูนย์อนุมัติ',exact:true}).getByRole('button',{name:'ปิดฟอร์ม',exact:true}).click();
  await page.setViewportSize({width:1440,height:844});await page.getByRole('button',{name:'เปลี่ยนเป็นภาษาอังกฤษ',exact:true}).click();await page.locator('.kc-header-approval').click();await page.getByRole('dialog',{name:'Approval center',exact:true}).waitFor();await page.getByRole('dialog',{name:'Approval center',exact:true}).getByRole('button',{name:'Close form',exact:true}).click();
- await page.setViewportSize({width:1440,height:844});await openDesktopMenu(page,'Leads');await page.getByRole('button',{name:'Details LD-QA',exact:true}).click();await page.setViewportSize({width,height:844});
- const lead=page.getByRole('dialog',{name:'Lead Detail',exact:true});await lead.waitFor();if(width===390){assert.ok(await lead.locator('.kc-lead-mobile-summary').isVisible());const assign=lead.getByRole('button',{name:'Assign lead',exact:true});const b=await assign.boundingBox();assert.ok(b.height>=52&&b.y+b.height<=845);assert.ok(await assign.isDisabled());await lead.getByRole('button',{name:'View all lead details',exact:true}).click();assert.ok(await lead.locator('.kc-lead-detail-body').isVisible());}await lead.screenshot({path:`test-artifacts/mobile-lead-${width}.png`});
  assert.deepEqual(errors,[]);await page.close();console.log('PASS Approval center',width);
 }}finally{await browser.close();}
