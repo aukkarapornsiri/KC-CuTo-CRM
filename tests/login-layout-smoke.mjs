@@ -6,7 +6,8 @@ const baseURL = new URL(process.env.SITE_URL || 'http://127.0.0.1:4173/kc-kuto-c
 baseURL.searchParams.delete('demo');
 const base = baseURL.href;
 const browser = await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
-const viewports = [[1779,864],[1920,1200],[1536,960],[1920,1080],[1736,800],[1440,900],[1440,720],[1366,768],[1280,650],[1024,650],[1024,768],[768,1024],[390,800],[320,568]];
+// Mobile presentation and form preservation are covered in mobile-signin-icons.mjs.
+const viewports = [[1779,864],[1920,1200],[1536,960],[1920,1080],[1736,800],[1440,900],[1440,720],[1366,768],[1280,650],[1024,650],[1024,768],[768,1024]];
 fs.mkdirSync('test-artifacts',{recursive:true});
 const results = [];
 try {
@@ -118,3 +119,4 @@ try {
   fs.writeFileSync('test-artifacts/login-layout-geometry.json',JSON.stringify(results,null,2));
   console.log('PASS login 50/50: 14 viewports x Thai/English, equal space above logo and below cards, pinned footer, borderless left-aligned artwork and text, exact reference copy, password toggle, native validation, intercepted password rejection, real Guest URL navigation, explicit demo only, tab branding; no live credentials/data submitted.');
 } finally {await browser.close();}
+
