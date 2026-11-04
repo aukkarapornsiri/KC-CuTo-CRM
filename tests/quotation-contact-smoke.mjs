@@ -33,7 +33,7 @@ try {
    await dialog.locator('tfoot').getByText('600,000.00',{exact:true}).waitFor();
    assert.equal(await dialog.locator('tbody .crm-internal-financial').first().innerText(),'600,000.00');
    assert.equal(await dialog.locator('tfoot .crm-internal-financial').last().innerText(),'28.57');
-   assert.equal(await dialog.getByRole('button',{name:'Edit',exact:true}).isDisabled(),true);
+   assert.equal(await dialog.getByRole('button',{name:'Edit',exact:true}).isDisabled(),false);
    await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
    await page.getByRole('button',{name:entry+code,exact:true}).click();
    await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight;});

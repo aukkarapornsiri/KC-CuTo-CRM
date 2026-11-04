@@ -201,5 +201,5 @@
 .kc-login-menu-showcase>p{font-size:11px;color:#b9ccd7;margin:18px 0 0;line-height:1.6}
 }
 
-/* The mobile sign-in contains the form only; app navigation lives after sign-in. */
+/* Mobile sign-in has no feature showcase. */
 @media(max-width:640px){.kc-login .kc-login-brand{display:none}.kc-login-shell{min-height:100dvh}.kc-login-access{flex:1}}
