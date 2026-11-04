@@ -1,3 +1,4 @@
+import {createMobileHome} from './mobile-home.mjs';
 import {renderBrandLoading} from './brand-loading.mjs';
 import {observeRead,readIdentity} from './read-coordinator.mjs';
 export const ACCESS_CHANGED='crm-access-changed';
@@ -55,12 +56,14 @@ export function createRoleAccess({React,client,useApp}){
   return h(Context.Provider,{value},children);
  }
  const useAccess=()=>React.useContext(Context);
+ const MobileHome=createMobileHome({React,useAccess});
  function Gate({module,page,render}){
-  const access=useAccess(),{lang,demoMode,navParams}=useApp();
-  if(demoMode)return render();
+  const access=useAccess(),{lang,demoMode,navParams,navigate}=useApp();
+  const content=()=>h(MobileHome,{lang,activeModule:module,onNavigate:navigate,renderContent:render});
+  if(demoMode)return content();
   if(access.loading)return renderBrandLoading(React,lang);
   if(access.error||!permitsPage(access,module,page)||(navParams?.create&&!access.can(module,'create')))return h('section',{className:'crm-settings'},h('h2',null,lang==='th'?'ไม่มีสิทธิ์เข้าถึงหน้านี้':'Access denied'),h('p',null,access.error||(lang==='th'?'กรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์':'Contact your administrator to request access')),h('button',{onClick:access.refresh},lang==='th'?'ตรวจสอบสิทธิ์อีกครั้ง':'Check access again'));
-  return h(React.Fragment,{key:JSON.stringify([effectiveRole(access.profile),access.rows,access.dashboards])},render());
+  return h(React.Fragment,{key:JSON.stringify([effectiveRole(access.profile),access.rows,access.dashboards])},content());
  }
  return {Provider,Gate,useAccess};
 }
