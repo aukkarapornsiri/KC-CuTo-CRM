@@ -1,0 +1,27 @@
+name: Mobile workspace layout
+on:
+  pull_request:
+    paths:
+      - 'src/mobile-workspace.css'
+      - 'index.html'
+      - 'tests/mobile-workspace-smoke.mjs'
+      - '.github/workflows/mobile-workspace.yml'
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/http.log 2>&1 &
+          sleep 2
+          node tests/mobile-workspace-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-workspace-layout
+          path: test-artifacts/

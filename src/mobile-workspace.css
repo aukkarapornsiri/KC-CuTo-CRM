@@ -1,0 +1,29 @@
+/* Compact workspace chrome and dashboard, only on phones. */
+@media(max-width:640px){
+.kc-app{width:100%;height:100dvh;min-width:0}
+.kc-app>.flex-1,.kc-app>.flex-1>.flex-1{min-width:0;width:100%;max-width:100%}
+.kc-app>.flex-1>.flex-1{padding:12px!important;overscroll-behavior-x:contain}
+.kc-app .kc-app-header{display:flex;gap:6px;padding:8px 12px!important;min-width:0;width:100%;align-items:center;flex-wrap:wrap}
+.kc-app-header>.flex-1{display:none}
+.kc-app-header>button.lg\:hidden{margin-right:auto;width:36px;height:40px;padding:8px}
+.kc-app-header>.relative{flex:none}.kc-app-header>.relative>button{min-height:40px;padding:8px 12px;font-size:12px;border-radius:12px}
+.kc-app-header>span{font-size:9px;white-space:nowrap}
+.kc-app-header .kc-header-approval{width:36px;height:40px;min-width:36px;overflow:hidden;font-size:0;padding:8px;justify-content:center;gap:0;border:0;background:transparent}
+.kc-app-header .kc-header-approval>span{font-size:0;display:block;width:24px;height:24px;background:center/contain no-repeat url('./header-approval.svg')}
+.kc-app-header .crm-language-toggle,.kc-app-header .kc-header-notifications{width:36px;min-width:36px;height:40px;min-height:40px;padding:6px;border:0}
+.kc-app-header .kc-profile-avatar-button{width:36px;height:36px;min-width:36px;padding:0}.kc-app-header .kc-profile-avatar-button img{width:36px;height:36px;object-fit:cover}
+.kc-app-header .kc-header-ai{order:20;width:100%;flex:0 0 100%;max-width:100%;min-width:0;margin-top:2px;height:42px}.kc-header-ai input{font-size:14px}.kc-header-ai .kc-chat-launch span{display:none}.kc-header-ai .kc-chat-send{width:32px;height:32px}
+.kc-dashboard-layout,.kc-dashboard-layout>*,.kc-dashboard-studio,.dash-content,.kc-role-dashboard,.kc-executive{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.kc-dashboard-layout .dash-role-nav{width:100%;min-width:0;padding:4px!important;border-radius:12px!important;margin-bottom:12px!important;overflow:hidden}
+.kc-dashboard-layout .dash-role-nav>div{max-width:100%;min-width:0;overflow-x:auto;scroll-padding:6px}
+.dash-role-nav button{min-height:40px!important;padding:8px 10px!important;font-size:11px!important}
+.kc-dashboard-layout .dash-hero:has(.dash-sales-system){min-height:350px;padding:18px 16px 48px;display:block;border-radius:18px;margin-bottom:12px}
+.kc-dashboard-layout .dash-hero-copy{width:100%!important;min-width:0;position:relative;z-index:2}
+.kc-dashboard-studio .dash-hero h1{font-size:23px!important;line-height:1.4;margin:8px 0!important;overflow-wrap:anywhere}
+.dash-hero p{font-size:12px;line-height:1.6}.dash-hero-meta{font-size:10px;gap:6px;margin-top:10px}.dash-source{font-size:10px}
+.kc-dashboard-layout .dash-sales-stage{position:relative;top:auto;right:auto;width:100%;height:140px;min-height:0;margin:10px 0 0;aspect-ratio:auto}.kc-dashboard-layout .dash-sales-stage .dash-fire-sun{width:100px;height:100px}.dash-sales-stage .dash-growth-center em{font-size:23px}.dash-sales-stage .dash-growth-center i{font-size:7px}
+.kc-dashboard-layout .dash-sales-system{position:relative;inset:auto;height:auto;flex:none;width:100%;min-width:0;max-width:100%}.kc-dashboard-layout .dash-sales-legend{position:static;margin:8px 0 0;width:100%;font-size:9px}.kc-dashboard-layout .dash-sales-banner{position:static;margin:8px 0 0}.kc-dashboard-layout .dash-sales-banner:empty{display:none}
+.kc-dashboard-layout .exec-kpis,.kc-dashboard-layout .kc-dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kc-dashboard-layout .exec-kpi,.kc-dashboard-layout .kc-dash-kpis>div{min-width:0;padding:14px;border-radius:14px;overflow-wrap:anywhere;box-sizing:border-box}
+.kc-dashboard-layout .exec-kpi strong{font-size:23px}.kc-dashboard-layout .exec-kpi p{font-size:12px;min-height:36px}.exec-two{grid-template-columns:minmax(0,1fr)}.exec-panel{padding:14px;max-width:100%;box-sizing:border-box}.exec-controls{gap:10px}.exec-filter{min-width:0;flex:1 1 120px}.exec-filter select{width:100%;max-width:100%}.exec-snapshot{width:100%;font-size:11px}
+}
