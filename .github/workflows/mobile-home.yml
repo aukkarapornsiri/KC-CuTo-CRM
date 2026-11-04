@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'src/mobile-home.*'
+      - 'assets/mobile-home/**'
       - 'app-C2ITSffc.js'
       - 'index.html'
       - 'tests/mobile-home-smoke.mjs'
