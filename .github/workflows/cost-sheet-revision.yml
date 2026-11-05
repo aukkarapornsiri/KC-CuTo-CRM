@@ -5,6 +5,8 @@ on:
       - 'src/so-amendments.mjs'
       - 'src/quotation-document.mjs'
       - 'src/internal-model.mjs'
+      - 'src/sales-financials.mjs'
+      - 'src/sales-order-print.mjs'
       - 'tests/quotation-zero-sale-cost-smoke.mjs'
       - 'src/sales-orders.mjs'
       - 'tests/so-quotation-revision-smoke.mjs'

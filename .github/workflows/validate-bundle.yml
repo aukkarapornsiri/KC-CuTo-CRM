@@ -14,7 +14,7 @@ jobs:
       - name: Validate Digital Workplace sales totals
         run: node --test tests/dw-company-sales.test.mjs tests/sales-targets.test.mjs tests/target-report-model.test.mjs
       - name: Validate approved document edit conditions
-        run: node --test tests/document-edit-policy.test.mjs tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs
+        run: node --test tests/document-edit-policy.test.mjs tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs tests/shared-sales-financials.test.mjs
       - name: Validate approval workflow templates
         run: node --test tests/workflow-templates.test.mjs
       - name: Validate AI analytics rules
@@ -76,7 +76,7 @@ jobs:
           node --test tests/marketing-edge.test.mjs
           node --check src/internal-workspace.mjs
           node --check src/approval-center.mjs
-          node --test tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs tests/assignment-links.test.mjs tests/microsoft-login.test.mjs
+          node --test tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs tests/shared-sales-financials.test.mjs tests/assignment-links.test.mjs tests/microsoft-login.test.mjs
           node --check src/lead-detail-enterprise.mjs
           node --test tests/lead-detail-enterprise.test.mjs
           node --test tests/thai-address.test.mjs tests/bilingual-address.test.mjs
