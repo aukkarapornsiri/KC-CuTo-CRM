@@ -15,7 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - run: node --test tests/mobile-notification-navigation.test.mjs tests/notification-center.test.mjs
+      - run: npm install --no-save playwright && npx playwright install chromium
       - name: Verify mobile and desktop approval review
         run: |
           mkdir -p test-artifacts

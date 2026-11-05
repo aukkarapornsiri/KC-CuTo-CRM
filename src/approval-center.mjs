@@ -66,6 +66,11 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
      if(active){Selected({...a.before_snapshot,id:a.target_id,kind:'template',template_type:a.request_type,key:'template:'+a.id,request:a,status:a.status,summary:a.reason,title:t(type.th,type.en),total:['lead_merge','lead_reassignment','inventory_adjustment'].includes(a.request_type)?null:a.amount,created_at:a.created_at});Comment('');}return;
     }
     if(!can('view')||!can('approve'))throw Error(t('ไม่มีสิทธิ์เข้าถึงงานอนุมัติ','Approval access denied'));
+    if(initialKind==='quotation_edit'){
+     const a=demoMode?(records.quotation_edit_requests||[]).find(r=>r.id===initialRecordId):await unwrap(client.from('crm_quotation_edit_requests').select('*').eq('id',initialRecordId).maybeSingle());
+     if(!a)throw Error(t('ไม่พบคำขอแก้ไขใบเสนอราคาหรือไม่มีสิทธิ์','Quotation edit request not found or access denied'));
+     if(active){Selected({...a.before_snapshot,id:a.quotation_id,kind:'quotation_edit',key:'quotation-edit:'+a.id,request:a,status:a.status,summary:a.reason,created_at:a.requested_at});Comment('');}return;
+    }
     if(initialKind==='amendment'){
      const a=demoMode?(records.so_amendments||[]).find(r=>r.id===initialRecordId):await unwrap(client.from('crm_so_amendments').select('*').eq('id',initialRecordId).maybeSingle());
      if(!a)throw Error(t('ไม่พบคำขอแก้ไข SO หรือไม่มีสิทธิ์','SO amendment request not found or access denied'));

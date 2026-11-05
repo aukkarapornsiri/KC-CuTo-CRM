@@ -30,3 +30,11 @@ test('typed approvals deep-link to the universal reviewer without requiring quot
  assert.equal(notificationTarget(row,()=>false),null);
  assert.equal(notificationWorkLabel({event_kind:'workflow_result'},'en'),'Approval result');
 });
+
+test('quotation edit notification opens its exact authorization and checks review access',()=>{
+ const id='19e8185a-e1df-40cb-b019-3e1e8fe8a3bb',quote='1204ac21-7183-4fca-a9b1-b510b73513ef';
+ const row={event_kind:'approval_requested',event_key:`quotation-edit:${id}:pending:1`,related_module:'quotations',related_id:quote};
+ assert.deepEqual(notificationTarget(row).params,{approvalRecordId:id,approvalKind:'quotation_edit'});
+ assert.equal(notificationTarget(row,(_m,a)=>a!=='approve'),null);
+ assert.equal(notificationTarget({...row,event_kind:'approval_resolved'}).page,'quot-list');
+});

@@ -17,7 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - run: node --test tests/mobile-notification-navigation.test.mjs tests/notification-center.test.mjs
+      - run: npm install --no-save playwright && npx playwright install chromium
       - run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/http.log 2>&1 &
           sleep 2

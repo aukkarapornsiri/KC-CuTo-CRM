@@ -5,6 +5,8 @@ import {assignmentTarget,emailDestination} from './assignment-links.mjs';
 export function notificationTarget(row,can=()=>true){
  const template=/^template(?:-result)?:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?::[1-8])?$/i.exec(row.event_key||'');
  if(template)return ['leads','customers','contracts','quotations','inventory'].includes(row.related_module)&&can(row.related_module,'view')?{module:row.related_module,page:'template-approval',params:{approvalRecordId:template[1],approvalKind:'template'}}:null;
+ const edit=/^quotation-edit:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):/i.exec(row.event_key||'');
+ if(edit&&row.event_kind==='approval_requested')return can('quotations','view')&&can('quotations','approve')?{module:'quotations',page:'quot-approval',params:{approvalRecordId:edit[1],approvalKind:'quotation_edit'}}:null;
  const amendment=/^so-amendment:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):/i.exec(row.event_key||'');
  if(amendment&&row.event_kind==='approval_requested')return can('quotations','view')&&can('quotations','approve')?{module:'quotations',page:'quot-approval',params:{approvalRecordId:amendment[1],approvalKind:'amendment'}}:null;
  const match=/^so-approval:([0-9a-f-]{36}):/i.exec(row.event_key||'');
