@@ -2,6 +2,8 @@ name: Approval Flow Settings Review
 on:
   pull_request:
     paths:
+      - 'src/quotation-gp-condition.mjs'
+      - 'tests/quotation-gp-condition-smoke.mjs'
       - 'src/approval-template-catalog.mjs'
       - 'src/template-request-form.mjs'
       - 'tests/extended-approval-templates-smoke.mjs'
@@ -28,6 +30,7 @@ jobs:
           SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/approval-flow-settings-smoke.mjs
           node tests/workflow-policy-actions-smoke.mjs
           node tests/extended-approval-templates-smoke.mjs
+          node tests/quotation-gp-condition-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
