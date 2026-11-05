@@ -15,7 +15,7 @@ export function salesOrderHTML(order,lang='th'){
   [t('เงื่อนไขชำระเงิน','Payment terms'),order.payment_terms==null?'—':order.payment_terms+' '+t('วัน','Days')],[t('วันที่ส่งของ','Delivery date'),order.expected_delivery_date],
   [t('ส่งของ','Ship to'),d.ship_to_name||order.customer_name,true],[t('สถานที่ส่งของ','Shipping address'),d.shipping_address,true],
   [t('เปิดบิล / วางบิล','Bill to'),d.bill_to_name||order.customer_name,true],[t('สถานที่วางบิล','Billing location'),d.billing_location||order.billing_address,true],
-  [t('มี PO','PO available'),order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')],[t('ชื่อคนรับสินค้า','Recipient'),d.recipient_name],
+  ['PO',order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')],[t('ชื่อคนรับสินค้า','Recipient'),d.recipient_name],
   [t('มีการติดตั้ง','Installation'),yesNo(d.installation)],[t('เบอร์ผู้รับสินค้า','Recipient phone'),d.recipient_phone],
   [t('เงื่อนไขพิเศษ','Special conditions'),order.note,true]
  ];
@@ -32,6 +32,7 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  const t=(th,en)=>lang==='th'?th:en;
  const num=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
  const money=v=>num(v)?Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+ const date=value=>{if(!value)return '—';const raw=String(value);if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw.split('-').reverse().join('-');const parsed=new Date(raw);return Number.isFinite(parsed.getTime())?new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',day:'2-digit',month:'2-digit',year:'numeric'}).format(parsed).replaceAll('/','-'):'—';};
  const lines=financial?.line_financials;
  const rows=(order.items||[]).map((item,i)=>{
   const f=Array.isArray(lines)&&lines.length===order.items.length?lines[i]:null;
@@ -54,7 +55,7 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  const meta=[
   [t('เลขที่ใบเสนอราคา','Quotation'),order.quotation_code],[t('เลขที่ PO','PO number'),order.po_number],
   [t('เลขผู้เสียภาษี','Tax ID'),order.tax_id],[t('ประเภทงาน','Order type'),d.order_type],
-  [t('ฝ่ายขาย','Salesperson'),order.owner_name],[t('วันที่ PO','PO date'),order.po_date],
+  [t('ฝ่ายขาย','Salesperson'),order.owner_name],[t('วันที่ PO','PO date'),date(order.po_date)],
   [t('กำหนดส่งมอบ','Delivery date'),order.expected_delivery_date],[t('เครดิต','Payment terms'),order.payment_terms==null?'—':order.payment_terms+' '+t('วัน','days')]
  ];
  const delivery=[
@@ -66,7 +67,7 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  const contact=[
   [t('ผู้รับสินค้า','Recipient'),d.recipient_name],[t('โทรศัพท์','Phone'),d.recipient_phone],
   [t('การติดตั้ง','Installation'),d.installation==='yes'?t('มี','Yes'):d.installation==='no'?t('ไม่มี','No'):'—'],
-  [t('มี PO','PO available'),order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')]
+  ['PO',order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')]
  ];
  const css=`@page{size:A4 landscape;margin:8mm}
  *{box-sizing:border-box;color:#000!important;-webkit-text-fill-color:#000!important}
@@ -89,7 +90,7 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  footer{font-size:8px;margin-top:6px;border-top:1px solid #d4d4d4;padding-top:4px}
  @media screen{body{max-width:281mm;margin:20px auto;padding:8mm;background:#fff}}`;
  return `<!doctype html><html lang="${lang==='th'?'th':'en'}"><head><meta charset="utf-8"><title>Cost Sheet ${escape(order.code)}</title><style>${css}</style></head><body>
- <header class="cs-header"><div><strong>KC CuTo CRM</strong><h1>Cost Sheet · ${t('ใบสั่งขาย','Sales Order')}</h1></div><div class="cs-doc-id">${escape(order.code)}<small>${t('เอกสารภายในองค์กร','INTERNAL USE ONLY')}${order.status==='cancelled'?' · '+t('ยกเลิกแล้ว','CANCELLED'):''}</small></div></header>
+ <header class="cs-header"><div><strong>KC CuTo CRM</strong><h1>Cost Sheet · ${t('ใบสั่งขาย','Sales Order')}</h1></div><div class="cs-doc-id">${escape(order.code)}<small>${t('วันที่ Convert SO','SO conversion date')}: ${escape(date(order.converted_at||order.created_at))}${order.status==='cancelled'?' · '+t('ยกเลิกแล้ว','CANCELLED'):''}</small></div></header>
  <section class="so-header-details"><div class="cs-meta">${meta.map(x=>field(...x)).join('')}</div><div class="cs-delivery">${delivery.map(x=>field(...x)).join('')}</div><div class="cs-contact">${contact.map(x=>field(...x)).join('')}</div>${order.note?`<p class="cs-note"><b>${t('เงื่อนไขพิเศษ','Special conditions')}:</b> ${escape(order.note)}</p>`:''}</section>
  ${table}<section class="cs-closing">${summary}${approvals}<footer>KC CuTo CRM · INTERNAL USE ONLY · Restricted Cost Information</footer></section></body></html>`;
 }
