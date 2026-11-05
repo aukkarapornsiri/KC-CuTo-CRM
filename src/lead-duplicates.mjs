@@ -15,7 +15,7 @@ export const duplicateCandidates=(draft,rows)=>rows.filter(r=>!r.duplicate_of).m
 export function createLeadDuplicates({React}){const h=React.createElement;
  return function LeadDuplicates({result,draft,lang,busy,can,reviewers=[],onAction,onSeparate,onClose,actorId}){const [reason,Reason]=React.useState(''),[reviewer,Reviewer]=React.useState('');const t=(a,b)=>lang==='th'?a:b;
  const hard=Boolean(result.hidden||result.has_company_duplicate||result.matches.some(r=>r.hard_duplicate??leadCompanyDuplicate(draft,r)));
- const policy=result.policy_state||{},crossConfigured=!!policy.cross_owner_merge?.configured;
+ const policy=result.policy_state||{},crossConfigured=!!policy.cross_owner_merge?.configured&&result.matches.some(r=>(r.hard_duplicate??leadCompanyDuplicate(draft,r))&&leadMergeMode(draft,r)==='review');
  const mergeEnabled=r=>(leadMergeMode(draft,r)==='merge'?policy.same_owner_merge:policy.cross_owner_merge)?.enabled!==false;
  const labels={tax_id:t('เลขภาษี/บัตรประชาชนตรงกัน','Matching tax / national ID'),email:t('อีเมลตรงกัน','Matching email'),phone:t('โทรศัพท์ตรงกัน','Matching phone'),name:t('ชื่อคล้ายกัน','Similar contact name'),company:t('บริษัทเดียวกันหรือชื่อคล้ายกัน','Same or similar company')};
  const button=(label,action,row,disabled=false)=>h('button',{type:'button',disabled:busy||disabled,onClick:()=>onAction(action,row,{reason:reason.trim()||(action==='merge'?t('ชื่อบริษัทหรือเลขผู้เสียภาษีซ้ำ รวมข้อมูลการติดต่อ','Matching company or tax ID; merge incoming enquiry'):''),reviewer})},label);
