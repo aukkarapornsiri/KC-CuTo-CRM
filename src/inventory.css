@@ -64,3 +64,5 @@
 .crm-inventory-dialog[data-kind=item] .crm-save{background:#0aada9;color:white;border-color:#0aada9}
 @media(max-width:900px){.kc-product-fields-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.kc-product-fields-grid{grid-template-columns:1fr}.crm-inventory-dialog[data-kind=item] form>.crm-inventory-grid{padding:16px}.kc-product-form-section{padding:16px}.crm-inventory-dialog[data-kind=item] form>header{padding:20px}.crm-inventory-dialog[data-kind=item] form>footer{padding:14px 20px}.crm-inventory-dialog[data-kind=item] input,.crm-inventory-dialog[data-kind=item] select,.crm-inventory-dialog[data-kind=item] textarea{font-size:16px}}
+
+.kc-inventory-compact table{min-width:1120px}.kc-inventory-compact th:nth-child(1){width:180px}.kc-inventory-compact th:nth-child(2){width:150px}.kc-inventory-compact th:nth-child(3){width:auto}.kc-inventory-compact th:nth-child(4){width:130px}.kc-inventory-compact th:nth-child(5){width:100px}.kc-inventory-compact th:last-child{width:420px}.kc-inventory-compact td:nth-child(-n+2){white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
