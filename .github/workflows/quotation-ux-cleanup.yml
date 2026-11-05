@@ -1,0 +1,30 @@
+name: Quotation UX Cleanup Regression
+on:
+  pull_request:
+    paths:
+      - 'src/quotation-detail.mjs'
+      - 'src/quotation-detail-layout.mjs'
+      - 'tests/quotation-detail-current-view.test.mjs'
+      - '.github/workflows/quotation-ux-cleanup.yml'
+jobs:
+  quotation-current-view:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/quotation-detail-current-view.test.mjs tests/quotation-detail.test.mjs tests/quotation-approval-layout.test.mjs
+      - run: npm install --no-save playwright && npx playwright install chromium
+      - name: Verify desktop, mobile and PDF preview
+        run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/quotation-ux-http.log 2>&1 &
+          sleep 2
+          SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/quotation-details-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quotation-ux-cleanup
+          path: test-artifacts/
