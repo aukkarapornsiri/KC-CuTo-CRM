@@ -1,3 +1,4 @@
+import {notificationTarget,notificationWorkLabel} from '../src/notification-center.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {notificationDate,newestNotifications,notificationText} from '../src/notification-center.mjs';
@@ -21,4 +22,11 @@ test('SO amendment notice opens the exact edit authorization instead of the sour
  assert.equal(notificationTarget(row,(_m,a)=>a!=='approve'),null);
  assert.equal(notificationTarget(row,(_m,a)=>a!=='view'),null);
  assert.equal(notificationTarget({...row,event_kind:'approval_resolved'}).page,'quot-list');
+});
+
+test('typed approvals deep-link to the universal reviewer without requiring quotation access',()=>{
+ const id='11111111-1111-4111-8111-111111111111',row={event_key:'template:'+id+':1',related_module:'inventory',related_id:'22222222-2222-4222-8222-222222222222'};
+ assert.deepEqual(notificationTarget(row,(m,a)=>m==='inventory'&&a==='view'),{module:'inventory',page:'template-approval',params:{approvalRecordId:id,approvalKind:'template'}});
+ assert.equal(notificationTarget(row,()=>false),null);
+ assert.equal(notificationWorkLabel({event_kind:'workflow_result'},'en'),'Approval result');
 });
