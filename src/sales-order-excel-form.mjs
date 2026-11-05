@@ -28,7 +28,7 @@ export function salesOrderForm(order,approval,lang='th',context={}){
  groups([field(t('ผู้รับสินค้า','Recipient'),d.recipient_name),field(t('โทรศัพท์','Phone'),d.recipient_phone),field(t('การติดตั้ง','Installation'),d.installation==='yes'?t('มี','Yes'):d.installation==='no'?t('ไม่มี','No'):'—'),field(t('มี PO','PO available'),order.po_file_key?t('มี','Yes'):'—')],4);
  if(order.note)full(field(t('เงื่อนไขพิเศษ','Special instructions'),order.note),0,Math.max(22,Math.ceil(order.note.length/180)*15));
  const spans=costs?[[0,0],[1,8],[9,11],[12,12],[13,14],[15,16],[17,18],[19,20],[21,22],[23,23]]:[[0,0],[1,10],[11,14],[15,17],[18,20],[21,23]];
- const headers=['#',t('สินค้า / Spec','Item / Spec'),'Part Number',t('จำนวน','Qty'),t('ราคาขาย/หน่วย','Unit sale'),t('ขายสุทธิรายการ','Line net'),t('ต้นทุน/หน่วย','Unit cost'),t('ต้นทุนรวม','Total cost'),'GP','GP %'];
+ const headers=['#',t('สินค้า / Spec','Item / Spec'),t('รหัสสินค้า','Part Number'),t('จำนวน','Qty'),t('ราคาขาย/หน่วย','Unit sale'),t('ขายสุทธิรายการ','Line net'),t('ต้นทุน/หน่วย','Unit cost'),t('ต้นทุนรวม','Total cost'),'GP','GP %'];
  const heading=r+1;row(spans.map(([a,b],i)=>[a,b,headers[i],4]),30);
  const lines=financial?.line_financials,matched=Array.isArray(lines)&&lines.length===(order.items||[]).length;
  for(const [i,item] of (order.items||[]).entries()){

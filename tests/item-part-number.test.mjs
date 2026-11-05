@@ -9,7 +9,7 @@ test('snapshot part number wins; legacy descriptions remain readable; item codes
 });
 test('SO and cost sheet print actual part number and escape HTML',()=>{
  const order={items:[{name:'Service',part_number:'PN-<42>',qty:1,price:1,total:1}],currency:'THB'};
- for(const html of [salesOrderHTML(order),costSheetHTML(order,{})]){
- assert.ok(html.includes('Part Number'));assert.ok(html.includes('PN-&lt;42&gt;'));assert.ok(!html.includes('PN-<42>'));
+ for(const lang of ['th','en'])for(const html of [salesOrderHTML(order,lang),costSheetHTML(order,{},lang)]){
+ assert.ok(html.includes(lang==='th'?'รหัสสินค้า':'Part Number'));assert.ok(html.includes('PN-&lt;42&gt;'));assert.ok(!html.includes('PN-<42>'));
  }
 });
