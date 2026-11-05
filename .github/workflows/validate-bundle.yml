@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify SO sales and profit summary
-        run: node --test tests/sales-order-summary.test.mjs
+        run: node --test tests/sales-order-summary.test.mjs tests/default-data-scope.test.mjs
       - name: Check JavaScript syntax
         run: |
           if ! node --check app-C2ITSffc.js 2> /tmp/js-check.err; then

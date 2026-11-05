@@ -1,3 +1,4 @@
+import {defaultDataScope} from './default-data-scope.mjs';
 import {grossProfitSummary} from './sales-financials.mjs';
 import {canReviewSO} from './approval-policy.mjs';
 import {createSalesOrderDetailLayout} from './sales-order-detail-layout.mjs';
@@ -32,7 +33,8 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
   const {demoMode,profile:appProfile,navigate}=useApp(),access=useAccess(),profile=access.profile||appProfile,t=(th,en)=>lang==='th'?th:en;
   const canFinancial=demoMode||(access.can('quotations','view')&&(access.can('quotations','approve')||['sales_user','sales_coordinator','sales_manager','sales_director'].includes(profile?.role==='custom'?profile.custom_role_key:profile?.role)));
   const can=action=>demoMode||access.can('quotations',action),statusLabel=s=>SO_STATUS[s]?.[lang==='th'?0:1]||s;
-  const [allRows,AllRows]=React.useState([]),[query,Query]=React.useState(''),[scope,Scope]=React.useState('mine'),[owner,Owner]=React.useState(''),[approvalFilter,ApprovalFilter]=React.useState(''),[due,Due]=React.useState(''),[activities,Activities]=React.useState([]);
+  const [allRows,AllRows]=React.useState([]),[query,Query]=React.useState(''),[scope,Scope]=React.useState(defaultDataScope(profile)),[owner,Owner]=React.useState(''),[approvalFilter,ApprovalFilter]=React.useState(''),[due,Due]=React.useState(''),[activities,Activities]=React.useState([]);
+  React.useEffect(()=>{Scope(defaultDataScope(profile));Page(0);},[profile?.id,profile?.role,profile?.custom_role_key,profile?.is_super_admin]);
   const [total,Total]=React.useState(null);
   const [rows,Rows]=React.useState([]),[selected,Selected]=React.useState(null),[events,Events]=React.useState([]),[busy,Busy]=React.useState(false),[loading,Loading]=React.useState(true),[error,ErrorText]=React.useState(''),[page,Page]=React.useState(0),[filter,Filter]=React.useState(''),[create,Create]=React.useState(false),[action,Action]=React.useState(''),[reason,Reason]=React.useState(''),[serials,Serials]=React.useState({});
   const [approval,Approval]=React.useState(null),[approvalRows,ApprovalRows]=React.useState({});

@@ -1,3 +1,4 @@
+import {defaultDataScope} from './default-data-scope.mjs';
 import {alphabetizeChoices} from './product-choice-order.mjs';
 import {createPagination} from './pagination.mjs';
 import {createServiceOverview} from './service-overview.mjs?v=20261028-figma';
@@ -32,8 +33,8 @@ export function createServiceDesk({React,client,useApp,records}){
  return function ServiceDesk({lang='th',route='tk-overview',params={},embedded=false,customerId,assetId}){
  const {demoMode,profile,navigate}=useApp(),th=lang==='th',txt=(a,b)=>th?a:b;
  const [data,D]=React.useState({}),[loaded,L]=React.useState(false),[busy,B]=React.useState(false),[error,E]=React.useState(''),[message,M]=React.useState(''),[permissions,P]=React.useState({}),[f,F]=React.useState({}),[view,V]=React.useState(route==='tk-kanban'?'kanban':'list'),[detail,Detail]=React.useState(null),[tab,Tab]=React.useState('Overview'),[modal,ModalState]=React.useState(null),[draft,Draft]=React.useState({}),[advanced,A]=React.useState(false),[now,Now]=React.useState(Date.now()),[page,Page]=React.useState(0),[files,Files]=React.useState([]);
- const [scope,Scope]=React.useState(embedded?'all':'mine');
- React.useEffect(()=>{Scope(embedded?'all':'mine');Page(0);},[route,profile?.id,embedded]);
+ const [scope,Scope]=React.useState(embedded?'all':defaultDataScope(profile));
+ React.useEffect(()=>{Scope(embedded?'all':defaultDataScope(profile));Page(0);},[route,profile?.id,profile?.role,profile?.custom_role_key,profile?.is_super_admin,embedded]);
  const lock=React.useRef(false),mounted=React.useRef(true);
  const can=a=>demoMode||profile?.is_super_admin===true||!!permissions[`can_${a}`];
  const setting={...DEFAULT_SETTINGS,...data.service_settings?.[0]?.config};
