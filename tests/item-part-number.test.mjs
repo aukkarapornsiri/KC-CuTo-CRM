@@ -13,3 +13,12 @@ test('SO and cost sheet print actual part number and escape HTML',()=>{
  assert.ok(html.includes(lang==='th'?'รหัสสินค้า':'Part Number'));assert.ok(html.includes('PN-&lt;42&gt;'));assert.ok(!html.includes('PN-<42>'));
  }
 });
+
+test('missing identifiers hydrate by linked id or unique legacy code without overwriting snapshots',async()=>{
+ const {withCatalogPartNumbers}=await import('../src/item-part-number.mjs');
+ const catalog=[{id:'a',code:'INTERNAL',part_number:'JL676A'},{id:'b',code:'DUP',part_number:'B'},{id:'c',code:'DUP',part_number:'C'}];
+ const items=[{price_item_id:'a',code:'INTERNAL'},{code:'INTERNAL'},{price_item_id:'a',part_number:'SAVED'},{code:'DUP'},{name:'Unlinked'},{price_item_id:'missing',code:'INTERNAL'}];
+ const result=withCatalogPartNumbers(items,catalog);
+ assert.equal(result[0].part_number,'JL676A');assert.equal(result[1].part_number,'JL676A');assert.equal(result[2].part_number,'SAVED');
+ for(const i of [2,3,4,5])assert.equal(result[i],items[i]);assert.equal(items[0].part_number,undefined);
+});

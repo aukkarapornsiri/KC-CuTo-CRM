@@ -1,4 +1,4 @@
-import {itemPartNumber} from './item-part-number.mjs';
+import {itemPartNumber,withCatalogPartNumbers} from './item-part-number.mjs';
 import {createRentalTerms,isLumpSum,defaultRental} from './rental-quotation.mjs';
 import {shortSalesName} from './sales-name.mjs';
 import {recordOptionLabel} from './record-display.mjs';
@@ -199,6 +199,7 @@ h('div',{className:'kc-quote-preview-lines',style:{'--quote-preview-columns':['3
     };return JSON.stringify(next)===JSON.stringify(old)?old:next;});},[templateLoading,templateError,template?.id,template?.updated_at,!!editing]);
     const personalSignature=useSellerSignature({editing,setEditing,profile,demoMode,ready:!templateLoading&&!templateError,lang,busy});
     const prices=(lookup.prices||[]).filter(x=>x.status==='active');
+    React.useEffect(()=>{if(!editing||!lookup.prices?.length)return;setEditing(old=>{if(!old?.items)return old;const items=withCatalogPartNumbers(old.items,lookup.prices);return items.some((x,i)=>x!==old.items[i])?{...old,items}:old;});},[editing?.id,lookup.prices]);
     React.useEffect(()=>{if(revision||!editing||!canViewFinancials||!prices.length)return;setEditing(old=>{if(!old?.items?.length)return old;let changed=false;const items=old.items.map(item=>{if(isLumpSum(item)||!item.price_item_id)return item;const p=prices.find(x=>x.id===item.price_item_id);if(!p||p.cost==null||Number(item.cost||0)===Number(p.cost||0))return item;changed=true;return {...item,cost:Number(p.cost||0)};});return changed?{...old,items}:old;});},[editing?.id,canViewFinancials,lookup.prices]);
     if(!editing)return null;
     const recurring=editing.quotation_kind==='recurring';

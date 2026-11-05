@@ -1,3 +1,4 @@
+import {withCatalogPartNumbers} from './item-part-number.mjs';
 import {applyLeadPolicyState} from './lead-policy-model.mjs';
 import {createQuotationEditRequest} from './document-edit-policy.mjs';
 import {createQuotationDetailLayout} from './quotation-detail-layout.mjs';
@@ -81,7 +82,7 @@ export function createInternalWorkspace({React,client,useApp,useAccess}){
  const ActivityDetail=createActivityDetail(React),RecordPopup=createRecordPopup(React),CustomerDialog=createCustomerDialog(React);
  const unwrap=async q=>{const {data,error}=await q;if(error)throw error;return data;};
  async function all(table,columns='*'){let rows=[];for(let n=0;n<20000;n+=500){const data=await unwrap(client.from(table).select(columns).order(table==='crm_quotation_followups'?'quotation_id':'id').range(n,n+499));rows.push(...data);if(data.length<500)return sortRecordsNewest(rows);}throw Error('More than 20,000 records: narrow the database query before loading');}
- async function priceCatalog(){const data=await unwrap(client.rpc('crm_price_catalog',undefined,{get:true}));return Array.isArray(data)?data:[];}
+ async function priceCatalog(){const data=await unwrap(client.rpc('crm_price_catalog_v2',undefined,{get:true}));return Array.isArray(data)?data:[];}
  function download(name,rows,columns){const url=URL.createObjectURL(new Blob([toCSV(rows,columns)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  const btn=(text,onClick,disabled=false,props={})=>h('button',{type:'button',onClick,disabled,...props},text);
  function ServiceHistoryPanel({lang,entity,record}){const [open,Open]=React.useState(false);return h('details',{onToggle:e=>Open(e.currentTarget.open)},h('summary',null,lang==='th'?'บริการ · ประวัติเคส ซ่อม เคลม และ SLA':'Service · Tickets, repairs, claims and SLA'),open&&h(ServiceDesk,{lang,route:'tk-all',embedded:true,customerId:entity==='customers'?record.id:undefined,assetId:entity==='assets'?record.id:undefined}));}
@@ -213,7 +214,7 @@ export function createInternalWorkspace({React,client,useApp,useAccess}){
     }
     if(entity==='activities'&&!saveNew){Edit(null);Select(null);Page(0);Message(t('บันทึกแล้ว','Saved'));await read(true);return;}
     const fresh=await read(entity==='activities');Page(0);if(entity==='contacts')Lookup(v=>({...v,contacts:[...(v.contacts||[]).filter(x=>x.id!==saved.id),saved]}));Edit(saveNew?defaults():null);Select(saveNew?null:fresh.find(x=>x.id===saved.id)||saved);if(!saveNew)await detail(fresh.find(x=>x.id===saved.id)||saved,true);Message(t('บันทึกแล้ว','Saved'));if(saveNew){if(entity==='opportunities')OpportunityRevision(v=>v+1);Message(t('บันทึกแล้ว','Saved'));requestAnimationFrame(()=>document.querySelector('dialog[open] input')?.focus());}});}
-  async function detail(row,withinAction=false){if(entity==='contacts'){const recent=addRecentContact(recentIds,row.id);RecentIds(recent);try{localStorage.setItem(contactKey,JSON.stringify({pinned:pinnedView,recent}));}catch{}}Select(row);Edit(null);Related({});Approval([]);Events([]);Versions([]);await (withinAction?async fn=>fn():run)(async()=>{const result={};if(entity==='leads'){
+  async function detail(row,withinAction=false){if(entity==='quotations'&&row.items?.some(i=>!i.part_number)){const catalog=demoMode?copy(demo.prices):await priceCatalog();row={...row,items:withCatalogPartNumbers(row.items,catalog)};}if(entity==='contacts'){const recent=addRecentContact(recentIds,row.id);RecentIds(recent);try{localStorage.setItem(contactKey,JSON.stringify({pinned:pinnedView,recent}));}catch{}}Select(row);Edit(null);Related({});Approval([]);Events([]);Versions([]);await (withinAction?async fn=>fn():run)(async()=>{const result={};if(entity==='leads'){
     result.resolutions=demoMode?(demo.lead_resolutions||[]).filter(x=>x.target_id===row.id||x.source_id===row.id):await unwrap(client.from('crm_lead_resolutions').select('*').or('target_id.eq.'+row.id+',source_id.eq.'+row.id).order('created_at',{ascending:false}).limit(100));
     const ids=[row.id,...result.resolutions.filter(x=>x.action==='merge'&&x.target_id===row.id).map(x=>x.source_id)];
     if(demoMode||access.can('activities','view'))result.activities=demoMode?(demo.activities||[]).filter(x=>x.related_module==='leads'&&ids.includes(x.related_id)):await unwrap(client.from('activities').select('*').eq('related_module','leads').in('related_id',ids).order('created_at',{ascending:false}).limit(100));
