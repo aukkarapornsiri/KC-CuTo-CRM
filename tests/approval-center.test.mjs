@@ -33,3 +33,15 @@ test('SO rejection requires a reason and uses the SO decision RPC',async()=>{
  const original=globalThis.window;globalThis.window={dispatchEvent:()=>{}};
  try{const empty=fixture('so','');nodes(empty.tree).find(n=>n.type==='button'&&n.children.includes('Reject')).props.onClick();assert.equal(empty.calls.length,0);assert.ok(empty.errors.includes('Enter a rejection reason'));const f=fixture('so','Incorrect PO');nodes(f.tree).find(n=>n.type==='button'&&n.children.includes('Reject')).props.onClick();await new Promise(r=>setTimeout(r,30));assert.deepEqual(f.calls,[{name:'crm_so_approval_action',args:{p_sales_order_id:'record-id',p_action:'reject',p_note:'Incorrect PO'}}]);}finally{globalThis.window=original;}
 });
+test('quotation edit deep link selects the exact request instead of another document workflow',async()=>{
+ const effects=[],states=[],queries=[];let state=0;
+ const request={id:'request-id',quotation_id:'quote-id',before_snapshot:{code:'SQ-EXACT'},status:'pending',approver_ids:['reviewer'],current_step:1,requested_by:'seller',reason:'Correct address'};
+ const React={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity)}),useRef:v=>({current:v}),useState:v=>{const i=state++;return [typeof v==='function'?v():v,x=>states.push({i,x})];},useEffect:f=>effects.push(f)};
+ const client={from:table=>({select:()=>({eq:(key,id)=>({maybeSingle:async()=>{queries.push({table,key,id});return {data:request};}})})})};
+ const Center=createApprovalCenter({React,client,useApp:()=>({profile:{id:'reviewer'},demoMode:false}),useAccess:()=>({can:()=>true}),records:{}});
+ Center({lang:'en',initialRecordId:'request-id',initialKind:'quotation_edit'});
+ // The second effect resolves a notification destination, independently of inbox loading.
+ effects[1]();await new Promise(r=>setTimeout(r,0));
+ assert.deepEqual(queries,[{table:'crm_quotation_edit_requests',key:'id',id:'request-id'}]);
+ assert.equal(states.find(s=>s.i===4)?.x.request.id,'request-id');
+});
