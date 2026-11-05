@@ -60,6 +60,11 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
    if(!initialRecordId||!profile?.id||access.loading)return;
    let active=true;
    (async()=>{try{
+    if(initialKind==='template'){
+     const a=await unwrap(client.from('crm_template_requests').select('*').eq('id',initialRecordId).maybeSingle()),type=EXTENDED_APPROVAL_TEMPLATES.find(t=>t.id===a?.request_type);
+     if(!a||!type||!access.can(type.module,'view'))throw Error(t('ไม่พบคำขอหรือไม่มีสิทธิ์เข้าถึง','Request not found or access denied'));
+     if(active){Selected({...a.before_snapshot,id:a.target_id,kind:'template',template_type:a.request_type,key:'template:'+a.id,request:a,status:a.status,summary:a.reason,title:t(type.th,type.en),total:['lead_merge','lead_reassignment','inventory_adjustment'].includes(a.request_type)?null:a.amount,created_at:a.created_at});Comment('');}return;
+    }
     if(!can('view')||!can('approve'))throw Error(t('ไม่มีสิทธิ์เข้าถึงงานอนุมัติ','Approval access denied'));
     if(initialKind==='amendment'){
      const a=demoMode?(records.so_amendments||[]).find(r=>r.id===initialRecordId):await unwrap(client.from('crm_so_amendments').select('*').eq('id',initialRecordId).maybeSingle());
@@ -98,7 +103,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
    }catch(e){ErrorText(e.message||String(e));}finally{lock.current=false;Busy(false);}
   }
   const open=(r,intent)=>{Selected(r);Comment('');ErrorText('');Message('');if(intent==='reject'&&typeof requestAnimationFrame==='function')requestAnimationFrame(()=>document.querySelector('.kc-approval-detail textarea')?.focus());};
-  const source=r=>{Selected(null);onSource?.();if(r.kind==='template'){const type=EXTENDED_APPROVAL_TEMPLATES.find(t=>t.id===r.template_type);navigate(type.module,type.page,{recordId:type.table==='crm_sales_orders'?r.quotation_id:r.id});return;}if(r.kind==='amendment'){navigate('quotations','quot-list',{recordId:r.quotation_id});return;}if(r.target)navigate(r.target.module,r.target.page,r.target.params);else navigate('quotations','quot-list',{recordId:r.kind==='so'?r.quotation_id:r.id});};
+  const source=r=>{Selected(null);onSource?.();if(r.kind==='template'){const type=EXTENDED_APPROVAL_TEMPLATES.find(t=>t.id===r.template_type);navigate(type.module==='inventory'?'settings':type.module,type.module==='inventory'?'set-inventory':type.page,{recordId:type.table==='crm_sales_orders'?r.quotation_id:r.id});return;}if(r.kind==='amendment'){navigate('quotations','quot-list',{recordId:r.quotation_id});return;}if(r.target)navigate(r.target.module,r.target.page,r.target.params);else navigate('quotations','quot-list',{recordId:r.kind==='so'?r.quotation_id:r.id});};
   const title=r=>r.kind==='quotation_edit'?t('ขอแก้ไขใบเสนอราคา','Request to edit approved quotation'):r.kind==='amendment'?t('ขอแก้ไขใบสั่งขาย','Request to amend sales order'):r.title||r.subject||r.name||(r.kind==='so'?t('เปิดคำสั่งขาย ','Open sales order '):'')+(r.items?.[0]?.name||r.code||labels[r.kind]);
   const statusLabel=s=>({pending:t('รออนุมัติ','Pending'),approved:t('อนุมัติแล้ว','Approved'),rejected:t('ไม่อนุมัติ','Rejected'),cancelled:t('ถอนคำขอแล้ว','Withdrawn'),completed:t('ดำเนินการแล้ว','Completed')}[s]||s);
   const visible=rows.filter(r=>(category==='all'||(category==='other'?!['quotation','quotation_edit','so','amendment'].includes(r.kind):category==='so'?['so','amendment'].includes(r.kind):category==='quotation'?['quotation','quotation_edit'].includes(r.kind):r.kind===category))&&[title(r),r.code,r.customer_name,r.summary].join(' ').toLowerCase().includes(search.toLowerCase()));
@@ -154,5 +159,5 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
 
 export function createApprovalLauncher(deps){
  const {React}=deps,h=React.createElement,Center=createApprovalCenter(deps),Popup=createRecordPopup(React);
- return function ApprovalLauncher({lang}){const [open,Open]=React.useState(false);return h(React.Fragment,null,h('button',{type:'button',className:'kc-header-approval','aria-label':lang==='th'?'งานอนุมัติ':'Approvals',onClick:()=>Open(true)},h('span',{'aria-hidden':true},'✓ '),lang==='th'?'งานอนุมัติ':'Approvals'),open&&h(Popup,{title:lang==='th'?'ศูนย์อนุมัติ':'Approval center',lang,onClose:()=>Open(false)},h(Center,{lang,onSource:()=>Open(false)})));};
+ return function ApprovalLauncher({lang}){const [open,Open]=React.useState(false),[recordId,RecordId]=React.useState(null);React.useEffect(()=>{const show=e=>{if(/^[0-9a-f-]{36}$/i.test(e.detail?.id||'')){RecordId(e.detail.id);Open(true);}};window.addEventListener('crm-template-approval',show);return()=>window.removeEventListener('crm-template-approval',show);},[]);return h(React.Fragment,null,h('button',{type:'button',className:'kc-header-approval','aria-label':lang==='th'?'งานอนุมัติ':'Approvals',onClick:()=>{RecordId(null);Open(true);}},h('span',{'aria-hidden':true},'✓ '),lang==='th'?'งานอนุมัติ':'Approvals'),open&&h(Popup,{title:lang==='th'?'ศูนย์อนุมัติ':'Approval center',lang,onClose:()=>Open(false)},h(Center,{lang,initialKind:recordId?'template':undefined,initialRecordId:recordId,onSource:()=>Open(false)})));};
 }

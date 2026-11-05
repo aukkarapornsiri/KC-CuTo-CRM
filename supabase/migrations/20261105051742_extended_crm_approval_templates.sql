@@ -48,6 +48,8 @@ create table public.crm_special_purchase_authorizations(
  id uuid primary key default gen_random_uuid(),request_id uuid not null unique references public.crm_template_requests(id),sales_order_id uuid not null references public.crm_sales_orders(id),
  supplier text not null,items jsonb not null,approved_amount numeric not null,requested_by uuid not null references public.profiles(id),approved_by uuid not null references public.profiles(id),created_at timestamptz not null default clock_timestamp()
 );
+create index crm_special_purchase_requester on public.crm_special_purchase_authorizations(requested_by,created_at);
+create index crm_special_purchase_reviewer on public.crm_special_purchase_authorizations(approved_by,created_at);
 create index crm_special_purchase_so on public.crm_special_purchase_authorizations(sales_order_id);
 alter table public.crm_special_purchase_authorizations enable row level security;
 create policy crm_purchase_read on public.crm_special_purchase_authorizations for select to authenticated using(exists(select 1 from public.crm_template_requests r where r.id=request_id));

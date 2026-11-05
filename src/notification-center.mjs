@@ -3,6 +3,8 @@ import {observeRead} from './read-coordinator.mjs';
 import {toCSV} from './settings-model.mjs';
 import {assignmentTarget,emailDestination} from './assignment-links.mjs';
 export function notificationTarget(row,can=()=>true){
+ const template=/^template(?:-result)?:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?::[1-8])?$/i.exec(row.event_key||'');
+ if(template)return ['leads','customers','contracts','quotations','inventory'].includes(row.related_module)&&can(row.related_module,'view')?{module:row.related_module,page:'template-approval',params:{approvalRecordId:template[1],approvalKind:'template'}}:null;
  const amendment=/^so-amendment:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):/i.exec(row.event_key||'');
  if(amendment&&row.event_kind==='approval_requested')return can('quotations','view')&&can('quotations','approve')?{module:'quotations',page:'quot-approval',params:{approvalRecordId:amendment[1],approvalKind:'amendment'}}:null;
  const match=/^so-approval:([0-9a-f-]{36}):/i.exec(row.event_key||'');
@@ -12,7 +14,7 @@ export function notificationTarget(row,can=()=>true){
 }
 export const notificationDate=value=>value&&Number.isFinite(Date.parse(value))?new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—';
 export const newestNotifications=rows=>[...rows].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)||String(b.id).localeCompare(String(a.id)));
-export const notificationOutcome=row=>row.event_kind==='approval_resolved'||/^Quotation (approved|rejected|cancelled):/.test(row.title||'');
+export const notificationOutcome=row=>['approval_resolved','workflow_result'].includes(row.event_kind)||/^Quotation (approved|rejected|cancelled):/.test(row.title||'');
 export function notificationWorkLabel(row,lang='th'){const t=(a,b)=>lang==='th'?a:b;return row.resolved_at?t(row.resolution==='dismissed'?'ปิดการแจ้งเตือนแล้ว':'ดำเนินการแล้ว',row.resolution==='dismissed'?'Dismissed':'Completed'):notificationOutcome(row)?t('แจ้งผลการอนุมัติแล้ว','Approval result'):t('รอดำเนินการ','Pending');}
 export function notificationText(row,lang='th'){
  if(row.event_kind==='customer_health')return {title:(lang==='th'?'ควรติดตามลูกค้า: ':'Customer needs follow-up: ')+(row.body||''),body:lang==='th'?'มีงานของคุณเกินนัดมากกว่า 1 วัน เปิด Customer 360 เพื่อตรวจสอบและอัปเดตงานเดิม':'Your customer activities are over one day overdue. Open Customer 360 to review and update existing tasks.'};
@@ -60,7 +62,7 @@ export function createNotificationCenter({React,client,useApp,useAccess}){
  h('td',{'data-label':labels.title},h('strong',null,text.title),h('p',null,text.body),row.priority==='high'&&h('span',{className:'crm-notification-urgent'},t('เร่งด่วน','Urgent'))),
  h('td',{'data-label':labels.is_read},t(row.is_read?'อ่านแล้ว':'ยังไม่อ่าน',row.is_read?'Read':'Unread')),
  h('td',{'data-label':labels.resolved_at},notificationWorkLabel(row,lang)),
- h('td',{'data-label':labels.actions},h('div',{className:'crm-notification-actions'},target&&(demoMode||access.can(target.module,'view'))&&h('button',{type:'button',onClick:()=>navigate(target.module,target.page,target.params)},t(target.page==='quot-approval'?'เปิดคำขออนุมัติ':target.module==='leads'?'เปิดลีด':'เปิดรายการ',target.page==='quot-approval'?'Open approval request':target.module==='leads'?'Open lead':'Open record')),
+ h('td',{'data-label':labels.actions},h('div',{className:'crm-notification-actions'},target&&(demoMode||access.can(target.module,'view'))&&h('button',{type:'button',onClick:()=>target.page==='template-approval'?window.dispatchEvent(new CustomEvent('crm-template-approval',{detail:{id:target.params.approvalRecordId}})):navigate(target.module,target.page,target.params)},t(['quot-approval','template-approval'].includes(target.page)?'เปิดคำขออนุมัติ':target.module==='leads'?'เปิดลีด':'เปิดรายการ',['quot-approval','template-approval'].includes(target.page)?'Open approval request':target.module==='leads'?'Open lead':'Open record')),
  h('button',{type:'button',disabled:busy,onClick:()=>change(row,{is_read:!row.is_read})},t(row.is_read?'ทำเป็นยังไม่อ่าน':'ทำเป็นอ่านแล้ว',row.is_read?'Mark unread':'Mark read')),
  !row.resolved_at&&h('button',{type:'button',disabled:busy,onClick:()=>{if(window.confirm(t('ปิดการแจ้งเตือนนี้? สถานะงานต้นทางจะไม่เปลี่ยน','Dismiss this notification? The source record status will not change.')))void change(row,{resolved_at:new Date().toISOString(),resolution:'dismissed'});}},t('ปิดการแจ้งเตือน','Dismiss')))));})))),
  busy&&h('p',{role:'status'},t(rows.length?'กำลังอัปเดตรายการ…':'กำลังโหลดการแจ้งเตือน…',rows.length?'Updating notifications…':'Loading notifications…')),

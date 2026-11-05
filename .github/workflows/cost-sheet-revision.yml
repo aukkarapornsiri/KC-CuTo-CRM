@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/so-amendments.mjs'
       - 'src/quotation-document.mjs'
+      - 'src/internal-model.mjs'
+      - 'tests/quotation-zero-sale-cost-smoke.mjs'
       - 'src/sales-orders.mjs'
       - 'tests/so-quotation-revision-smoke.mjs'
       - 'src/internal-workspace.mjs'
@@ -26,6 +28,7 @@ jobs:
           sleep 2
           SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/cost-sheet-revision-smoke.mjs
           SITE_URL='http://127.0.0.1:4173/?demo=1' node tests/so-quotation-revision-smoke.mjs
+          node tests/quotation-zero-sale-cost-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
