@@ -85,6 +85,14 @@ begin
  r:=public.crm_template_submit('credit_terms',cid,'{"credit_days":60,"credit_limit":300000}','QA rejected request',stamp);
  perform set_config('request.jwt.claim.sub',v::text,true);r:=public.crm_template_decide(r.id,'reject','Not authorized for this amount',r.updated_at);
  if r.status<>'rejected' or (select credit_days from public.customers where id=cid)<>30 then raise exception 'Rejected request applied';end if;
+ perform set_config('request.jwt.claim.sub',u::text,true);
+ begin update public.crm_template_requests set status='approved' where id=r.id;raise exception 'Direct request write accepted';exception when insufficient_privilege then null;end;
+ update public.role_permissions set can_view=false where role_key='qa_template_reviewer' and module='customers';
+ perform set_config('request.jwt.claim.sub',v::text,true);
+ if exists(select 1 from public.crm_template_requests where id=r.id) then raise exception 'Revoked module permission still exposes request';end if;
+ begin perform public.crm_template_submit('credit_terms',cid,'{"credit_days":1,"credit_limit":1}','Revoked permission',stamp);raise exception 'Revoked user submitted a request';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',u::text,true);
+ update public.role_permissions set can_view=true where role_key='qa_template_reviewer' and module='customers';
  perform set_config('request.jwt.claim.sub','',true);
  begin perform public.crm_template_submit('credit_terms',cid,'{}','Anonymous request',stamp);raise exception 'Anonymous request accepted';exception when insufficient_privilege then null;end;
 end $$;
