@@ -29,8 +29,7 @@ export function createQuotationDetailLayout(React){
   const approvalPanel=h(React.Fragment,null,h('section',{className:'kc-quote-extra-section kc-quote-priority-approval kc-approval-compact',ref:n=>sections.current.approval=n},
    h('header',{className:'kc-approval-heading'},h('h3',null,t('การอนุมัติและดำเนินการต่อ','Approval and next actions')),h('span',{className:'kc-approval-status','data-status':r.approval_status||'none'},statusLabel)),
    h('div',{className:'kc-approval-actions'},decorate(account,'customer'),decorate(contact,'contact'),...approvalActions.map(n=>decorate(n,kindFor(n)))),
-   h('div',{className:'kc-approval-fields'},commentField&&h('label',{className:'kc-approval-note'},h('span',null,t('หมายเหตุ','Note')),React.cloneElement(commentField,{rows:1,placeholder:t('เพิ่มหมายเหตุการอนุมัติ…','Add an approval note…')})),...reviewers),
-   (workflow.length>0||extraLinks.length>0||extraApproval.length>0)&&h('div',{className:'kc-approval-extra-actions'},workflow,extraLinks,extraApproval)),
+   h('div',{className:'kc-approval-fields'},commentField&&h('label',{className:'kc-approval-note'},h('span',null,t('หมายเหตุ','Note')),React.cloneElement(commentField,{rows:1,placeholder:t('เพิ่มหมายเหตุการอนุมัติ…','Add an approval note…')})),...reviewers)),
    history.length>0&&h('details',{className:'kc-approval-history'},h('summary',null,t('ประวัติการอนุมัติ','Approval history')),history));
   const initials=String(r.prepared_by||r.owner_name||'').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'—';
   return h('section',{...attrs,className:'crm-record-detail kc-quote-detail'},
@@ -45,7 +44,7 @@ export function createQuotationDetailLayout(React){
      card(t('ผู้จัดทำเอกสาร','Document preparer'),h(React.Fragment,null,h('div',{className:'kc-quote-preparer'},h('span',{className:'kc-quote-avatar','aria-hidden':true},initials),h('div',null,h('strong',null,r.prepared_by||'—'),h('small',null,r.project_name||'—'))),h('div',{className:'kc-quote-contact-fields'},preparer))),
      card(t('เงื่อนไขและการชำระเงิน','Commercial terms'),h(React.Fragment,null,h('div',{className:'kc-quote-payment-fields'},payment),h('div',{className:'kc-quote-divider'},terms))),
      card(t('ข้อมูลเอกสารเพิ่มเติม','Document details'),h('div',{className:'kc-quote-document-fields'},document,...fields.values()))),
-    h('section',{className:'kc-quote-extra-section',ref:n=>sections.current.related=n},h('h3',null,t('เอกสารที่เกี่ยวข้อง','Related documents')),related,integration,status)),
+    h('section',{className:'kc-quote-extra-section',ref:n=>sections.current.related=n},h('h3',null,t('เอกสารที่เกี่ยวข้อง','Related documents')),h('div',{className:'kc-approval-extra-actions'},workflow,extraLinks,extraApproval),related,integration,status)),
    h('footer',{className:'kc-quote-footer'},h('small',null,t('แก้ไขได้ตามสิทธิ์และสถานะเอกสาร','Editing follows your permissions and document status')),h('div',{className:'crm-actions'},close)));
  };
 }
