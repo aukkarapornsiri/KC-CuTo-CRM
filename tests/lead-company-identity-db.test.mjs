@@ -15,6 +15,7 @@ test('company identity requires merge; same owner merges directly and cross-owne
  insert into leads(id,company_name,contact_name,email,phone,owner_id,status) values('${l1}','Same company','First Contact','same@example.test','0812345678','${a}','disqualified'),('${l2}','Same company','Second Contact','second@example.test','0999999999','${b}','new');
  insert into activities(related_module,related_id,status,scheduled_at) values('leads','${l2}','completed',now()-interval '1 day');insert into opportunities(lead_id) values('${l2}');`);
 
+ await db.exec(`insert into leads(id,company_name,owner_id) values('55555555-5555-4555-8555-555555555555','Same company','${a}')`);
  await db.exec(fs.readFileSync('db/lead-duplicates.sql','utf8'));
  await db.exec(fs.readFileSync('db/lead-company-identity.sql','utf8'));
  await db.exec(`set role authenticated;set app.actor='${a}';set app.denied='';`);
@@ -27,7 +28,7 @@ test('company identity requires merge; same owner merges directly and cross-owne
  const resolve=async(target,data,reviewer=null,source=null,request=crypto.randomUUID())=>(await db.query('select crm_lead_resolve($1,$2,$3,$4,$5,$6,$7) id',[target,source,'merge',JSON.stringify(data),'Merge enquiry',request,reviewer])).rows[0].id;
  const same=await resolve(l1,{company_name:'Same company',owner_id:a});
  let row=(await db.query('select * from crm_lead_resolutions where id=$1',[same])).rows[0];assert.equal(row.action,'merge');assert.equal(row.merge_status,'approved');assert.equal(row.source_id,null);
- assert.equal((await db.query('select count(*)::int n from leads')).rows[0].n,3,'merge does not create a duplicate or delete records');
+ assert.equal((await db.query('select count(*)::int n from leads')).rows[0].n,4,'merge does not create a duplicate or delete records');
  await assert.rejects(resolve(l2,{company_name:'Same company',owner_id:a}),/reviewer required/);
  await assert.rejects(resolve(l2,{company_name:'Other company',owner_id:a},b),/Different companies|identity changed/);
  const pending=await resolve(l2,{company_name:'Same company',owner_id:a},b);
@@ -47,7 +48,12 @@ test('company identity requires merge; same owner merges directly and cross-owne
  const changed=await resolve(l2,{company_name:'Same company',owner_id:a},b);
  await db.exec(`reset role;update leads set owner_id=null where id='${l2}';set role authenticated;set app.actor='${b}'`);
  await assert.rejects(db.query('select crm_lead_merge_decide($1,true)',[changed]),/ownership changed/);
+ await db.exec(`reset role;update leads set owner_id='${b}' where id='${l2}';set role authenticated;set app.actor='${a}'`);
+ const existing=await resolve(l2,{company_name:'Same company',owner_id:a},b,'55555555-5555-4555-8555-555555555555');
+ assert.equal((await db.query('select action from crm_lead_resolutions where id=$1',[existing])).rows[0].action,'review');
+ await db.exec(`set app.actor='${b}'`);await db.query('select crm_lead_merge_decide($1,true)',[existing]);
+ assert.equal((await db.query("select source_snapshot->>'id' id from crm_lead_resolutions where request_id=$1 and action='merge'",[existing])).rows[0].id,'55555555-5555-4555-8555-555555555555');
  await db.exec('reset role');
- assert.equal((await db.query('select count(*)::int n from leads')).rows[0].n,3);
+ assert.equal((await db.query('select count(*)::int n from leads')).rows[0].n,4);
  assert.equal((await db.query('select related_id from activities')).rows[0].related_id,l2);assert.equal((await db.query('select lead_id from opportunities')).rows[0].lead_id,l2);
  }finally{await db.close();}});

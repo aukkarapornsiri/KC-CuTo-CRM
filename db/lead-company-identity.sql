@@ -44,7 +44,7 @@ revoke all on function public.crm_create_lead_checked(jsonb,text) from public,an
 -- A trigger also guards direct/import writes. Existing records remain editable if identity is unchanged.
 create or replace function private.crm_lead_company_guard() returns trigger language plpgsql security definer set search_path='' as $$
 begin
- if TG_OP='UPDATE' and new.company_name is not distinct from old.company_name and new.tax_id is not distinct from old.tax_id then return new;end if;
+ if TG_OP='UPDATE' and private.crm_lead_norm(new.company_name,'name')=private.crm_lead_norm(old.company_name,'name') and regexp_replace(coalesce(new.tax_id,''),'[^0-9]','','g')=regexp_replace(coalesce(old.tax_id,''),'[^0-9]','','g') then return new;end if;
  perform pg_advisory_xact_lock(867820);
  if exists(select 1 from public.leads l where l.id<>new.id and private.crm_lead_company_duplicate(to_jsonb(new),to_jsonb(l)) and not exists(select 1 from public.crm_lead_resolutions r where r.action='merge' and r.source_id=l.id)) then raise exception 'Duplicate company or tax ID: merge with the existing lead; approval required for different sales owners';end if;
  return new;
@@ -71,7 +71,7 @@ begin
   snapshot:=p_incoming;
   if not private.crm_lead_company_duplicate(p_incoming,to_jsonb(target)) then raise exception 'Company identity changed; check again';end if;
  end if;
- if exists(select 1 from public.crm_lead_resolutions where action='merge' and (source_id=p_target or (p_source is not null and (source_id=p_source or target_id=p_source)))) then raise exception 'Already merged or merge chain; review the primary lead';end if;
+ if exists(select 1 from public.crm_lead_resolutions where action='merge' and (source_id=p_target or (p_source is not null and (source_id=p_source or (target_id=p_source and source_id is not null))))) then raise exception 'Already merged or merge chain; review the primary lead';end if;
  if p_approval is null then
   if own is distinct from auth.uid() and not private.crm_lead_assigner_eligible(auth.uid()) then raise insufficient_privilege;end if;
   if own is not null and own=target.owner_id then state:='approved';event_action:='merge';
@@ -106,14 +106,7 @@ begin
   select * into target from public.leads where id=p_target for update;if not found then raise exception 'Lead not found';end if;
   if p_action<>'separate' and cardinality(private.crm_lead_match(p_incoming,to_jsonb(target)))=0 then raise exception 'Match changed; check again';end if;
  end if;
- if p_action='merge' then
-  if not private.crm_can('leads','edit') or not private.crm_can('leads','assign') or p_source is null or p_source=target.id then raise insufficient_privilege;end if;
-  select * into source from public.leads where id=p_source for update;if not found then raise exception 'Source unavailable';end if;
-  if cardinality(private.crm_lead_match(to_jsonb(source),to_jsonb(target)))=0 then raise exception 'Source does not match';end if;
-  if source.customer_id is not null and target.customer_id is not null and source.customer_id<>target.customer_id then raise exception 'Different customer accounts require review';end if;
-  if exists(select 1 from public.crm_lead_resolutions where action='merge' and (source_id in (p_source,target.id) or target_id=p_source)) then raise exception 'Already merged or merge chain; review the primary lead';end if;
-  snapshot:=to_jsonb(source);
- elsif p_action='reopen' then
+ if p_action='reopen' then
   if not private.crm_can('leads','edit') or target.status not in ('disqualified','lost','closed') then raise exception 'Lead cannot be reopened';end if;
   update public.leads set status='follow',updated_at=now() where id=target.id;
  elsif p_action in ('activity','opportunity','contact') then
