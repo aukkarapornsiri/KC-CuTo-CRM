@@ -14,7 +14,7 @@ jobs:
       - name: Validate Digital Workplace sales totals
         run: node --test tests/dw-company-sales.test.mjs tests/sales-targets.test.mjs tests/target-report-model.test.mjs
       - name: Validate approved document edit conditions
-        run: node --test tests/document-edit-policy.test.mjs tests/so-amendments.test.mjs tests/approval-center.test.mjs
+        run: node --test tests/document-edit-policy.test.mjs tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs
       - name: Validate approval workflow templates
         run: node --test tests/workflow-templates.test.mjs
       - name: Validate AI analytics rules
@@ -76,7 +76,7 @@ jobs:
           node --test tests/marketing-edge.test.mjs
           node --check src/internal-workspace.mjs
           node --check src/approval-center.mjs
-          node --test tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/assignment-links.test.mjs tests/microsoft-login.test.mjs
+          node --test tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs tests/assignment-links.test.mjs tests/microsoft-login.test.mjs
           node --check src/lead-detail-enterprise.mjs
           node --test tests/lead-detail-enterprise.test.mjs
           node --test tests/thai-address.test.mjs tests/bilingual-address.test.mjs
@@ -110,7 +110,7 @@ jobs:
           node --test tests/document-retention-db.test.mjs
           node --test tests/quotation-followup.test.mjs tests/quotation-followup-db.test.mjs
           node --test tests/so-configured-approval.test.mjs
-          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs tests/rental-quotation-db.test.mjs tests/lead-duplicates-db.test.mjs tests/lead-company-identity-db.test.mjs tests/lead-policy-manager-db.test.mjs tests/lead-policy-model.test.mjs tests/lead-field-rules.test.mjs
+          node --test tests/assignment-email-summary.test.mjs tests/so-notification-completion.test.mjs tests/rental-quotation-db.test.mjs tests/quotation-zero-sale-cost-db.test.mjs tests/lead-duplicates-db.test.mjs tests/lead-company-identity-db.test.mjs tests/lead-policy-manager-db.test.mjs tests/lead-policy-model.test.mjs tests/lead-field-rules.test.mjs
       - name: Parse Edge Function TypeScript
         run: |
           npx -y esbuild supabase/functions/crm-user-admin/index.ts --bundle --platform=neutral --format=esm --external:npm:* --outfile=/tmp/crm-user-admin.js
