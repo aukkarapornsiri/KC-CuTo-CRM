@@ -1,4 +1,4 @@
-import {EXTENDED_APPROVAL_TEMPLATES,templatePayload} from './approval-template-catalog.mjs';
+import {EXTENDED_APPROVAL_TEMPLATES,templatePayload,templatePermitted} from './approval-template-catalog.mjs';
 import {createRecordPopup} from './record-popup.mjs';
 export const TEMPLATE_FIELD_LABELS={source_id:['ลีดที่นำมารวม','Source lead'],owner_id:['ผู้รับผิดชอบใหม่','New owner'],credit_days:['เครดิต (วัน)','Credit days'],credit_limit:['วงเงินเครดิต (บาท)','Credit limit (THB)'],name:['ชื่อสัญญา','Contract name'],product:['สินค้า / ขอบเขตบริการ','Product / service scope'],value:['มูลค่าสัญญา (บาท)','Contract value (THB)'],start_date:['วันเริ่มต้น','Start date'],end_date:['วันสิ้นสุด','End date'],sla_level:['ระดับ SLA','SLA level'],warehouse_id:['คลังสินค้า','Warehouse'],serial_number:['Serial number','Serial number'],quantity:['จำนวนที่ปรับเพิ่ม (+) / ลด (-)','Quantity delta (+ / -)'],supplier:['ผู้ขาย / Supplier','Supplier']};
 export function createTemplateRequestForm({React,client,useApp,useAccess}){
@@ -7,7 +7,7 @@ export function createTemplateRequestForm({React,client,useApp,useAccess}){
   const {demoMode}=useApp(),access=useAccess(),t=(a,b)=>lang==='th'?a:b;
   const [kind,Kind]=React.useState(''),[target,Target]=React.useState(''),[draft,Draft]=React.useState({}),[reason,Reason]=React.useState(''),[search,Search]=React.useState(''),[rows,Rows]=React.useState([]),[people,People]=React.useState([]),[warehouses,Warehouses]=React.useState([]),[loading,Loading]=React.useState(false),[busy,Busy]=React.useState(false),[error,ErrorText]=React.useState('');
   const lock=React.useRef(false),type=EXTENDED_APPROVAL_TEMPLATES.find(x=>x.id===kind),record=rows.find(r=>r.id===target);
-  const choices=EXTENDED_APPROVAL_TEMPLATES.filter(x=>access.can(x.module,'view')&&access.can(x.module,x.id==='inventory_adjustment'?'create':'edit')&&(x.id!=='lead_reassignment'||access.can('leads','assign'))&&(x.id!=='contract_renewal'||access.can('contracts','create')));
+  const choices=EXTENDED_APPROVAL_TEMPLATES.filter(x=>templatePermitted(x.id,(m,a)=>access.can(m,a)));
   React.useEffect(()=>{if(!type)return;let active=true;const controller=new AbortController();Loading(true);ErrorText('');
    (async()=>{try{
     if(demoMode)throw Error(t('ส่งคำขอด้วยบัญชีจริงเท่านั้น','Use a signed-in account to submit requests'));

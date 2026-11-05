@@ -1,4 +1,4 @@
-import {EXTENDED_APPROVAL_TEMPLATES,templateCanReview} from './approval-template-catalog.mjs';
+import {EXTENDED_APPROVAL_TEMPLATES,templateCanReview,templatePermitted} from './approval-template-catalog.mjs';
 import {createTemplateRequestForm,createTemplateRequestDetails} from './template-request-form.mjs';
 import {canReviewSO} from './approval-policy.mjs';
 import {createRecordPopup} from './record-popup.mjs';
@@ -15,6 +15,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
   const [creatingTemplate,CreatingTemplate]=React.useState(false);
   const generation=React.useRef(0),lock=React.useRef(false);
   const can=action=>access.can('quotations',action),labels={template:t('คำขอตาม Template','Template request'),quotation_edit:t('ขอแก้ไขใบเสนอราคา','Edit Approved Quotation'),quotation:t('ใบเสนอราคา','Quotation'),so:t('เปิด SO','Open SO'),amendment:t('ขอแก้ไข SO','SO amendment'),service:t('งานบริการ','Service'),lead:t('ลีด','Lead'),other:t('งานอื่น','Other work')};
+  const amountLabel=r=>r.kind==='template'?({credit_terms:t('วงเงินเครดิต','Credit limit'),contract_amendment:t('มูลค่าสัญญา','Contract value'),contract_renewal:t('มูลค่าต่ออายุสัญญา','Renewal value'),special_purchase:t('วงเงินจัดซื้อก่อนภาษี','Purchase amount before tax')}[r.template_type]||t('ยอดรวม VAT','Total incl. VAT')):t('ยอดรวม VAT','Total incl. VAT');
   const money=r=>new Intl.NumberFormat(lang==='th'?'th-TH':'en-US',{style:'currency',currency:r.currency||'THB'}).format(Number(r.total||0));
   async function load(){
    const token=++generation.current;Loading(true);ErrorText('');
@@ -40,7 +41,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
     }
     if(!demoMode){
      const requests=await readAll(()=>{let q=client.from('crm_template_requests').select('*').order('created_at',{ascending:false}).order('id');return tab==='pending'?q.eq('status','pending').contains('approver_ids',[profile.id]):tab==='sent'?q.eq('requested_by',profile.id):q.neq('status','pending');});
-     for(const a of requests){const type=EXTENDED_APPROVAL_TEMPLATES.find(t=>t.id===a.request_type);if(!type||!access.can(type.module,'view')||(tab==='pending'&&!templateCanReview(a,profile.id)))continue;list.push({...a.before_snapshot,kind:'template',template_type:a.request_type,key:'template:'+a.id,id:a.target_id,request:a,status:a.status,created_at:a.created_at,total:a.amount,summary:a.reason,title:t(type.th,type.en)});}
+     for(const a of requests){const type=EXTENDED_APPROVAL_TEMPLATES.find(t=>t.id===a.request_type);if(!type||!access.can(type.module,'view')||(tab==='pending'&&!(templateCanReview(a,profile.id)&&templatePermitted(a.request_type,(m,a)=>access.can(m,a),true))))continue;list.push({...a.before_snapshot,kind:'template',template_type:a.request_type,key:'template:'+a.id,id:a.target_id,request:a,status:a.status,created_at:a.created_at,total:['lead_merge','lead_reassignment','inventory_adjustment'].includes(a.request_type)?null:a.amount,summary:a.reason,title:t(type.th,type.en)});}
     }
     // Other workflows keep their own permissions and decision handlers at the source.
     if(!demoMode&&tab!=='sent'){
@@ -104,12 +105,12 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
   const summary=r=>r.kind==='amendment'?r.request.reason:r.summary||r.note||(r.items||[]).slice(0,2).map(x=>(x.name||'')+' × '+(x.qty||x.quantity||1)).join(' · ')||t('เปิดดูรายละเอียดเพื่อพิจารณา','Open details to review');
   const requester=r=>r.request?.requested_by===profile?.id||r.request?.submitted_by===profile?.id?t('คุณ','You'):r.requester_name||((r.request?.requested_by===r.owner_id||r.request?.submitted_by===r.owner_id)?r.owner_name:'')||t('ผู้ใช้ในระบบ','CRM user');
   const requestedDate=r=>r.created_at&&Number.isFinite(Date.parse(r.created_at))?new Intl.DateTimeFormat(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(r.created_at)):'—';
-  const canAct=r=>r?.kind==='template'?templateCanReview(r.request,profile?.id):r?.status==='pending'&&can('approve')&&(r.kind==='quotation'?canReviewQuotation(r.request,profile?.id,true):['amendment','so','quotation_edit'].includes(r.kind)&&canReviewSO(r.request,profile?.id,true)&&r.orderStatus!=='cancelled');
+  const canAct=r=>r?.kind==='template'?templateCanReview(r.request,profile?.id)&&templatePermitted(r.template_type,(m,a)=>access.can(m,a),true):r?.status==='pending'&&can('approve')&&(r.kind==='quotation'?canReviewQuotation(r.request,profile?.id,true):['amendment','so','quotation_edit'].includes(r.kind)&&canReviewSO(r.request,profile?.id,true)&&r.orderStatus!=='cancelled');
   const actionable=canAct(selected);
   const button=(label,fn,props={})=>h('button',{type:'button',onClick:fn,disabled:busy,...props},label);
   return h('section',{className:'kc-approval-app','aria-label':t('ศูนย์อนุมัติ','Approval center')},
    h('header',{className:'kc-approval-top'},h('div',null,h('h1',null,t('ศูนย์อนุมัติ','Approval center')),h('p',null,t('ตรวจสอบ ตัดสินใจ และติดตามงานในที่เดียว','Review, decide and track work in one place'))),button(h('img',{src:'./assets/approval/refresh.svg',width:20,height:20,alt:''}),()=>void load(),{disabled:busy||loading,'aria-label':t('โหลดใหม่','Refresh'),className:'kc-approval-refresh'})),
-   !demoMode&&button(t('+ สร้างคำขอจาก Template','+ New template request'),()=>CreatingTemplate(true),{className:'kc-approval-new-template'}),
+   !demoMode&&EXTENDED_APPROVAL_TEMPLATES.some(x=>templatePermitted(x.id,(m,a)=>access.can(m,a)))&&button(t('+ สร้างคำขอจาก Template','+ New template request'),()=>CreatingTemplate(true),{className:'kc-approval-new-template'}),
    creatingTemplate&&h(TemplateForm,{lang,onClose:()=>CreatingTemplate(false),onSaved:()=>{CreatingTemplate(false);Tab('sent');Message(t('ส่งคำขออนุมัติแล้ว','Request submitted'));void load();}}),
    message&&h('p',{role:'status'},message),!selected&&error&&h('p',{role:'alert'},error),
    h('section',{className:'kc-approval-metrics','aria-label':t('สรุปรายการในมุมมองที่เลือก','Summary of selected view')},[
@@ -128,7 +129,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
      h('span',{className:'kc-approval-card-top'},h('span',{className:'kc-approval-badge'},labels[r.kind]),h('span',{className:'kc-approval-state'},statusLabel(r.status))),
      h('strong',{className:'kc-approval-card-title',title:title(r)},title(r)),
      h('span',{className:'kc-approval-card-reference'},r.code||'—'),h('span',{className:'kc-approval-customer',title:r.customer_name||summary(r)},r.customer_name||summary(r)),
-     h('span',{className:'kc-approval-value'},h('b',null,r.total!=null?money(r):'—'),h('span',null,t('ยอดรวม VAT','Total incl. VAT'))),
+     h('span',{className:'kc-approval-value'},h('b',null,r.total!=null?money(r):'—'),h('span',null,amountLabel(r))),
      h('span',{className:'kc-approval-card-meta'},h('span',{title:requester(r)},requester(r)),h('span',null,requestedDate(r)))
     ),()=>open(r),{className:'kc-approval-card-main','aria-label':t('ตรวจสอบ ','Review ')+(r.code||title(r))}),
     h('div',{className:'kc-approval-card-actions'},button(t('รายละเอียด','Details'),()=>open(r),{className:'kc-approval-card-details'}),canAct(r)&&h(React.Fragment,null,button(t('ไม่อนุมัติ','Reject'),()=>open(r,'reject'),{className:'kc-approval-card-reject'}),button(t('อนุมัติ','Approve'),()=>open(r),{className:'kc-approval-card-approve'}))) ))),
@@ -137,7 +138,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
    selected&&h(Popup,{title:labels[selected.kind],lang,busy,error,onClose:()=>Selected(null)},h('div',{className:'kc-approval-detail','data-kind':selected.kind},h('div',{className:'kc-approval-review-content'},
     h('section',{className:'kc-approval-overview'},button(h(React.Fragment,null,h('img',{src:'./assets/approval/back.svg',width:20,height:20,alt:''}),t('รายการคำขอ','Requests')),()=>Selected(null),{className:'kc-approval-back'}),h('div',{className:'kc-approval-badges'},h('span',{className:'kc-approval-badge'},labels[selected.kind]),h('span',{className:'kc-approval-status-badge'},statusLabel(selected.status))),h('small',{className:'kc-approval-reference'},selected.code||''),h('h2',null,title(selected)),h('p',{className:'kc-approval-customer'},selected.customer_name||'')),
     selected.kind==='template'&&h(TemplateDetails,{request:selected.request,lang}),
-    selected.total!=null&&h('section',{className:'kc-approval-amount'},h('div',null,h('span',null,selected.kind==='amendment'?t('ยอด SO ปัจจุบัน','Current SO total'):t('ยอดรวม VAT','Total including VAT')),h('small',null,selected.kind==='amendment'?t('ยอดก่อนการแก้ไข รวม VAT แล้ว','Before revision, including VAT'):t('รวมภาษีมูลค่าเพิ่มแล้ว','Including VAT'))),h('strong',null,money(selected))),
+    selected.total!=null&&h('section',{className:'kc-approval-amount'},h('div',null,h('span',null,selected.kind==='amendment'?t('ยอด SO ปัจจุบัน','Current SO total'):amountLabel(selected)),h('small',null,selected.kind==='amendment'?t('ยอดก่อนการแก้ไข รวม VAT แล้ว','Before revision, including VAT'):selected.kind==='template'?t('ยอดตามประเภทคำขอ','Amount for this request type'):t('รวมภาษีมูลค่าเพิ่มแล้ว','Including VAT'))),h('strong',null,money(selected))),
     ['so','amendment'].includes(selected.kind)&&h('section',{className:'kc-approval-policy'},h('strong',null,selected.request.approval_policy_name||t('ขั้นตอนอนุมัติที่กำหนด','Configured approval policy')),h('p',null,t('ขั้นที่ ','Step ')+selected.request.current_step+'/'+(selected.request.approver_ids?.length||0))),
     selected.kind==='quotation_edit'&&h('section',{className:'kc-approval-policy'},h('strong',null,t('ขออนุมัติก่อนแก้ไขใบเสนอราคา','Approve quotation editing')),h('p',null,selected.request.reason),h('p',null,t('ผู้ขอแก้ไขได้หนึ่งครั้ง หลังบันทึกต้องอนุมัติใบเสนอราคาฉบับใหม่','Authorize one save; the revised quotation requires approval again.'))),
      selected.kind==='quotation'&&h('section',{className:'kc-approval-policy'},h('strong',null,t('ลำดับอนุมัติตาม Policy ที่ส่งคำขอ','Approval sequence from submitted policy')),h('p',null,t('ขั้นที่ ','Step ')+selected.request.current_step+'/'+selected.request.approver_ids.length),h('p',null,selected.request.approver_ids.map((id,i)=>(i+1<selected.request.current_step?'✓ ':i+1===selected.request.current_step?'● ':'○ ')+(i+1)+(id===profile.id?t(' คุณ',' You'):'')).join(' → '))),

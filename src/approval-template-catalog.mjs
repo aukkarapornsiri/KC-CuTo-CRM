@@ -23,3 +23,8 @@ export function templatePayload(type,draft){
  }
 }
 export function templateCanReview(request,userId){return request?.status==='pending'&&request.requested_by!==userId&&request.approver_ids?.[request.current_step-1]===userId;}
+
+export function templatePermitted(type,can,review=false){
+ const t=EXTENDED_APPROVAL_TEMPLATES.find(t=>t.id===type);if(!t)return false;
+ return can(t.module,'view')&&can(t.module,type==='inventory_adjustment'?'create':'edit')&&(type!=='lead_reassignment'||can('leads','assign'))&&(type!=='contract_renewal'||can('contracts','create'))&&(!review||can(t.module,['lead_merge','lead_reassignment'].includes(type)?'assign':'approve'));
+}
