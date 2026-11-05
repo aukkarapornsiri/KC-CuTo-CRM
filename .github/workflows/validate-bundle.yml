@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate Digital Workplace sales totals
         run: node --test tests/dw-company-sales.test.mjs tests/sales-targets.test.mjs tests/target-report-model.test.mjs
+      - name: Validate approved document edit conditions
+        run: node --test tests/document-edit-policy.test.mjs tests/so-amendments.test.mjs tests/approval-center.test.mjs
       - name: Validate AI analytics rules
         run: node --test tests/lead-evidence-loader.test.mjs tests/lead-sales-outcome.test.mjs tests/quotation-list-filter.test.mjs tests/ai-dashboard.test.mjs tests/status-summary.test.mjs tests/lead-quotation-summary.test.mjs tests/pagination.test.mjs tests/lead-period.test.mjs tests/lead-source.test.mjs
       - uses: actions/setup-node@v4
