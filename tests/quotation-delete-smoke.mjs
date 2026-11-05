@@ -13,7 +13,7 @@ try {
    const source=await(await fetch([...document.scripts].find(s=>s.src.includes('app-C2ITSffc')).src)).text();
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
-   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',quotation_kind:i>=2&&i<=5?'recurring':'standard',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{billing_period:i>=2&&i<=5?['day','month','year','once'][i-2]:undefined,name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
+   DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,owner_id:'00000000-0000-0000-0000-0000000000d0',code:'QA-QUOTE-'+i,customer_name:'QA Company',quotation_kind:i>=2&&i<=5?'recurring':'standard',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{billing_period:i>=2&&i<=5?['day','month','year','once'][i-2]:undefined,name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
   else {
