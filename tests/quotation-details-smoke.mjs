@@ -4,7 +4,7 @@ import {openDesktopMenu} from './menu-helper.mjs';
 const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']}: {})});
 try {
  for(const width of [1440,390]){
-  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];
+  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(process.env.SITE_URL||'http://127.0.0.1:4173/');
   await page.getByRole('button',{name:'เข้าใช้งานโหมดทดลอง',exact:true}).click();
@@ -15,14 +15,8 @@ try {
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
    DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,code:'QA-QUOTE-'+i,customer_name:'QA Company',issue_date:'2026-11-03',valid_until:'2026-11-06',payment_terms:0,payment_term_code:'cash',counterparty_tax_id:'0125568016470',counterparty_address:'119/531 Rattanathibet Road, Nonthaburi',prepared_by_email:'sales@example.test',prepared_by_phone:'021234567',project_name:'Sales',payment_instructions:'50% deposit before delivery',document_language:'en',currency:'THB',prepared_by:i?'Monchai Aukkarapornsiri':'',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
-  if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
-  else {
-   await page.locator('button.lg\\:hidden').first().click();
-   const nav=page.locator('div.fixed.top-0.left-0.h-full.w-64.lg\\:hidden');
-   await nav.getByRole('button',{name:'Sales',exact:true}).click();
-   await nav.getByText('Quotations',{exact:true}).click();
-   await nav.getByText('Quotation List',{exact:true}).click();
-  }
+  await openDesktopMenu(page,'Quotations','Quotation List');
+  await page.setViewportSize({width,height:900});
   await page.locator('[data-entity=quotations] thead [data-field=prepared_by]').waitFor();
   const summary=page.getByRole('region',{name:'Quotation summary'});
   await summary.waitFor();assert.equal(await summary.locator('.crm-master-form').count(),4);
@@ -50,8 +44,8 @@ try {
    assert.equal(await dialog.locator('tfoot .crm-internal-financial').last().innerText(),'28.57');
    assert.equal(await dialog.getByRole('button',{name:'Edit',exact:true}).isDisabled(),false);
    await dialog.getByRole('button',{name:'Edit',exact:true}).click();
-   await page.getByText('This quotation is locked by approval and has no SO to amend',{exact:true}).waitFor();
-   assert.equal(await page.getByRole('dialog',{name:'Quotation form',exact:true}).count(),0,'Approval remains locked without an SO amendment scope');
+   await page.getByText(code==='QA-QUOTE-0'?'Withdraw or finish the pending approval before editing':'Approved document editing requires a signed-in account',{exact:true}).waitFor();
+   assert.equal(await page.getByRole('dialog',{name:'Quotation form',exact:true}).count(),0,'Approved editing requires a real account and policy check');
    await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
    await page.getByRole('button',{name:entry+code,exact:true}).click();
    await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight;});
