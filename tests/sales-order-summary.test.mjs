@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {salesOrderSummary,firstItemLine} from '../src/sales-order-summary.mjs';
+test('sales uses document discount and aggregate margin rather than average line percentages',()=>{const order={subtotal:1000,discount:100,items:[{},{}]};assert.deepEqual(salesOrderSummary(order,{line_financials:[{cost_total:300},{cost_total:420}]},true),{sales:900,gp:180,margin:20});});
+test('missing and unauthorized costs never become zero or leak profit',()=>{const order={subtotal:1000,items:[{},{}]};assert.deepEqual(salesOrderSummary(order,{cost_total:400},false),{sales:1000,gp:null,margin:null});assert.equal(salesOrderSummary(order,{line_financials:[{cost_total:0},{}]},true).gp,null);assert.equal(salesOrderSummary(order,{cost_total:0},true).gp,1000);assert.equal(salesOrderSummary({subtotal:0,items:[]},{cost_total:40},true).margin,null);});
+test('first line retains item identity while excluding specifications',()=>{assert.equal(firstItemLine('Aruba 6100\r\n32GB / additional specifications'),'Aruba 6100');});
