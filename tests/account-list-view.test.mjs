@@ -24,3 +24,11 @@ test('account names open 360 on double click, keyboard activation or touch, not 
  name.props.onClick({detail:0,nativeEvent:{}});assert.deepEqual(opened,['a','a']);
  name.props.onClick({detail:1,nativeEvent:{pointerType:'touch'}});assert.deepEqual(opened,['a','a','a']);
 });
+
+ test('account entry ignores a previously pinned all view and resets to my newest records',async()=>{
+ const {createAccountList}=await import('../src/account-list-view.mjs');
+ const states=[],effects=[];
+ const React={createElement:(tag,props,...children)=>({tag,props,children}),useState:value=>{const i=states.length;states.push(value);return[value,v=>states[i]=v];},useRef:()=>({current:null}),useEffect:fn=>effects.push(fn)};
+ const previous=globalThis.localStorage;globalThis.localStorage={getItem:()=>JSON.stringify({pinned:'all'})};
+ try{const tree=createAccountList({React})({lang:'en',rows,loaded:true,profile:{id:'u'},route:'customer-list',can:()=>false});assert.equal(states[0],'mine');assert.ok(!JSON.stringify(tree).includes('Alpha'));effects[0]();assert.equal(states[0],'mine');states[0]='all';effects[1]();assert.equal(states[0],'mine');assert.equal(states[9],'created_at');assert.equal(states[10],true);}finally{globalThis.localStorage=previous;}
+ });
