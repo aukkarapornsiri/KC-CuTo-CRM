@@ -313,7 +313,7 @@ function Permissions({lang,mode='permissions',revision=0,onCreate,onEdit}){
  }
  const AIStatus=createAISettings({React,client,useApp});
  const LeadFields=createLeadFieldSettings({React,client,useApp,useAccess});
- const LeadDuplicates=createLeadDuplicateSettings({React});
+ const LeadDuplicates=createLeadDuplicateSettings({React,client,useApp,useAccess});
  const Documents=createDocumentRetention({React,client,useApp});
  return {Company,DataEditor,Permissions,Feed,Transfer,Security,AIStatus,LeadFields,LeadDuplicates,Documents};
 }

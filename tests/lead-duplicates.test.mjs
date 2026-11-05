@@ -14,3 +14,6 @@ test('shared contact across METRO and UNITED is warning-only; company or tax ide
  assert.equal(leadCompanyDuplicate({company_name:'Metro'},{company_name:'Metro Holdings'}),false);
  assert.equal(leadMergeMode(a,b),'merge');assert.equal(leadMergeMode(a,{...b,owner_id:'sales-b'}),'review');assert.equal(leadMergeMode({},{}),'review');
 });
+
+import {createLeadDuplicates} from '../src/lead-duplicates.mjs';
+test('configured cross-owner policy is only announced for an actual cross-owner company duplicate',()=>{const React={createElement:(tag,props,...children)=>({tag,props,children}),useState:v=>[v,()=>{}]},View=createLeadDuplicates({React}),draft={company_name:'METRO CO., LTD',owner_id:'a'};const show=row=>JSON.stringify(View({result:{matches:[row],policy_state:{cross_owner_merge:{enabled:true,configured:true,name:'Configured policy',steps:2}}},draft,lang:'en',can:()=>true}));assert.doesNotMatch(show({company_name:'UNITED FLOUR MILL PUBLIC COMPANY LIMITED',owner_id:'b',hard_duplicate:false,reasons:['email']}),/Approval follows policy/);assert.doesNotMatch(show({company_name:draft.company_name,owner_id:'a',hard_duplicate:true,reasons:['company']}),/Approval follows policy/);assert.match(show({company_name:draft.company_name,owner_id:'b',hard_duplicate:true,reasons:['company']}),/Approval follows policy/);});
