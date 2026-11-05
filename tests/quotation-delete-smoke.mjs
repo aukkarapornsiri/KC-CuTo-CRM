@@ -35,10 +35,10 @@ try {
    await dialog.waitFor();assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
    const box=await dialog.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=901&&box.x>=0&&box.x+box.width<=width+1);
    assert.ok((await dialog.innerText()).includes('HCI Node'));
-   await dialog.locator('tfoot').getByText('600,000.00',{exact:true}).waitFor();
-   assert.equal(await dialog.locator('tbody .crm-internal-financial').first().innerText(),'600,000.00');
-   assert.equal(await dialog.locator('tfoot .crm-internal-financial').last().innerText(),'28.57');
-   assert.equal(await dialog.getByRole('button',{name:'Edit',exact:true}).isDisabled(),false);
+   await dialog.locator('.kc-quote-summary-gp strong').getByText('600,000.00',{exact:true}).waitFor();
+   assert.equal(await dialog.locator('.kc-quote-compact-items tbody tr').count(),1);
+   assert.equal(await dialog.locator('.kc-quote-summary-margin strong').innerText(),'28.57%');
+   assert.equal(await dialog.getByRole('button',{name:'Edit details',exact:true}).isDisabled(),false);
    await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
    await page.getByRole('button',{name:entry+code,exact:true}).click();
    await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight;});
