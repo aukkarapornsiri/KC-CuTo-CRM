@@ -38,7 +38,7 @@ export function createQuotationDetailLayout(React){
     h('nav',{className:'kc-quote-nav','aria-label':t('ส่วนของใบเสนอราคา','Quotation sections')},[['overview','ภาพรวม','Overview'],['items','สินค้าและบริการ','Items and services'],['approval','การอนุมัติ','Approval'],['related','เอกสารที่เกี่ยวข้อง','Related documents']].map(([id,th,en])=>h('button',{type:'button',key:id,'aria-current':current===id?'location':undefined,onClick:()=>scroll(id)},t(th,en)))),
     reviews.length>0&&h('div',{className:'kc-quote-review-shortcut'},reviews),
     approvalPanel,
-    h('section',{className:'kc-quote-extra-section',ref:n=>sections.current.items=n},h('h3',null,t('สินค้าและบริการ','Items and services')),items.map(n=>React.cloneElement(n,{compact:true}))),
+    h('section',{className:'kc-quote-extra-section',ref:n=>sections.current.items=n},h('h3',null,t('สินค้าและบริการ','Items and services')),items),
     h('div',{className:'kc-quote-card-grid',ref:n=>sections.current.overview=n},
      card(t('ข้อมูลลูกค้า','Customer information'),h(React.Fragment,null,r.customer_name&&h('strong',{className:'kc-quote-customer-name'},r.customer_name),h('div',{className:'kc-quote-customer-fields'},customer))),
      card(t('ผู้จัดทำเอกสาร','Document preparer'),h(React.Fragment,null,h('div',{className:'kc-quote-preparer'},h('span',{className:'kc-quote-avatar','aria-hidden':true},initials),h('div',null,h('strong',null,r.prepared_by||'—'),h('small',null,r.project_name||'—'))),h('div',{className:'kc-quote-contact-fields'},preparer))),
