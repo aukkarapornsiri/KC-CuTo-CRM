@@ -31,11 +31,11 @@
 @media(max-width:760px){.kc-app :is(.crm-contact-header,.crm-account-header,.crm-sales-header,.crm-service-header,.svc-header,.kc-reports-heading,.email-heading,.crm-target-heading){padding:16px;gap:12px}.kc-app .crm-menu-search-tools{width:100%;flex-wrap:wrap;justify-content:flex-start}.kc-app .crm-menu-search-tools :is(.crm-contact-search,.crm-account-search,.crm-sales-search,.crm-service-search){flex:1 0 100%;width:100%;max-width:none}.kc-app .crm-menu-filter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.kc-app .crm-menu-filter-fields>button{width:100%;white-space:normal}.kc-app .crm-menu-controls :is(select,input:not([type=checkbox])){font-size:16px}.kc-app .crm-menu-field>span{min-height:20px;height:auto}.kc-app :is(.crm-contact-primary-actions,.crm-account-actions,.crm-sales-primary-actions,.crm-service-primary-actions){margin-left:0;width:100%}}
 /* Analytical menus retain their charts while sharing page spacing and controls. */
 .kc-app :is(.sales-map-heading,.exec-heading){box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;min-height:106px;margin:0 0 16px;padding:18px 22px;border:1px solid var(--menu-line);border-radius:16px;background:var(--crm-surface,#fff)}
-.kc-app :is(.sales-map-controls,.exec-controls,.seller-tools){display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;border:1px solid var(--menu-line);border-radius:12px;background:var(--menu-tint)}
-.kc-app :is(.sales-map-controls,.exec-controls,.seller-tools) :is(input,select,button){min-height:40px;box-sizing:border-box;border-radius:8px}
+.kc-app :is(.sales-map-controls,.exec-controls){display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;border:1px solid var(--menu-line);border-radius:12px;background:var(--menu-tint)}
+.kc-app :is(.sales-map-controls,.exec-controls) :is(input,select,button){min-height:40px;box-sizing:border-box;border-radius:8px}
 .kc-app .kc-dashboard-studio .dash-hero{margin-bottom:16px;border-radius:16px}
 .kc-app :is(.crm-table-scroll,.crm-account-table-wrap,.svc-table-scroll,.kc-report-scroll){border-radius:12px}
-@media(max-width:760px){.kc-app :is(.sales-map-heading,.exec-heading){padding:16px}.kc-app :is(.sales-map-controls,.exec-controls,.seller-tools){gap:8px}}
+@media(max-width:760px){.kc-app :is(.sales-map-heading,.exec-heading){padding:16px}.kc-app :is(.sales-map-controls,.exec-controls){gap:8px}}
 .kc-app .crm-settings-hub{max-width:none;padding:0}
 .kc-app .crm-hub-header{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:106px;margin:0 0 16px;padding:18px 22px;border:1px solid var(--menu-line);border-radius:16px;background:var(--crm-surface,#fff)}
 .kc-app .crm-hub-header h1{font-size:25px;margin:0 0 6px;line-height:1.3}
