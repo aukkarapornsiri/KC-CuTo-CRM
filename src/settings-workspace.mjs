@@ -1,3 +1,4 @@
+import {createLeadDuplicateSettings} from './lead-duplicate-settings.mjs';
 import {createApprovalFlowSettings} from './approval-flow-settings.mjs';
 import {createRolePicker,canDeleteRole} from './role-groups.mjs';
 import {createDocumentRetention} from './document-retention.mjs';
@@ -312,6 +313,7 @@ function Permissions({lang,mode='permissions',revision=0,onCreate,onEdit}){
  }
  const AIStatus=createAISettings({React,client,useApp});
  const LeadFields=createLeadFieldSettings({React,client,useApp,useAccess});
+ const LeadDuplicates=createLeadDuplicateSettings({React});
  const Documents=createDocumentRetention({React,client,useApp});
- return {Company,DataEditor,Permissions,Feed,Transfer,Security,AIStatus,LeadFields,Documents};
+ return {Company,DataEditor,Permissions,Feed,Transfer,Security,AIStatus,LeadFields,LeadDuplicates,Documents};
 }
