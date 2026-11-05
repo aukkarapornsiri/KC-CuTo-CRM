@@ -23,7 +23,7 @@ try{
    const uri=source.match(/from ['"]([^'"]*internal-workspace\.mjs[^'"]*)['"]/)[1];
    const {DEMO_RECORDS:r}=await import(new URL(uri,location.href).href);
    r.native_sales_orders=[];r.sales_order_events=[];r.sales_orders=[];
-   r.quotations=['APPROVED','CANCEL','DRAFT'].map((name,i)=>({id:'native-quote-'+i,code:'QA-'+name,customer_id:'native-customer',customer_name:'Native SO Customer',owner_id:'demo-owner',owner_name:'QA Sales',status:i===2?'draft':'approved',approval_status:i===2?null:'approved',counterparty_address:'1 Example Road, Bangkok, 10160, Thailand',currency:'THB',items:[{name:'Test service',qty:2,unit:'Unit',price:100,cost:60,part_number:'PN-123',desc:'Specification QA',total:200,discount:0}],subtotal:200,discount:0,vat:14,total:214,net_total:214}));
+   r.quotations=['APPROVED','CANCEL','DRAFT'].map((name,i)=>({id:'native-quote-'+i,code:'QA-'+name,customer_id:'native-customer',customer_name:'Native SO Customer',owner_id:'00000000-0000-0000-0000-0000000000d0',owner_name:'QA Sales',status:i===2?'draft':'approved',approval_status:i===2?null:'approved',counterparty_address:'1 Example Road, Bangkok, 10160, Thailand',currency:'THB',items:[{name:'Test service',qty:2,unit:'Unit',price:100,cost:60,part_number:'PN-123',desc:'Specification QA',total:200,discount:0}],subtotal:200,discount:0,vat:14,total:214,net_total:214}));
   });
   if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
   else{await page.locator('button.lg\\:hidden').first().click();const nav=page.locator('div.fixed.top-0.left-0.h-full.w-64.lg\\:hidden');await nav.getByRole('button',{name:'Sales',exact:true}).click();await nav.getByText('Quotations',{exact:true}).click();await nav.getByText('Quotation List',{exact:true}).click();}
