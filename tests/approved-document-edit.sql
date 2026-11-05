@@ -15,8 +15,8 @@ declare u uuid;reviewer uuid;q public.quotations;s public.crm_sales_orders;a pub
  begin perform public.crm_quotation_edit_action(q.id,'approve','Self review',(request->>'id')::uuid);raise exception 'Self review accepted';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claim.sub',reviewer::text,true);request:=public.crm_quotation_edit_action(q.id,'approve','Allowed',(request->>'id')::uuid);
  if request->>'status'<>'approved' then raise exception 'Authorization failed';end if;
- perform set_config('request.jwt.claim.sub',u::text,true);update public.quotations set note='Authorized revision',updated_at=clock_timestamp() where id=q.id returning * into q;
- if q.approval_status is not null or q.status<>'draft' or (select status from public.crm_quotation_edit_requests where id=(request->>'id')::uuid)<>'applied' then raise exception 'One-time edit not consumed';end if;
+ perform set_config('request.jwt.claim.sub',u::text,true);update public.quotations set note='Authorized revision',items=jsonb_set(items,'{0,qty}','2'),updated_at=clock_timestamp() where id=q.id returning * into q;
+ if q.total<>214 or q.approval_status is not null or q.status<>'draft' or (select status from public.crm_quotation_edit_requests where id=(request->>'id')::uuid)<>'applied' then raise exception 'One-time edit not consumed';end if;
  settings:=public.crm_document_edit_policy();settings:=public.crm_document_edit_policy(jsonb_build_object('quotation_requires_approval',false,'so_requires_approval',false,'expected_updated_at',settings->>'updated_at'));
  perform set_config('crm.approval_transition','yes',true);update public.quotations set approval_status='approved',status='approved' where id=q.id;perform set_config('crm.approval_transition','',true);
  update public.quotations set note='Direct revision',updated_at=clock_timestamp() where id=q.id returning * into q;if q.status<>'draft' then raise exception 'Direct quotation edit failed';end if;
