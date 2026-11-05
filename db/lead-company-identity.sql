@@ -131,7 +131,7 @@ begin
  if p_approve then perform private.crm_lead_merge_write(e.target_id,e.source_id,e.incoming,e.reason,e.id,auth.uid(),e.id);end if;
  update public.crm_lead_resolutions set merge_status=case when p_approve then 'approved' else 'rejected' end,reviewed_by=auth.uid(),reviewed_at=now(),resolved_at=now() where id=e.id;
  update public.notifications set resolved_at=now(),resolution=case when p_approve then 'approved' else 'rejected' end where event_key='lead-duplicate:'||e.id;
- perform private.crm_notify_once(e.actor_id,'leads',e.target_id,'lead_duplicate','lead-duplicate-decision:'||e.id,case when p_approve then 'อนุมัติรวมลีดแล้ว' else 'ไม่อนุมัติรวมลีด' end,e.reason,false);
+ perform private.crm_notify_once(e.actor_id,'leads',e.target_id,'lead_duplicate','lead-duplicate-decision:'||e.id,case when p_approve then 'รวมลีดเรียบร้อยแล้ว' else 'คำขอรวมลีดถูกปฏิเสธ' end,e.reason,false);
 end $$;
 revoke all on function public.crm_lead_merge_decide(uuid,boolean) from public,anon;grant execute on function public.crm_lead_merge_decide(uuid,boolean) to authenticated;
 create or replace function private.crm_lead_review_complete(p_id uuid) returns void language plpgsql security definer set search_path='' as $$

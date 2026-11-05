@@ -38,6 +38,9 @@ test('company identity requires merge; same owner merges directly and cross-owne
  await db.exec(`set app.actor='${b}'`);
  await db.query('select crm_lead_merge_decide($1,true)',[pending]);await db.query('select crm_lead_merge_decide($1,true)',[pending]);
  assert.equal((await db.query('select merge_status from crm_lead_resolutions where id=$1',[pending])).rows[0].merge_status,'approved');
+ await db.exec('reset role');
+ assert.equal(/อนุมัติ|approval/i.test((await db.query('select title from notifications where event_key=$1',['lead-duplicate-decision:'+pending])).rows[0].title),false,'result notification is not a new approval request');
+ await db.exec('set role authenticated');
  assert.equal((await db.query("select count(*)::int n from crm_lead_resolutions where request_id=$1 and action='merge'",[pending])).rows[0].n,1,'approval idempotent');
  await db.exec(`set app.actor='${a}'`);
  const rejected=await resolve(l2,{company_name:'Same company',owner_id:a},b);
