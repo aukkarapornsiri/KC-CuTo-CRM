@@ -24,3 +24,5 @@
 }
 @media(max-width:350px){.kc-mobile-home-header{padding-left:18px;padding-right:18px}.kc-mobile-home-content{padding-left:18px;padding-right:18px}.kc-mobile-app-icon{width:60px;height:60px}.kc-mobile-home-grid button>span:last-child{font-size:11px}}
 @media(max-width:640px) and (max-height:650px){.kc-mobile-home{min-height:440px}.kc-mobile-home-header{padding-top:12px;min-height:76px}.kc-mobile-home-content{padding-top:12px;padding-bottom:16px;gap:12px}.kc-mobile-home-grid{row-gap:12px}.kc-mobile-home-grid button{min-height:90px}}
+
+@media(max-width:640px){.kc-mobile-bell{position:relative;display:inline-flex}.kc-mobile-notification-badge{position:absolute;top:-8px;right:-12px;display:grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border:2px solid #102532;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;line-height:1;box-sizing:content-box}}
