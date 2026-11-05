@@ -5,6 +5,7 @@ on:
       - 'src/lead-duplicates.mjs'
       - 'src/lead-field-settings.mjs'
       - 'src/lead-duplicate-settings.mjs'
+      - 'src/lead-policy-model.mjs'
       - 'tests/lead-policy-settings-smoke.mjs'
       - 'src/internal-workspace.mjs'
       - 'tests/lead-duplicates-smoke.mjs'
