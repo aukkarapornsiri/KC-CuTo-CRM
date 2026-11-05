@@ -149,7 +149,7 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
  function download(name,text,type='text/csv;charset=utf-8'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  async function unwrap(query){const {data,error}=await query;if(error)throw error;return data;}
  function useTask(){const [busy,B]=React.useState(false),[message,M]=React.useState(''),[error,E]=React.useState(false);async function run(fn){if(busy)return;B(true);M('');E(false);try{await fn();}catch(e){E(true);M(e.message||String(e));}finally{B(false);}}return {busy,message,error,run,setMessage:M};}
- function Shell({title,task,children}){return h('section',{className:'crm-settings'},h('div',{className:'crm-intro'},h('h1',null,title)),task.message&&h('p',{role:task.error?'alert':'status',className:task.error?'crm-error':'crm-notice'},task.message),children);}
+ function Shell({title,task,children,className=''}){return h('section',{className:'crm-settings'+(className?' '+className:'')},h('div',{className:'crm-intro'},h('h1',null,title)),task.message&&h('p',{role:task.error?'alert':'status',className:task.error?'crm-error':'crm-notice'},task.message),children);}
  const button=(label,onClick,disabled=false,extra={})=>h('button',{type:'button',onClick,disabled,...extra},label);
  const userActionStyle={display:'inline-flex',alignItems:'center',justifyContent:'center',width:36,height:36,padding:8,border:0,background:'transparent',color:'#5b5bb2',borderRadius:8,verticalAlign:'middle'};
  const userActionIcon=type=>h('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,focusable:'false'},...(type==='pause'?['M8 5v14','M16 5v14']:type==='play'?['m8 5 11 7-11 7Z']:type==='edit'?['M16 3a2.1 2.1 0 0 1 3 3L8 17l-4 1 1-4Z','m14 5 3 3']:['M3 6h18','M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2','m5 6 1 14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l1-14','M10 10v7','M14 10v7']).map((d,i)=>h('path',{key:i,d})));
@@ -239,7 +239,7 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
   });
   const tableFields=kind==='users'?[['display_name','ชื่อผู้ใช้งาน','Display name'],...def.fields.filter(f=>['email','job_title','department_group','role','is_active'].includes(f[0]))]:kind==='workflow'?def.fields:def.fields.slice(0,4);
   const visible=rows.filter(row=>(kind!=='workflow'||!row.deleted_at)&&(kind!=='users'||((showDeleted||!row.deleted_at)&&(statusFilter==='all'||(statusFilter==='active'?row.is_active:!row.is_active))))&&JSON.stringify(row).toLowerCase().includes(query.toLowerCase()));
-  return h(Shell,{title:tr(...def.title),lang,demoMode,task},
+  return h(Shell,{title:tr(...def.title),lang,demoMode,task,className:kind==='workflow'?'kc-workflow-settings':''},
    kind==='workflow'&&h('style',null,workflowPolicyTableStyles),
    kind==='workflow'&&h('p',{className:'crm-notice'},tr('เลือก Template ให้ตรงประเภทงาน แล้วกำหนดผู้อนุมัติ 1–8 ขั้น ระบบเลือกนโยบายยอดขั้นต่ำสูงสุดภายในประเภทเดียวกัน ชื่อนโยบายไม่มีผลต่อการเชื่อม Flow ผู้ขอและเจ้าของเอกสารอนุมัติเองไม่ได้','Select a workflow template and 1–8 eligible approvers. The highest matching threshold applies within that workflow type. Policy names do not control routing. Requesters and document owners cannot self-approve.')),
    kind==='users'?h('div',{className:'crm-user-toolbar'},h('div',{className:'crm-user-toolbar-top'},h('div',null,h('h2',null,tr('จัดการผู้ใช้','Manage users')),h('p',null,tr('บัญชีและสิทธิ์จากระบบจริง · ผู้ดูแลระบบเท่านั้นที่จัดการผู้ใช้ได้','Live accounts and permissions · Administrators manage users'))),h('div',{className:'crm-user-tools'},h('input',{type:'search','aria-label':tr('ค้นหารายการ','Search records'),placeholder:tr('ค้นหาชื่อ อีเมล หรือทีม','Search name, email or team'),value:query,onChange:e=>Q(e.target.value)}),h(Invite,{lang}))),h('div',{className:'crm-user-toolbar-bottom'},h('div',{className:'crm-user-tools'},h('select',{'aria-label':tr('สถานะผู้ใช้','User status'),value:statusFilter,onChange:e=>SF(e.target.value)},[['all','ทุกสถานะ','All statuses'],['active','ใช้งานอยู่','Active'],['inactive','ระงับ','Suspended']].map(([v,th,en])=>h('option',{key:v,value:v},tr(th,en)))),h('label',null,h('input',{type:'checkbox',checked:showDeleted,onChange:e=>SD(e.target.checked)}),tr('ผู้ใช้ที่ลบ','Deleted users'))),h('div',{className:'crm-user-tools'},h('span',null,visible.length+' / '+rows.filter(r=>showDeleted||!r.deleted_at).length+' '+tr('บัญชี','accounts')),button(tr('ลิงก์เข้าใช้งาน','Login link'),()=>task.run(async()=>{await navigator.clipboard.writeText('https://kc-cuto.kaicomhub.com/');task.setMessage(tr('คัดลอกลิงก์แล้ว','Link copied'));})),button('↻',load,task.busy,{'aria-label':tr('โหลดใหม่','Reload'),title:tr('โหลดใหม่','Reload')})))):
@@ -323,7 +323,15 @@ function Permissions({lang,mode='permissions',revision=0,onCreate,onEdit}){
 }
 
 const workflowPolicyTableStyles=`
-.crm-settings .kc-workflow-policy-table{width:100%;min-width:1250px;border-collapse:collapse;table-layout:auto}
+.crm-settings.kc-workflow-settings{box-sizing:border-box;width:100%;max-width:none;min-width:0;margin-inline:0}
+.kc-workflow-settings>.crm-table-scroll{width:100%;max-width:100%;min-width:0;overflow-x:auto}
+.crm-settings .kc-workflow-policy-table{width:100%;min-width:1120px;border-collapse:collapse;table-layout:fixed}
+.crm-settings .kc-workflow-policy-table :is(th,td):nth-child(1){width:20%}
+.crm-settings .kc-workflow-policy-table :is(th,td):nth-child(2){width:22%}
+.crm-settings .kc-workflow-policy-table :is(th,td):nth-child(3){width:88px}
+.crm-settings .kc-workflow-policy-table :is(th,td):nth-child(5){width:96px}
+.crm-settings .kc-workflow-policy-table td{max-width:none;white-space:normal;overflow-wrap:anywhere}
+.crm-settings .kc-workflow-policy-table th:last-child{width:300px}
 .crm-settings .kc-workflow-policy-table :is(th,td){display:table-cell!important;vertical-align:middle!important;text-align:start;line-height:20px;font-size:13px;padding:12px 14px!important}
 .crm-settings .kc-workflow-policy-table tr{display:table-row!important;height:68px!important}
 .crm-settings .kc-workflow-policy-table thead tr{height:44px!important}
