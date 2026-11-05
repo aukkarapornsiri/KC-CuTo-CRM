@@ -2,14 +2,15 @@ import {filterModules} from './role-access.mjs';
 import {getNavigationModules,railEntries} from './context-navigation.mjs';
 export function createMobileHome({React,useAccess}){
  const h=React.createElement,icons={dashboard:'dashboard',leads:'leads',contacts:'contacts',customers:'customers',sales:'opportunities',service:'tickets',activities:'activities',documents:'documents',insights:'reports'};
- return function MobileHome({lang='th',activeModule,modules=getNavigationModules(),onNavigate,renderContent}){
+ return function MobileHome({lang='th',activeModule,unreadCount=0,modules=getNavigationModules(),onNavigate,renderContent}){
   const access=useAccess(),t=(th,en)=>lang==='th'?th:en;
   const [mobile,Mobile]=React.useState(()=>window.matchMedia('(max-width:640px)').matches),[home,Home]=React.useState(true);
   React.useEffect(()=>{const m=window.matchMedia('(max-width:640px)'),update=()=>Mobile(m.matches);m.addEventListener('change',update);return()=>m.removeEventListener('change',update);},[]);
   React.useEffect(()=>{if(activeModule==='dashboard')Home(true);},[activeModule]);
   if(!mobile)return renderContent();
   const entries=railEntries(filterModules(modules,access)).filter(x=>x.id!=='settings'),isHome=activeModule==='dashboard'&&home;
-  const approval=()=>document.querySelector('.kc-header-approval')?.click();
+  const approval=()=>{const launcher=document.querySelector('.kc-header-approval');if(launcher)launcher.click();else onNavigate('quotations','quot-approval');};
+  const openNotifications=()=>access.can('quotations','view')?approval():onNavigate('settings','set-notifications');
   function goHome(){Home(true);const target=entries.find(x=>x.id==='dashboard')?.target;if(target)onNavigate(target.moduleId,target.pageId);}
   function open(entry){if(entry.id==='dashboard'){Home(false);return;}onNavigate(entry.target.moduleId,entry.target.pageId);}
   return h(React.Fragment,null,isHome?h('section',{className:'kc-mobile-home','aria-label':t('เมนูหลักบนมือถือ','Mobile home')},
@@ -18,6 +19,6 @@ export function createMobileHome({React,useAccess}){
    access.loading?h('p',{role:'status'},t('กำลังโหลดเมนู…','Loading menus…')):h('nav',{className:'kc-mobile-home-grid','aria-label':t('เมนูใช้งาน','Workspace menus')},entries.filter(entry=>entry.id!=='dashboard').map(entry=>h('button',{key:entry.id,type:'button','data-menu':entry.id,onClick:()=>open(entry)},h('span',{className:'kc-mobile-app-icon'},h('img',{src:'./assets/mobile-home/'+entry.id+'.svg',alt:'',width:34,height:34})),h('span',null,entry.id==='dashboard'?t('หน้าหลัก','Home'):entry.label[lang]||entry.label.en)))),
    entries.some(entry=>entry.id==='dashboard')&&h('button',{type:'button',className:'kc-mobile-dashboard-link','data-action':'dashboard',onClick:()=>Home(false)},h('span',null,t('ดูแดชบอร์ด','View dashboard')),h('span',{'aria-hidden':true},'›')),
    )):h('div',{className:'kc-mobile-page'},renderContent()),
-   h('nav',{className:'kc-mobile-bottom-nav','aria-label':t('ทางลัดมือถือ','Mobile shortcuts')},h('button',{type:'button',onClick:goHome,'aria-current':isHome?'page':undefined},h('img',{src:'./assets/mobile-home/home.svg',alt:'',width:22,height:22}),t('หน้าหลัก','Home')),access.can('quotations','view')&&h('button',{type:'button',onClick:approval},h('img',{src:'./assets/mobile-home/approvals.svg',alt:'',width:22,height:22}),t('งานอนุมัติ','Approvals')),h('button',{type:'button',onClick:()=>onNavigate('settings','set-notifications')},h('img',{src:'./assets/mobile-home/notifications.svg',alt:'',width:22,height:22}),t('แจ้งเตือน','Notifications'))));
+   h('nav',{className:'kc-mobile-bottom-nav','aria-label':t('ทางลัดมือถือ','Mobile shortcuts')},h('button',{type:'button',onClick:goHome,'aria-current':isHome?'page':undefined},h('img',{src:'./assets/mobile-home/home.svg',alt:'',width:22,height:22}),t('หน้าหลัก','Home')),access.can('quotations','view')&&h('button',{type:'button',onClick:approval},h('img',{src:'./assets/mobile-home/approvals.svg',alt:'',width:22,height:22}),t('งานอนุมัติ','Approvals')),h('button',{type:'button',onClick:openNotifications,'aria-label':t('แจ้งเตือน','Notifications')+(unreadCount>0?' · '+unreadCount:''),'data-action':'mobile-notifications'},h('span',{className:'kc-mobile-bell'},h('img',{src:'./assets/mobile-home/notifications.svg',alt:'',width:22,height:22}),unreadCount>0&&h('span',{className:'kc-mobile-notification-badge','aria-hidden':true},unreadCount>99?'99+':unreadCount)),t('แจ้งเตือน','Notifications'))));
  };
 }
