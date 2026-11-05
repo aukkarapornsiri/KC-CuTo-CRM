@@ -1,3 +1,5 @@
+import {grossProfitSummary} from './sales-financials.mjs';
+import {rentalFactor} from './rental-quotation.mjs';
 import {itemPartNumber} from './item-part-number.mjs';
 import {DESIGN_FONTS,normalizeDesign} from './quotation-designer.mjs';
 import {periodLabel} from './quotation-recurring.mjs';
@@ -34,14 +36,15 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  const rows=(order.items||[]).map((item,i)=>{
   const f=Array.isArray(lines)&&lines.length===order.items.length?lines[i]:null;
   const part=itemPartNumber(item)||'—';
-  return `<tr><td>${i+1}</td><td><b>${escape(item.name)}</b><small>${escape(item.desc)}</small>${item.billing_period?`<small>${escape(periodLabel(item.billing_period,lang))} × ${escape(item.cycle_count)} · ${escape(item.service_start)} – ${escape(item.service_end)}</small>`:''}<small>${t('รหัสสินค้า','Item code')}: ${escape(item.code||'—')}</small></td><td>${escape(part)}</td><td>${escape(item.qty)} ${escape(item.unit)}</td><td>${money(item.price)}</td><td>${money(item.total)}</td><td>${money(num(f?.cost_total)&&Number(item.qty)>0?Number(f.cost_total)/Number(item.qty)/(Number(item.cycle_count)||1):null)}</td><td>${money(f?.cost_total)}</td><td>${money(f?.gp)}</td><td>${money(f?.margin)}</td></tr>`;
+  const profit=num(f?.cost_total)&&num(item.total)?grossProfitSummary(item.total,f.cost_total):null;
+  return `<tr><td>${i+1}</td><td><b>${escape(item.name)}</b><small>${escape(item.desc)}</small>${item.billing_period?`<small>${escape(periodLabel(item.billing_period,lang))} × ${escape(item.cycle_count)} · ${escape(item.service_start)} – ${escape(item.service_end)}</small>`:''}<small>${t('รหัสสินค้า','Item code')}: ${escape(item.code||'—')}</small></td><td>${escape(part)}</td><td>${escape(item.qty)} ${escape(item.unit)}</td><td>${money(item.price)}</td><td>${money(item.total)}</td><td>${money(num(f?.cost_total)&&Number(item.qty)>0?Number(f.cost_total)/rentalFactor(item):null)}</td><td>${money(f?.cost_total)}</td><td>${money(profit?.gp_amount)}</td><td>${money(profit?.has_margin_base?profit.gp_margin:null)}</td></tr>`;
  }).join('');
  const headers=['#',t('สินค้า / Spec','Item / Spec'),'Part Number',t('จำนวน','Qty'),t('ราคาขาย/หน่วย','Unit sale'),t('ขายสุทธิรายการ','Line net'),t('ต้นทุน/หน่วย','Unit cost'),t('ต้นทุนรวม','Total cost'),'GP','GP %'];
  const table=`<table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
  const net=Number(order.subtotal||0)-Number(order.discount||0);
- const cost= num(financial?.cost_total)?Number(financial.cost_total):Array.isArray(lines)&&lines.length===(order.items||[]).length&&lines.every(x=>num(x?.cost_total))?lines.reduce((v,x)=>v+Number(x.cost_total),0):null;
- const gp=num(financial?.gp_amount)?Number(financial.gp_amount):num(cost)?net-Number(cost):null;
- const margin=num(financial?.gp_margin)?Number(financial.gp_margin):num(gp)&&net?gp/net*100:null;
+ const cost=Array.isArray(lines)&&lines.length===(order.items||[]).length&&lines.length>0&&lines.every(x=>num(x?.cost_total))?lines.reduce((v,x)=>v+Number(x.cost_total),0):num(financial?.cost_total)?Number(financial.cost_total):null;
+ const financials=num(cost)?grossProfitSummary(net,cost):null;
+ const gp=financials?.gp_amount??null,margin=financials?.has_margin_base?financials.gp_margin:null;
  const approval=context.approval, signed=approval?.status==='approved';
  const signature=signed&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(context.signature||'')?context.signature:'';
  const approvalStep=(i,name,role)=>'<div class="cs-approval"><b>'+i+' '+name+'</b><small>'+role+'</small>'+(i==='03'&&signed?'<div class="cs-signed">'+(signature?'<img alt="Approver signature" src="'+signature+'">':'')+'<small>'+escape(approval.reviewer_name||'')+'</small><small>'+escape(approval.reviewed_at?new Date(approval.reviewed_at).toLocaleString(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok'}):'')+'</small></div>':'<span>Name / Signature __________________</span>')+'</div>';
