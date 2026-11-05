@@ -1,0 +1,53 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {PGlite} from '@electric-sql/pglite';
+import {ITEM_DEFAULTS,validateInventoryItem} from '../src/inventory-model.mjs';
+import {missingItemFields} from '../src/item-field-rules.mjs';
+test('optional blanks normalize while required whitespace and invalid values fail',()=>{
+ const p={...ITEM_DEFAULTS,name:'Test',unit:'',price:'',cost:''};
+ assert.equal(validateInventoryItem(p,[]).price,0);
+ assert.equal(validateInventoryItem(p,[]).unit,'');
+ assert.throws(()=>validateInventoryItem(p,['unit']),/unit/);
+ assert.throws(()=>validateInventoryItem({...p,part_number:'  '},['part_number']),/part_number/);
+ assert.deepEqual(missingItemFields({...p,price:0,cost:0},['price','cost']),[]);
+ assert.throws(()=>validateInventoryItem({...p,price:-1},[]),/Invalid price/);
+ assert.throws(()=>validateInventoryItem({...p,name:''},[]),/name/);
+});
+test('shared rules enforce RPC saves and protect settings with RLS and version checks',async()=>{
+ const db=new PGlite();
+ try{
+ await db.exec(`create role anon;create role authenticated;create schema private;create schema auth;grant usage on schema public,private,auth to authenticated;
+ create function auth.uid() returns uuid language sql as $$select '11111111-1111-4111-8111-111111111111'::uuid$$;
+ create function private.crm_active_user() returns boolean language sql as $$select current_setting('app.active',true)='yes'$$;
+ create function private.crm_can(text,text) returns boolean language sql as $$select private.crm_active_user() and ($2<>'manage_settings' or current_setting('app.admin',true)='yes')$$;
+ create table profiles(id uuid primary key);insert into profiles values('11111111-1111-4111-8111-111111111111');
+ create table crm_inventory_settings(id boolean primary key);insert into crm_inventory_settings values(true);
+ create table crm_price_items(id uuid primary key,name text,code text unique,category text,unit text,price numeric,cost numeric,description text,status text,updated_at timestamptz default now());
+ create table crm_item_details(id uuid primary key,stock_mode text,product_type text,product_kind text,brand text,part_number text,barcode text,vat_mode text,subscription text,contract_start date,contract_end date,track_serial boolean,product_id text,income_account text,expense_account text,inventory_account text,asset_account text,deferred_account text);`);
+ await db.exec('grant select on crm_price_items,crm_item_details to authenticated');
+ await db.exec(fs.readFileSync('db/item-field-rules.sql','utf8'));
+ await db.exec("set role authenticated;set app.active='yes';set app.admin='no'");
+ assert.equal((await db.query('select * from crm_item_field_rules')).rows.length,1);
+ assert.equal((await db.query("update crm_item_field_rules set rules='[]',version=2 returning id")).rows.length,0);
+ const save=p=>db.query('select private.crm_inventory_save_item($1::jsonb) id',[JSON.stringify(p)]);
+ await assert.rejects(save({...ITEM_DEFAULTS,name:'Test'}),/unit/);
+ await db.exec("set app.admin='yes'");
+ await assert.rejects(db.exec(`update crm_item_field_rules set rules='["code"]',version=2`),/Unsupported/);
+ await assert.rejects(db.exec(`update crm_item_field_rules set rules='["unit","unit"]',version=2`),/Duplicate/);
+ await db.exec(`update crm_item_field_rules set rules='[]',version=2`);
+ const p={...ITEM_DEFAULTS,name:'Optional',price:'',cost:''};
+ const id=(await save(p)).rows[0].id;
+ assert.equal((await db.query('select price from crm_price_items where id=$1',[id])).rows[0].price,'0');
+ await db.exec(`update crm_item_field_rules set rules='["part_number","brand"]',version=3`);
+ await assert.rejects(save({...p,name:'Missing',part_number:' '}),/part_number/);
+ const before=(await db.query('select * from crm_price_items where id=$1',[id])).rows[0];
+ await assert.rejects(save({...p,id,updated_at:before.updated_at}),/part_number/);
+ assert.deepEqual((await db.query('select * from crm_price_items where id=$1',[id])).rows[0],before);
+ await save({...p,part_number:'PN1',brand:'Brand'});
+ assert.equal((await db.query('select * from crm_item_field_rule_history')).rows.length,2);
+ assert.equal((await db.query("update crm_item_field_rules set rules='[]',version=3 where version=2 returning id")).rows.length,0);
+ await db.exec("set app.active='no'");assert.equal((await db.query('select * from crm_item_field_rules')).rows.length,0);
+ await assert.rejects(save({...p,part_number:'PN1',brand:'Brand'}),/permission denied/);
+ }finally{await db.close();}
+});
