@@ -35,7 +35,7 @@ try {
    const approvalPanel=dialog.locator('.kc-approval-compact');
    const approvalButtons=await approvalPanel.locator('.kc-approval-actions>button').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,y:n.getBoundingClientRect().y})));
    assert.equal(approvalButtons.length,6);assert.ok(approvalButtons.every(n=>Math.abs(n.w-approvalButtons[0].w)<1&&n.h===44));
-   if(width>1000){assert.ok(approvalButtons.every(n=>Math.abs(n.y-approvalButtons[0].y)<1));assert.ok((await approvalPanel.boundingBox()).height<=190,'Approval panel is compact');}
+   if(width>1000){assert.ok(approvalButtons.every(n=>Math.abs(n.y-approvalButtons[0].y)<1));const bounds=await approvalPanel.evaluate(n=>({height:n.getBoundingClientRect().height,children:[...n.children].map(x=>({class:x.className,h:x.getBoundingClientRect().height,margin:getComputedStyle(x).margin}))}));assert.ok(bounds.height<=190,JSON.stringify(bounds));}
    const iconSlots=await approvalPanel.locator('.kc-approval-action img').evaluateAll(ns=>ns.map(n=>({ok:n.complete&&n.naturalWidth>0,w:n.width,h:n.height})));assert.ok(iconSlots.every(n=>n.ok&&n.w===18&&n.h===18));
    await approvalPanel.getByRole('textbox',{name:'Approval comment',exact:true}).fill('QA approval note');assert.equal(await approvalPanel.getByRole('textbox',{name:'Approval comment',exact:true}).inputValue(),'QA approval note');
    const cards=dialog.locator('.kc-quote-card-grid>.kc-quote-card');assert.equal(await cards.count(),4);

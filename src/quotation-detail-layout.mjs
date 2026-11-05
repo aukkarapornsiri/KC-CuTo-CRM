@@ -26,11 +26,11 @@ export function createQuotationDetailLayout(React){
   const history=approvalChildren.filter(n=>n.type!=='h3'&&n!==commentField&&!classHas(n,'crm-actions')&&n!==approvalChildren.find(x=>x.type==='p'));
   const kindFor=node=>({[t('ส่งอนุมัติ','Submit for approval')]:'submit',[t('อนุมัติขั้นนี้','Approve this step')]:'approve',[t('ปฏิเสธ','Reject')]:'reject',[t('ถอนคำขอ','Withdraw request')]:'withdraw'})[caption(node)];
   const extraLinks=linkedButtons.filter(n=>n!==account&&n!==contact),extraApproval=approval.filter(n=>n!==approvalNode);
-  const approvalPanel=h('section',{className:'kc-quote-extra-section kc-quote-priority-approval kc-approval-compact',ref:n=>sections.current.approval=n},
+  const approvalPanel=h(React.Fragment,null,h('section',{className:'kc-quote-extra-section kc-quote-priority-approval kc-approval-compact',ref:n=>sections.current.approval=n},
    h('header',{className:'kc-approval-heading'},h('h3',null,t('การอนุมัติและดำเนินการต่อ','Approval and next actions')),h('span',{className:'kc-approval-status','data-status':r.approval_status||'none'},statusLabel)),
    h('div',{className:'kc-approval-actions'},decorate(account,'customer'),decorate(contact,'contact'),...approvalActions.map(n=>decorate(n,kindFor(n)))),
    h('div',{className:'kc-approval-fields'},commentField&&h('label',{className:'kc-approval-note'},h('span',null,t('หมายเหตุ','Note')),React.cloneElement(commentField,{rows:1,placeholder:t('เพิ่มหมายเหตุการอนุมัติ…','Add an approval note…')})),...reviewers),
-   (workflow.length>0||extraLinks.length>0||extraApproval.length>0)&&h('div',{className:'kc-approval-extra-actions'},workflow,extraLinks,extraApproval),
+   (workflow.length>0||extraLinks.length>0||extraApproval.length>0)&&h('div',{className:'kc-approval-extra-actions'},workflow,extraLinks,extraApproval)),
    history.length>0&&h('details',{className:'kc-approval-history'},h('summary',null,t('ประวัติการอนุมัติ','Approval history')),history));
   const initials=String(r.prepared_by||r.owner_name||'').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'—';
   return h('section',{...attrs,className:'crm-record-detail kc-quote-detail'},
