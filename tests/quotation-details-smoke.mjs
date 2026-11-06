@@ -49,7 +49,7 @@ try {
    assert.ok((await dialog.innerText()).includes('HCI Node'));
    await dialog.locator('.kc-quote-summary-gp strong').getByText('600,000.00',{exact:true}).waitFor();
    assert.equal(await dialog.locator('.kc-quote-compact-items tbody tr').count(),1);
-   assert.equal(await dialog.locator('.kc-quote-summary-margin strong').innerText(),'28.57%');
+   assert.equal(await dialog.locator('.kc-quote-summary-margin strong').innerText(),'28.57%');assert.equal(await dialog.locator('.kc-quote-summary-cost strong').innerText(),'1,500,000.00');const profitCards=await dialog.locator('.kc-quote-profit-summary article').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));assert.equal(profitCards.length,4);assert.ok(profitCards.every(c=>Math.abs(c.w-profitCards[0].w)<1&&Math.abs(c.h-profitCards[0].h)<1));
    assert.equal(await dialog.getByRole('button',{name:'Edit details',exact:true}).isDisabled(),false);
    await dialog.getByRole('button',{name:'Edit details',exact:true}).click();
    await page.getByText(code==='QA-QUOTE-0'?'Withdraw or finish the pending approval before editing':'Approved document editing requires a signed-in account',{exact:true}).waitFor();
