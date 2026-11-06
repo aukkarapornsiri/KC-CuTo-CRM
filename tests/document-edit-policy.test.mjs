@@ -24,3 +24,10 @@ test('quotation edit request approves through its own RPC without asking for a d
  const old=globalThis.window;globalThis.window={dispatchEvent(){}};try{await walk(tree).find(n=>n.type==='button'&&n.children.includes('Authorize editing')).props.onClick();}finally{globalThis.window=old;}
  assert.equal(calls[0].name,'crm_quotation_edit_action');assert.equal(calls[0].args.p_request_id,'edit');
 });
+test('template editor shows only its own edit condition and preserves the other saved flag',async()=>{
+ const saved={quotation_requires_approval:false,so_requires_approval:true,updated_at:'version'},draft={...saved,so_requires_approval:false},calls=[];
+ const R=mock([saved,draft,false,'','']);const C=createDocumentEditSettings({React:R,client:{rpc:async(name,args)=>{calls.push({name,args});return {data:draft};}},useApp:()=>({profile:{is_super_admin:true}})});
+ const tree=C({lang:'en',condition:'so_requires_approval'});assert.deepEqual(walk(tree).filter(n=>n.props.role==='switch').map(n=>n.props['aria-label']),['Edit Approved Sales Order (SO)']);
+ const old=globalThis.window;globalThis.window={dispatchEvent(){}};try{await walk(tree).find(n=>n.type==='button'&&n.children.includes('Save conditions')).props.onClick();}finally{globalThis.window=old;}
+ assert.deepEqual(calls[0].args.p_patch,{quotation_requires_approval:false,so_requires_approval:false,expected_updated_at:'version'});
+});
