@@ -1,0 +1,25 @@
+name: Thai UI language consistency
+on:
+  pull_request:
+    paths: ['src/**', 'app-C2ITSffc.js', 'tests/thai-ui*', '.github/workflows/thai-ui.yml']
+jobs:
+  language:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/thai-ui-copy.test.mjs tests/record-display.test.mjs tests/quotation-detail-current-view.test.mjs tests/approval-center.test.mjs tests/so-amendments.test.mjs
+      - run: npm install --no-save playwright && npx playwright install chromium
+      - run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/thai-ui.log 2>&1 &
+          sleep 2
+          node tests/thai-ui-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: thai-ui
+          path: test-artifacts/

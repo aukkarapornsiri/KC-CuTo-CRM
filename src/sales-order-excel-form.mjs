@@ -20,16 +20,16 @@ export function salesOrderForm(order,approval,lang='th',context={}){
  const groups=(values,style=0,height=22)=>row(values.map((v,i)=>[i*6,i*6+5,v,style]),height);
  const field=(label,value)=>`${label}  ${value??'—'}`;
  row([[0,17,'KC CuTo CRM',1],[18,23,order.code,2]],23);
- row([[0,17,costs?t('Cost Sheet · ใบสั่งขาย','Cost Sheet · Sales Order'):t('ใบสั่งขาย','Sales Order'),3],[18,23,t('เอกสารภายในองค์กร','Internal document'),2]],30);
- groups([field(t('เลขที่ใบเสนอราคา','Quotation'),order.quotation_code),field(t('เลขที่ PO','PO number'),purchaseOrderLabel(order,lang)),field(t('เลขผู้เสียภาษี','Tax ID'),order.tax_id),field(t('ประเภทงาน','Order type'),d.order_type)]);
- groups([field(t('ฝ่ายขาย','Salesperson'),order.owner_name),field(t('วันที่ PO','PO date'),order.po_date),field(t('กำหนดส่งมอบ','Delivery date'),order.expected_delivery_date),field(t('เครดิต','Payment terms'),order.payment_terms==null?'—':order.payment_terms+' '+t('วัน','days'))]);
+ row([[0,17,costs?t("ใบต้นทุน · ใบสั่งขาย",'Cost Sheet · Sales Order'):t('ใบสั่งขาย','Sales Order'),3],[18,23,t('เอกสารภายในองค์กร','Internal document'),2]],30);
+ groups([field(t('เลขที่ใบเสนอราคา','Quotation'),order.quotation_code),field(t("เลขที่ ใบสั่งซื้อ",'PO number'),purchaseOrderLabel(order,lang)),field(t('เลขผู้เสียภาษี','Tax ID'),order.tax_id),field(t('ประเภทงาน','Order type'),d.order_type)]);
+ groups([field(t('ฝ่ายขาย','Salesperson'),order.owner_name),field(t("วันที่ ใบสั่งซื้อ",'PO date'),order.po_date),field(t('กำหนดส่งมอบ','Delivery date'),order.expected_delivery_date),field(t('เครดิต','Payment terms'),order.payment_terms==null?'—':order.payment_terms+' '+t('วัน','days'))]);
  row([[0,11,field(t('ส่งของให้','Ship to'),d.ship_to_name||order.customer_name),4],[12,23,field(t('เปิดบิล / วางบิลให้','Bill to'),d.bill_to_name||order.customer_name),4]],28);
  const ship=field(t('สถานที่ส่งของ','Shipping address'),d.shipping_address||order.billing_address),bill=field(t('สถานที่วางบิล','Billing location'),d.billing_location||order.billing_address);
  row([[0,11,ship],[12,23,bill]],Math.max(30,Math.ceil(Math.max(ship.length,bill.length)/95)*15));
- groups([field(t('ผู้รับสินค้า','Recipient'),d.recipient_name),field(t('โทรศัพท์','Phone'),d.recipient_phone),field(t('การติดตั้ง','Installation'),d.installation==='yes'?t('มี','Yes'):d.installation==='no'?t('ไม่มี','No'):'—'),field(t('มี PO','PO available'),hasNoPO(order)?t('ไม่มี PO','No PO'):order.po_file_key?t('มี','Yes'):'—')],4);
+ groups([field(t('ผู้รับสินค้า','Recipient'),d.recipient_name),field(t('โทรศัพท์','Phone'),d.recipient_phone),field(t('การติดตั้ง','Installation'),d.installation==='yes'?t('มี','Yes'):d.installation==='no'?t('ไม่มี','No'):'—'),field(t("มี ใบสั่งซื้อ",'PO available'),hasNoPO(order)?t("ไม่มี ใบสั่งซื้อ",'No PO'):order.po_file_key?t('มี','Yes'):'—')],4);
  if(order.note)full(field(t('เงื่อนไขพิเศษ','Special instructions'),order.note),0,Math.max(22,Math.ceil(order.note.length/180)*15));
  const spans=costs?[[0,0],[1,8],[9,11],[12,12],[13,14],[15,16],[17,18],[19,20],[21,22],[23,23]]:[[0,0],[1,10],[11,14],[15,17],[18,20],[21,23]];
- const headers=['#',t('สินค้า / Spec','Item / Spec'),t('รหัสสินค้า','Part Number'),t('จำนวน','Qty'),t('ราคาขาย/หน่วย','Unit sale'),t('ขายสุทธิรายการ','Line net'),t('ต้นทุน/หน่วย','Unit cost'),t('ต้นทุนรวม','Total cost'),'GP','GP %'];
+ const headers=['#',t("สินค้า / คุณลักษณะ",'Item / Spec'),t('รหัสสินค้า','Part Number'),t('จำนวน','Qty'),t('ราคาขาย/หน่วย','Unit sale'),t('ขายสุทธิรายการ','Line net'),t('ต้นทุน/หน่วย','Unit cost'),t('ต้นทุนรวม','Total cost'),'GP','GP %'];
  const heading=r+1;row(spans.map(([a,b],i)=>[a,b,headers[i],4]),30);
  const lines=financial?.line_financials,matched=Array.isArray(lines)&&lines.length===(order.items||[]).length;
  for(const [i,item] of (order.items||[]).entries()){
@@ -46,7 +46,7 @@ export function salesOrderForm(order,approval,lang='th',context={}){
  const gp=costs?(number(financial?.gp_amount)??(cost!==null?net-cost:null)):null;
  const margin=number(financial?.gp_margin)??(gp!==null&&net?gp/net*100:null);
  full(costs?t('สรุปยอดขายและกำไร','FINANCIAL SUMMARY'):t('สรุปยอดขาย','ORDER SUMMARY'),1,24);
- groups(costs?[t('ยอดขายก่อน VAT','Net sales (ex VAT)'),t('ต้นทุนรวม','Total inventory cost'),t('กำไรขั้นต้น','Gross profit'),'TOTAL ORDER VALUE']:[t('ยอดขายก่อน VAT','Net sales (ex VAT)'),t('ส่วนลด','Discount'),'VAT','TOTAL ORDER VALUE'],8);
+ groups(costs?[t("ยอดขายก่อน ภาษีมูลค่าเพิ่ม",'Net sales (ex VAT)'),t('ต้นทุนรวม','Total inventory cost'),t('กำไรขั้นต้น','Gross profit'),'TOTAL ORDER VALUE']:[t("ยอดขายก่อน ภาษีมูลค่าเพิ่ม",'Net sales (ex VAT)'),t('ส่วนลด','Discount'),'VAT','TOTAL ORDER VALUE'],8);
  groups(costs?[net,cost,gp,number(order.total)]:[net,number(order.discount),number(order.vat),number(order.total)],9,30);
  groups(['','',costs?`GP ${margin===null?'—':margin.toFixed(2)+'%'}`:'',`${order.currency||'THB'} · VAT ${number(order.vat)?.toFixed(2)??'—'}`],10);
  full(t('การอนุมัติและการเปิดงานภายใน','INTERNAL APPROVAL & RELEASE'),1,24);

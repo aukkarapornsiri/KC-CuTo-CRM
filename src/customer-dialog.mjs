@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 import {recordOptionLabel} from './record-display.mjs';
 import {streetInputValue,localizeAddressText,addressInputValue} from './customer-address.mjs';
 import {OPTIONS} from './internal-options.mjs';
@@ -20,7 +21,7 @@ React.useEffect(()=>{const d=profileDialogRef.current;d.showModal();return()=>{i
   return h('dialog',{ref:profileDialogRef,className:'crm-profile-dialog crm-customer-dialog',style:{'--kc-section-icon':'#95bfff','--kc-section-action':'#2e64aa'},'aria-labelledby':'crm-customer-title',onCancel:e=>{e.preventDefault();e.stopPropagation();if(!busy)Edit(null);}},
    h('form',{'aria-label':t('ฟอร์มลูกค้า','Customer form'),onSubmit:save},
     h('header',{className:'crm-profile-header'},h('span',{className:'crm-profile-symbol','aria-hidden':true},'▦'),h('div',null,h('h2',{id:'crm-customer-title'},editing.id?t('แก้ไขลูกค้า','Edit Account'):t('สร้างลูกค้า','New Account')),h('p',null,t('ข้อมูลที่มี * จำเป็นต้องระบุ','* Required fields'))),btn('×',()=>Edit(null),busy,{'aria-label':t('ปิดฟอร์ม','Close form'),className:'crm-profile-close'})),
-    h('div',{className:'crm-profile-body'},error&&h('p',{role:'alert',className:'crm-error'},error),
+    h('div',{className:'crm-profile-body'},error&&h('p',{role:'alert',className:'crm-error'},systemMessage(error,lang)),
      profileSection(t('เกี่ยวกับลูกค้า','About'),['name','website','type','description','parent_customer_id','owner_id']),
      profileSection(t('ข้อมูลติดต่อ','Get in Touch'),['phone','email']),
      !editing.id&&h('section',{className:'crm-profile-section'},h('h3',null,t('ผู้ติดต่อหลัก','Primary Contact')),h('p',null,t('กรอกเพื่อสร้างผู้ติดต่อและเชื่อมกับลูกค้านี้ หรือเว้นว่างทั้งหมดเพื่อเพิ่มภายหลัง','Fill in to create a linked contact, or leave all fields blank to add later')),h('div',{className:'crm-profile-grid'},[['first_name','ชื่อผู้ติดต่อ','Contact First Name'],['last_name','นามสกุลผู้ติดต่อ','Contact Last Name'],['position','ตำแหน่งผู้ติดต่อ','Contact Position'],['phone','เบอร์โทรผู้ติดต่อ','Contact Phone'],['email','อีเมลผู้ติดต่อ','Contact Email']].map(([key,th,en])=>h('label',{key,className:'crm-field'},h('span',null,t(th,en)),h('input',{'aria-label':t(th,en),type:key==='email'?'email':key==='phone'?'tel':'text',maxLength:250,disabled:busy,value:editing.primary_contact?.[key]||'',onChange:e=>Edit(v=>({...v,primary_contact:{...v.primary_contact,[key]:e.target.value}}))}))))),

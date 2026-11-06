@@ -8,15 +8,15 @@ const num=v=>v==null||v===''?null:Number.isFinite(Number(v))?Number(v):null;
 const date=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&Number.isFinite(Date.parse(v))?{date:(Date.parse(v)-Date.UTC(1899,11,30))/86400000}:'';
 export function salesOrderSheets(order,approval,lang='th'){
  const t=(th,en)=>lang==='th'?th:en,d=order.delivery_details||{};
- const status={confirmed:t('เปิด SO','Confirmed'),delivered:t('ส่งมอบแล้ว','Delivered'),completed:t('ปิดงาน','Completed'),cancelled:t('ยกเลิก','Cancelled')};
+ const status={confirmed:t("เปิด ใบสั่งขาย",'Confirmed'),delivered:t('ส่งมอบแล้ว','Delivered'),completed:t('ปิดงาน','Completed'),cancelled:t('ยกเลิก','Cancelled')};
  const review={pending:t('รออนุมัติ','Pending'),approved:t('อนุมัติแล้ว','Approved'),rejected:t('ไม่อนุมัติ','Rejected')};
  const rows=[['KC CuTo CRM',t('ใบสั่งขาย','Sales Order')],
- [t('เลขที่ SO','SO number'),order.code],[t('สถานะ SO','SO status'),status[order.status]||order.status],
+ [t("เลขที่ ใบสั่งขาย",'SO number'),order.code],[t("สถานะ ใบสั่งขาย",'SO status'),status[order.status]||order.status],
  [t('การอนุมัติ','Approval'),review[approval?.status]||t('ยังไม่ส่งอนุมัติ','Not submitted')],
  [t('ใบเสนอราคา','Quotation'),order.quotation_code],[t('ลูกค้า','Customer'),order.customer_name],
  [t('ที่อยู่','Address'),order.billing_address],[t('เลขผู้เสียภาษี','Tax ID'),String(order.tax_id??'')],
- [t('ฝ่ายขาย','Salesperson'),order.owner_name],[t('เลขที่ PO','PO number'),order.po_number],
- [t('วันที่ PO','PO date'),date(order.po_date)],[t('กำหนดส่งมอบ','Expected delivery'),date(order.expected_delivery_date)],
+ [t('ฝ่ายขาย','Salesperson'),order.owner_name],[t("เลขที่ ใบสั่งซื้อ",'PO number'),order.po_number],
+ [t("วันที่ ใบสั่งซื้อ",'PO date'),date(order.po_date)],[t('กำหนดส่งมอบ','Expected delivery'),date(order.expected_delivery_date)],
  [t('เครดิต (วัน)','Payment terms (days)'),num(order.payment_terms)],[t('สกุลเงิน','Currency'),order.currency||'THB'],
  [t('ยอดรวมรายการ','Subtotal'),num(order.subtotal)],[t('ส่วนลดรวม','Total discount'),num(order.discount)],
  ['VAT',num(order.vat)],[t('ยอดรวม','Total'),num(order.total)],

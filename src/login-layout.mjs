@@ -42,7 +42,7 @@ export function LoginLayout({React, lang, onLanguage, logo, children}) {
     if (node.props.className === 'kc-login-demo') return h('div', {className:'kc-login-secondary', key:'guest-access'},
       h('p', {className:'kc-login-help'}, t('ลืมรหัสผ่าน? ติดต่อผู้ดูแลเพื่อรับลิงก์ตั้งรหัสผ่านใหม่', 'Forgot your password? Contact your administrator for a password reset link.')),
       h('a', {className:'kc-login-guest', href:GUEST_PORTAL_URL, referrerPolicy:'no-referrer'}, icon(React, 'people'),
-        h('span', null, t('Guest Portal · สำหรับบุคคลภายนอก', 'Guest Portal · For external users'))),
+        h('span', null, t("พื้นที่สำหรับผู้ใช้ภายนอก · สำหรับบุคคลภายนอก", 'Guest Portal · For external users'))),
       showDemo ? node : null
     );
     return node.props.children == null ? node : React.cloneElement(node, undefined, React.Children.map(node.props.children, present));

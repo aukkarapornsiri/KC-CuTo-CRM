@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 import {permitsPage} from './role-access.mjs';
 import {createWorkspaceTheme,validateWorkspace,WORKSPACE_SHADOWS} from './workspace-theme.mjs?v=20261001-five-themes';
 // Editable source for the Settings extension. The original frontend is distributed as a bundle.
@@ -187,7 +188,7 @@ export function createExperience({React,client,useApp,useAccess,palette}) {
         if(error)throw error;
         if(!data)throw Error(tr('มีผู้แก้ไขการตั้งค่าระหว่างนี้ หรือไม่มีสิทธิ์ กรุณาโหลดใหม่','Settings changed or access denied. Reload before saving.'));
         setVersion(data.experience_version);setValue(next);setSaved(next);if(!scopeMode)publish(next);
-        setMessage(scopeMode?tr('บันทึกรหัสอ้างอิงแล้ว ยังไม่ได้ตรวจสอบหรือซิงค์ระบบปลายทาง','Reference IDs saved. Destination verification and synchronization are still pending.'):tr('บันทึก Design ลงฐานข้อมูลแล้ว','Design saved to database'));
+        setMessage(scopeMode?tr('บันทึกรหัสอ้างอิงแล้ว ยังไม่ได้ตรวจสอบหรือซิงค์ระบบปลายทาง','Reference IDs saved. Destination verification and synchronization are still pending.'):tr("บันทึก รูปแบบ ลงฐานข้อมูลแล้ว",'Design saved to database'));
       }catch(error){setFailed(true);setMessage(error.message);}
       finally{setBusy(false);}
     }
@@ -195,10 +196,10 @@ export function createExperience({React,client,useApp,useAccess,palette}) {
     const label=(text,control)=>h('label',{className:'crm-field',key:text},h('span',null,text),React.cloneElement(control,{'aria-label':text}));
     const select=(key,options)=>h('select',{value:value[key],disabled:!canEdit||busy,onChange:e=>update(key,e.target.value)},options.map(option=>h('option',{key:option,value:option},option)));
     return h('section',{className:'crm-settings'},
-      h('div',{className:'crm-intro'},h('h1',null,scopeMode?tr('การเชื่อมโยง KC Ecosystem','KC Ecosystem references'):tr('Design, Font และ UX/UI','Design, Font & UX/UI')),h('p',null,scopeMode?tr('ระบุ UUID จริงจาก KC Account 360 และ KC EAM เพื่อเตรียมการจับคู่บริษัท ไม่ใช่การเปิดใช้ Sync','Use real KC Account 360 and KC EAM UUIDs to prepare company mapping. This does not enable sync.'):tr('ปรับสี ฟอนต์ ขนาด และระยะห่าง ตามแนวทาง KC Account 360','Customize colors, typography and spacing using the KC Account 360 design approach'))),
+      h('div',{className:'crm-intro'},h('h1',null,scopeMode?tr('การเชื่อมโยง KC Ecosystem','KC Ecosystem references'):tr("รูปแบบ ฟอนต์ และหน้าจอใช้งาน",'Design, Font & UX/UI')),h('p',null,scopeMode?tr("ระบุ UUID จริงจาก KC Account 360 และ KC EAM เพื่อเตรียมการจับคู่บริษัท ไม่ใช่การเปิดใช้ ซิงก์",'Use real KC Account 360 and KC EAM UUIDs to prepare company mapping. This does not enable sync.'):tr('ปรับสี ฟอนต์ ขนาด และระยะห่าง ตามแนวทาง KC Account 360','Customize colors, typography and spacing using the KC Account 360 design approach'))),
       !scopeMode&&h(PersonalWorkspace,{lang}),
 
-      !canEdit&&h('p',{className:'crm-notice'},tr('อ่านอย่างเดียว ต้องเป็น Admin เพื่อแก้ไข','Read only. An admin is required to edit.')),
+      !canEdit&&h('p',{className:'crm-notice'},tr("อ่านอย่างเดียว ต้องเป็น ผู้ดูแลระบบ เพื่อแก้ไข",'Read only. An admin is required to edit.')),
       loading?h('p',{role:'status'},tr('กำลังโหลด…','Loading…')):h(React.Fragment,null,
         h('div',{className:'crm-grid'},scopeMode?
           Object.keys(initial).map(key=>label(key,h('input',{key,value:value[key],maxLength:key==='branch_code'?30:36,disabled:!canEdit||busy,onChange:e=>update(key,e.target.value),placeholder:key==='branch_code'?'HQ':'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'}))):
@@ -206,8 +207,8 @@ export function createExperience({React,client,useApp,useAccess,palette}) {
             ['primary','sidebar','background'].map(key=>label(({primary:tr('สีหลัก','Primary color'),sidebar:tr('สีเมนูด้านข้าง','Sidebar color'),background:tr('สีพื้นหลัง','Background color')})[key],h('input',{type:'color',value:value[key],disabled:!canEdit||busy,onChange:e=>update(key,e.target.value)}))),
             label(tr('ฟอนต์','Font'),select('font',FONTS)),label(tr('ขนาดตัวอักษร','Font size'),select('fontSize',['14','16','18'])),label(tr('ความโค้งมุม','Corner radius'),select('radius',['8','12','16'])),label(tr('ระยะห่างแถว','Row spacing'),select('density',['comfortable','compact'])))),
         !scopeMode&&h('div',{className:'crm-preview',style:{background:value.background,borderRadius:value.radius+'px',fontFamily:value.font==='system'?'system-ui':value.font,fontSize:value.fontSize+'px'}},h('aside',{style:{background:value.sidebar,color:readableInk(value.sidebar)}},'KC KuTo',h('p',null,tr('ลูกค้า • โอกาสการขาย','Customers • Opportunities'))),h('div',null,h('h2',null,tr('ตัวอย่างหน้าตา','Appearance preview')),h('p',null,tr('ข้อมูลลูกค้าและโอกาสการขาย อ่านง่าย ใช้งานคล่อง','Clear customer and opportunity information')),h('span',{className:'crm-preview-action',style:{background:value.primary,color:readableInk(value.primary),padding:value.density==='compact'?'6px 12px':'12px 18px',borderRadius:value.radius+'px'}},tr('สร้างใบเสนอราคา','Create quotation')))),
-        scopeMode&&h('div',{className:'crm-notice'},h('strong',null,tr('สถานะ: ยังไม่เชื่อมต่อ','Status: not connected')),h('p',null,tr('CRM ดูแลลูกค้าและโอกาสการขาย • Account 360 ดูแลบัญชี • EAM ดูแลวงจรสินทรัพย์ ต้องตรวจสอบ API และสิทธิ์ของแต่ละระบบก่อนเปิด Sync','CRM owns customers and opportunities; Account 360 owns accounting; EAM owns the asset lifecycle. Verify APIs and access before enabling synchronization.'))),
-        message&&h('p',{role:failed?'alert':'status',className:failed?'crm-error':'crm-notice'},message),
+        scopeMode&&h('div',{className:'crm-notice'},h('strong',null,tr('สถานะ: ยังไม่เชื่อมต่อ','Status: not connected')),h('p',null,tr("CRM ดูแลลูกค้าและโอกาสการขาย • ลูกค้า 360 ดูแลบัญชี • EAM ดูแลวงจรสินทรัพย์ ต้องตรวจสอบ การเชื่อมต่อระบบ และสิทธิ์ของแต่ละระบบก่อนเปิด ซิงก์",'CRM owns customers and opportunities; Account 360 owns accounting; EAM owns the asset lifecycle. Verify APIs and access before enabling synchronization.'))),
+        message&&h('p',{role:failed?'alert':'status',className:failed?'crm-error':'crm-notice'},(failed)?systemMessage(message,lang):message),
         h('div',{className:'crm-actions'},h('button',{disabled:busy,onClick:load},tr('โหลดใหม่','Reload')),h('button',{disabled:!dirty||busy,onClick:()=>{setValue({...saved});setMessage('');}},tr('ยกเลิกการแก้ไข','Discard changes')),h('button',{className:'crm-save',disabled:!canEdit||version===null||busy||!dirty,onClick:save},busy?tr('กำลังบันทึก…','Saving…'):tr('บันทึก','Save')))));
   }
   return {DesignPage,ExperienceSync,SettingsHub,useThemeRefresh,WorkspaceLauncher,Breadcrumb};

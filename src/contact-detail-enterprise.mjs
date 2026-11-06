@@ -61,10 +61,10 @@ export function createContactDetailEnterprise({React}){
      )
     ),
     h('div',{className:'kc-lead-detail-body'},
-     h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลผู้ติดต่อ','Contact Information')),h('span',null,t('ข้อมูลทั่วไปแสดงแบบ Compact เพื่อให้เห็นบริบทได้เร็ว','Compact information for fast context'))),
+     h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลผู้ติดต่อ','Contact Information')),h('span',null,t("ข้อมูลทั่วไปแสดงแบบ กระชับ เพื่อให้เห็นบริบทได้เร็ว",'Compact information for fast context'))),
      h('div',{className:'kc-lead-info-grid'},fields.map(([label,value])=>h('div',{className:'kc-lead-info-field',key:label},h('div',{className:'kc-lead-info-label'},label),h('div',{className:'kc-lead-info-value'},clean(value))))),
      h('section',{className:'kc-lead-note-wrap'},
-      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('หมายเหตุสำคัญ','Important Notes')),h('span',null,t('พื้นที่หลักสำหรับบริบทการขายและความต้องการของลูกค้า · Auto Height ตามข้อมูล','Primary sales context · Auto height'))),
+      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('หมายเหตุสำคัญ','Important Notes')),h('span',null,t("พื้นที่หลักสำหรับบริบทการขายและความต้องการของลูกค้า · ปรับความสูงอัตโนมัติ ตามข้อมูล",'Primary sales context · Auto height'))),
       h('div',{className:'kc-lead-note-panel'},h('div',{className:'kc-lead-note-head'},h('span',{'aria-hidden':true},'▤'),t('หมายเหตุ / ข้อมูลการขาย','Notes / Sales Context')),h('div',{className:'kc-lead-note-body'},clean(record.description||record.note)))
      ),
      children,

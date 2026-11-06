@@ -45,7 +45,7 @@ export function contextEntries(modules,activeModule){
         return {module:item,page:page||null};
       }).filter(Boolean);
       const quotes=byId.get('quotations');
-      if(quotes?.subs?.some(p=>p.id==='quot-list'))items.push({module:quotes,page:{id:'quot-list',navigationKey:'sales-orders',label:{th:'ใบสั่งขาย (SO)',en:'Sales Orders (SO)'},params:{openSalesOrders:true}}});
+      if(quotes?.subs?.some(p=>p.id==='quot-list'))items.push({module:quotes,page:{id:'quot-list',navigationKey:'sales-orders',label:{th:"ใบสั่งขาย (ใบสั่งขาย)",en:'Sales Orders (SO)'},params:{openSalesOrders:true}}});
       return {title:group.label,items,extra:[]};
     }
     if(group.id==='service'){
