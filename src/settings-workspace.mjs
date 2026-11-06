@@ -180,7 +180,7 @@ export function createSettingsWorkspace({React,client,useApp,useAccess}){
  };
  const ApprovalFlow=createApprovalFlowSettings({React,client,useApp,demo});
  const AccessManagement=createAccessManagement({React,RecordEditor,ApprovalFlow,Permissions,Feed,client,useApp,demoStats:()=>[demo.profiles.filter(p=>p.is_active&&!p.deleted_at).length,0,demo.custom_roles.length,(demo.crm_approval_policies||[]).filter(p=>p.is_active).length]});
- function DataEditor(props){return ['users','roles'].includes(props.kind)?h(AccessManagement,{lang:props.lang}):h(RecordEditor,props);}
+ function DataEditor(props){if(props.kind==='workflow')return h(ApprovalFlow,{lang:props.lang,active:props.active??true});return ['users','roles'].includes(props.kind)?h(AccessManagement,{lang:props.lang}):h(RecordEditor,props);}
  function RecordEditor({lang,kind,active=true,initialEdit=null,initialCreate=false,onSaved,onCancel,hidePermissions=false}){
   const def=definitions[kind],{demoMode,profile}=useApp(),task=useTask(),tr=(a,b)=>lang==='th'?a:b,access=useAccess(),canEdit=demoMode||(['users','roles','workflow'].includes(kind)?profile?.is_super_admin===true:access.can('settings',kind==='workflow'?'manage_settings':'edit')),canCreate=demoMode||(['users','roles','workflow'].includes(kind)?profile?.is_super_admin===true:access.can('settings',kind==='workflow'?'manage_settings':'create'));
   const [rows,S]=React.useState([]),[people,P]=React.useState([]),[edit,E]=React.useState(null),[original,O]=React.useState(null),[query,Q]=React.useState(''),[loaded,L]=React.useState(false),[deleting,D]=React.useState(null),[statusTarget,ST]=React.useState(null),[roleOptions,RO]=React.useState([]),[statusFilter,SF]=React.useState('all'),[showDeleted,SD]=React.useState(false);
