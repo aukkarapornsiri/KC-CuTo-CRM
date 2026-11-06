@@ -1,3 +1,4 @@
+import {purchaseOrderLabel,hasNoPO} from './sales-order-po.mjs';
 import {grossProfitSummary} from './sales-financials.mjs';
 import {rentalFactor} from './rental-quotation.mjs';
 import {itemPartNumber} from './item-part-number.mjs';
@@ -7,15 +8,15 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 export function salesOrderHTML(order,lang='th'){
  const t=(th,en)=>lang==='th'?th:en,money=n=>escape(new Intl.NumberFormat(lang==='th'?'th-TH':'en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n||0)));
  const rows=(order.items||[]).map(item=>`<tr><td>${escape(item.name)}<small>${escape(item.desc||'')}</small>${item.billing_period?`<small>${escape(periodLabel(item.billing_period,lang))} × ${escape(item.cycle_count)} · ${escape(item.service_start)} – ${escape(item.service_end)}</small>`:''}</td><td>${escape(itemPartNumber(item)||'—')}</td><td>${escape(item.qty)} ${escape(item.unit)}</td><td>${money(item.price)}</td><td>${money(item.total)}</td></tr>`).join('');
- const html=`<!doctype html><html lang="${lang==='th'?'th':'en'}"><meta charset="utf-8"><title>${escape(order.code)}</title><style>@page{size:A4;margin:16mm}body{font:14px sans-serif;color:#0f172a}h1{font-size:24px}header{border-bottom:2px solid #2563eb;padding-bottom:12px}dl{display:grid;grid-template-columns:140px 1fr;gap:8px}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{text-align:left;padding:10px;border-bottom:1px solid #dbe3ec}thead{display:table-header-group}tr{break-inside:avoid}small{display:block;white-space:pre-wrap;color:#475569}.total{text-align:right;break-inside:avoid}footer{margin-top:24px;color:#64748b;white-space:pre-wrap}.cancelled{color:#b91c1c;font-size:22px}</style><header><strong>KC CuTo CRM</strong><h1>${t('ใบสั่งขาย','Sales Order')} ${escape(order.code)}</h1>${order.status==='cancelled'?`<p class="cancelled">${t('ยกเลิกแล้ว','CANCELLED')}</p>`:''}</header><dl><dt>${t('ลูกค้า','Customer')}</dt><dd>${escape(order.customer_name)}</dd><dt>${t('ที่อยู่','Address')}</dt><dd>${escape(order.billing_address)}</dd><dt>${t('เลขผู้เสียภาษี','Tax ID')}</dt><dd>${escape(order.tax_id)}</dd><dt>${t('ใบเสนอราคา','Quotation')}</dt><dd>${escape(order.quotation_code)}</dd><dt>PO</dt><dd>${escape(order.po_number)} · ${escape(order.po_date)}</dd><dt>${t('กำหนดส่งมอบ','Expected delivery')}</dt><dd>${escape(order.expected_delivery_date||'—')}</dd><dt>${t('พนักงานขาย','Salesperson')}</dt><dd>${escape(order.owner_name)}</dd></dl><table><thead><tr><th>${t('รายการ','Item')}</th><th>${t('รหัสสินค้า','Part Number')}</th><th>${t('จำนวน','Quantity')}</th><th>${t('ราคาต่อหน่วย','Unit price')}</th><th>${t('ยอดรายการ','Line total')}</th></tr></thead><tbody>${rows}</tbody></table><div class="total"><p>${t('ยอดก่อน VAT','Net before VAT')}: ${money(Number(order.subtotal)-Number(order.discount))}</p><p>VAT: ${money(order.vat)}</p><h3>${t('ยอดรวม','Total')}: ${money(order.total)} ${escape(order.currency)}</h3></div><footer></footer></html>`;
+ const html=`<!doctype html><html lang="${lang==='th'?'th':'en'}"><meta charset="utf-8"><title>${escape(order.code)}</title><style>@page{size:A4;margin:16mm}body{font:14px sans-serif;color:#0f172a}h1{font-size:24px}header{border-bottom:2px solid #2563eb;padding-bottom:12px}dl{display:grid;grid-template-columns:140px 1fr;gap:8px}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{text-align:left;padding:10px;border-bottom:1px solid #dbe3ec}thead{display:table-header-group}tr{break-inside:avoid}small{display:block;white-space:pre-wrap;color:#475569}.total{text-align:right;break-inside:avoid}footer{margin-top:24px;color:#64748b;white-space:pre-wrap}.cancelled{color:#b91c1c;font-size:22px}</style><header><strong>KC CuTo CRM</strong><h1>${t('ใบสั่งขาย','Sales Order')} ${escape(order.code)}</h1>${order.status==='cancelled'?`<p class="cancelled">${t('ยกเลิกแล้ว','CANCELLED')}</p>`:''}</header><dl><dt>${t('ลูกค้า','Customer')}</dt><dd>${escape(order.customer_name)}</dd><dt>${t('ที่อยู่','Address')}</dt><dd>${escape(order.billing_address)}</dd><dt>${t('เลขผู้เสียภาษี','Tax ID')}</dt><dd>${escape(order.tax_id)}</dd><dt>${t('ใบเสนอราคา','Quotation')}</dt><dd>${escape(order.quotation_code)}</dd><dt>PO</dt><dd>${escape(purchaseOrderLabel(order,lang))} · ${escape(order.po_date)}</dd><dt>${t('กำหนดส่งมอบ','Expected delivery')}</dt><dd>${escape(order.expected_delivery_date||'—')}</dd><dt>${t('พนักงานขาย','Salesperson')}</dt><dd>${escape(order.owner_name)}</dd></dl><table><thead><tr><th>${t('รายการ','Item')}</th><th>${t('รหัสสินค้า','Part Number')}</th><th>${t('จำนวน','Quantity')}</th><th>${t('ราคาต่อหน่วย','Unit price')}</th><th>${t('ยอดรายการ','Line total')}</th></tr></thead><tbody>${rows}</tbody></table><div class="total"><p>${t('ยอดก่อน VAT','Net before VAT')}: ${money(Number(order.subtotal)-Number(order.discount))}</p><p>VAT: ${money(order.vat)}</p><h3>${t('ยอดรวม','Total')}: ${money(order.total)} ${escape(order.currency)}</h3></div><footer></footer></html>`;
  const d=order.delivery_details||{},yesNo=v=>v==='yes'?t('มี','Yes'):v==='no'?t('ไม่มี','No'):'—';
  const fields=[
   [t('เลขผู้เสียภาษี','Tax ID'),order.tax_id],[t('ประเภท','Type'),d.order_type],
-  [t('เลขที่ SO','SO number'),order.code],[t('เลขที่ PO','PO number'),order.po_number],
+  [t('เลขที่ SO','SO number'),order.code],[t('เลขที่ PO','PO number'),purchaseOrderLabel(order,lang)],
   [t('เงื่อนไขชำระเงิน','Payment terms'),order.payment_terms==null?'—':order.payment_terms+' '+t('วัน','Days')],[t('วันที่ส่งของ','Delivery date'),order.expected_delivery_date],
   [t('ส่งของ','Ship to'),d.ship_to_name||order.customer_name,true],[t('สถานที่ส่งของ','Shipping address'),d.shipping_address,true],
   [t('เปิดบิล / วางบิล','Bill to'),d.bill_to_name||order.customer_name,true],[t('สถานที่วางบิล','Billing location'),d.billing_location||order.billing_address,true],
-  ['PO',order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')],[t('ชื่อคนรับสินค้า','Recipient'),d.recipient_name],
+  ['PO',hasNoPO(order)?t('ไม่มี PO','No PO'):order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')],[t('ชื่อคนรับสินค้า','Recipient'),d.recipient_name],
   [t('มีการติดตั้ง','Installation'),yesNo(d.installation)],[t('เบอร์ผู้รับสินค้า','Recipient phone'),d.recipient_phone],
   [t('เงื่อนไขพิเศษ','Special conditions'),order.note,true]
  ];
@@ -53,7 +54,7 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  const approvals='<div class="cs-section-title">'+t('การอนุมัติและการเปิดงานภายใน','INTERNAL APPROVAL & RELEASE')+'</div><div class="cs-approvals">'+approvalStep('01','PREPARED BY','Sales')+approvalStep('02','COST REVIEW','Finance')+approvalStep('03','APPROVED BY','Manager')+approvalStep('04','RELEASE TO OPS','Operations')+'</div>';
  const d=order.delivery_details||{},field=(label,value)=>`<div class="cs-field"><b>${escape(label)}</b><span>${escape(value??'—')}</span></div>`;
  const meta=[
-  [t('เลขที่ใบเสนอราคา','Quotation'),order.quotation_code],[t('เลขที่ PO','PO number'),order.po_number],
+  [t('เลขที่ใบเสนอราคา','Quotation'),order.quotation_code],[t('เลขที่ PO','PO number'),purchaseOrderLabel(order,lang)],
   [t('เลขผู้เสียภาษี','Tax ID'),order.tax_id],[t('ประเภทงาน','Order type'),d.order_type],
   [t('ฝ่ายขาย','Salesperson'),order.owner_name],[t('วันที่ PO','PO date'),date(order.po_date)],
   [t('กำหนดส่งมอบ','Delivery date'),order.expected_delivery_date],[t('เครดิต','Payment terms'),order.payment_terms==null?'—':order.payment_terms+' '+t('วัน','days')]
@@ -67,7 +68,7 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  const contact=[
   [t('ผู้รับสินค้า','Recipient'),d.recipient_name],[t('โทรศัพท์','Phone'),d.recipient_phone],
   [t('การติดตั้ง','Installation'),d.installation==='yes'?t('มี','Yes'):d.installation==='no'?t('ไม่มี','No'):'—'],
-  ['PO',order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')]
+  ['PO',hasNoPO(order)?t('ไม่มี PO','No PO'):order.po_file_key||order.po_number?t('มี','Yes'):t('ไม่มี','No')]
  ];
  const css=`@page{size:A4 landscape;margin:8mm}
  *{box-sizing:border-box;color:#000!important;-webkit-text-fill-color:#000!important}
