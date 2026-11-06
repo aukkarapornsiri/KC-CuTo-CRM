@@ -11,6 +11,6 @@ function render({canViewFinancials=true,data=financial,error=false,lang='en'}={}
  effects.forEach(f=>f());
  return {tree,text:JSON.stringify(tree),queries};
 }
-test('current item view shows first line, part number, net sales and weighted margin',()=>{const {tree,text}=render();assert.equal(tree.props.className,'kc-quote-compact-items');assert.equal(tree.props.id,'crm-quotation-print');for(const value of ['KC-TEST','First line','900.00','200.00','22.22%','963.00'])assert.ok(text.includes(value));assert.ok(!text.includes('Extra detail'));});
-test('financial permission suppresses cost reads and displayed GP',()=>{const {text,queries}=render({canViewFinancials:false});assert.deepEqual(queries,[]);assert.ok(!text.includes('200.00'));assert.ok(!text.includes('22.22%'));});
+test('current item view shows first line, part number, net sales and weighted margin',()=>{const {tree,text}=render();assert.equal(tree.props.className,'kc-quote-compact-items');assert.equal(tree.props.id,'crm-quotation-print');for(const value of ['KC-TEST','First line','900.00','700.00','200.00','22.22%','963.00'])assert.ok(text.includes(value));assert.ok(!text.includes('Extra detail'));});
+test('financial permission suppresses cost reads and displayed GP',()=>{const {text,queries}=render({canViewFinancials:false});assert.deepEqual(queries,[]);assert.ok(!text.includes('700.00'));assert.ok(!text.includes('200.00'));assert.ok(!text.includes('22.22%'));});
 test('inconsistent and failed cost data keep placeholders and localized notice',()=>{assert.ok(render({data:{...financial,gp_amount:900}}).text.includes('costs are complete'));assert.ok(render({data:null,error:true}).text.includes('Unable to load costs'));assert.ok(render({data:null,lang:'th'}).text.includes('GP และ Margin'));});
