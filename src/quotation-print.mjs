@@ -164,7 +164,7 @@ export async function prepareQuotationPrint(root,doc){
 export async function printQuotation(source,quotationNumber){
  if(!source)throw Error('ไม่พบใบเสนอราคาสำหรับพิมพ์');
  const frame=document.createElement('iframe');frame.title='Quotation A4 print';frame.style.cssText='display:block;width:100%;height:calc(90dvh - 64px);border:0;background:white';
- const review=document.createElement('dialog');review.setAttribute('aria-label','Review PDF');review.style.cssText='width:min(1000px,94vw);height:90dvh;padding:0;border:1px solid #dbe5e9;border-radius:12px;background:white';const bar=document.createElement('div');bar.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px;gap:16px';const caption=document.createElement('strong');caption.textContent=quotationNumber||'Review PDF';const again=document.createElement('button');again.type='button';again.textContent='พิมพ์ / Save PDF';again.onclick=()=>frame.contentWindow.print();const close=document.createElement('button');close.type='button';close.textContent='ปิด / Close';close.onclick=()=>review.close();bar.append(caption,again,close);review.append(bar,frame);document.body.append(review);review.showModal();
+ const review=document.createElement('dialog');review.setAttribute('aria-label','Review PDF');review.style.cssText='width:min(1000px,94vw);height:90dvh;padding:0;border:1px solid #dbe5e9;border-radius:12px;background:white';const bar=document.createElement('div');bar.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px;gap:16px';const caption=document.createElement('strong');caption.textContent=quotationNumber||'Review PDF';const again=document.createElement('button');again.type='button';again.textContent='พิมพ์ / Save PDF';again.onclick=()=>{document.title=frame.contentDocument.title;frame.contentWindow.print();};const close=document.createElement('button');close.type='button';close.textContent='ปิด / Close';close.onclick=()=>review.close();bar.append(caption,again,close);review.append(bar,frame);document.body.append(review);review.showModal();
  let previousTitle,printTitle;let timer;
  const cleanup=()=>{clearTimeout(timer);if(previousTitle!==undefined&&document.title===printTitle)document.title=previousTitle;review.remove();};
  try{const doc=frame.contentDocument;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Quotation</title></head><body></body></html>');doc.close();
@@ -173,7 +173,7 @@ export async function printQuotation(source,quotationNumber){
  await new Promise(resolve=>frame.contentWindow.requestAnimationFrame(()=>frame.contentWindow.requestAnimationFrame(resolve)));
  // Chromium uses the parent document title for Save as PDF from an iframe.
  printTitle=String(quotationNumber||'Quotation').trim().replace(/[<>:"/\\|?*\x00-\x1f]/g,'-')||'Quotation';
- previousTitle=document.title;doc.title=printTitle;document.title=printTitle;
- review.addEventListener('close',cleanup,{once:true});frame.contentWindow.addEventListener('afterprint',()=>{if(document.title===printTitle)document.title=previousTitle;});frame.contentWindow.focus();frame.contentWindow.print();
+ previousTitle=document.title;doc.title=printTitle;
+ review.addEventListener('close',cleanup,{once:true});frame.contentWindow.addEventListener('afterprint',()=>{if(document.title===printTitle)document.title=previousTitle;});frame.contentWindow.focus();
  }catch(error){cleanup();throw error;}
 }
