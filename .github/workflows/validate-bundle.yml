@@ -16,7 +16,7 @@ jobs:
       - name: Validate approved document edit conditions
         run: node --test tests/document-edit-policy.test.mjs tests/so-amendments.test.mjs tests/approval-center.test.mjs tests/quotation-zero-sale-cost.test.mjs tests/shared-sales-financials.test.mjs
       - name: Validate approval workflow templates
-        run: node --test tests/workflow-templates.test.mjs tests/quotation-gp-condition.test.mjs tests/extended-approval-templates.test.mjs
+        run: node --test tests/workflow-templates.test.mjs tests/quotation-gp-condition.test.mjs tests/unified-approval-settings.test.mjs tests/extended-approval-templates.test.mjs
       - name: Validate AI analytics rules
         run: node --test tests/lead-evidence-loader.test.mjs tests/lead-sales-outcome.test.mjs tests/quotation-list-filter.test.mjs tests/ai-dashboard.test.mjs tests/status-summary.test.mjs tests/lead-quotation-summary.test.mjs tests/pagination.test.mjs tests/lead-period.test.mjs tests/lead-source.test.mjs
       - uses: actions/setup-node@v4

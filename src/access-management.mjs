@@ -5,7 +5,7 @@ export const DASHBOARD_LABELS={my:['ของฉัน','My dashboard'],sales:['
 
 export function createAccessManagement({React,RecordEditor,ApprovalFlow,Permissions,Feed,client,useApp,demoStats}){
  const h=React.createElement;
- const tabs=[['users','ผู้ใช้','Users'],['roles','บทบาทและสิทธิ์','Roles and permissions'],['dashboards','การมองเห็นแดชบอร์ด','Dashboard visibility'],['workflow','ขั้นตอนอนุมัติ','Approval workflow'],['audit','บันทึกการตรวจสอบ','Audit log']];
+ const tabs=[['users','ผู้ใช้','Users'],['roles','บทบาทและสิทธิ์','Roles and permissions'],['dashboards','การมองเห็นแดชบอร์ด','Dashboard visibility'],['workflow','นโยบายและขั้นตอนอนุมัติ','Approval policies and workflows'],['audit','บันทึกการตรวจสอบ','Audit log']];
  return function AccessManagement({lang}){
   const tr=(th,en)=>lang==='th'?th:en;
   const [tab,T]=React.useState('users'),[visited,V]=React.useState(['users']),[editor,E]=React.useState(null),[revision,R]=React.useState(0);
