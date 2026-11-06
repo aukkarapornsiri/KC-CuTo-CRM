@@ -1,7 +1,7 @@
 name: SO Filter Cards
 on:
   pull_request:
-    paths: ['src/sales-orders.mjs', 'tests/so-filter-cards-smoke.mjs', '.github/workflows/so-filter-cards.yml']
+    paths: ['src/sales-orders.mjs', 'src/sales-order-view.mjs', 'tests/so-overview-financials.test.mjs', 'tests/so-filter-cards-smoke.mjs', '.github/workflows/so-filter-cards.yml']
 jobs:
   filters:
     runs-on: ubuntu-latest
@@ -11,6 +11,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node --test tests/so-overview-financials.test.mjs tests/sales-order-view.test.mjs
       - run: npm install --no-save playwright && npx playwright install chromium
       - run: |
           mkdir -p test-artifacts

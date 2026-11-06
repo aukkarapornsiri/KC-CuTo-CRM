@@ -13,6 +13,7 @@ try{for(const width of [1440,900,390]){
   const host=document.createElement('div');document.body.append(host);window.QACreateRoot(host).render(React.createElement(C,{lang:'en',onClose:()=>{window.didClose=true},onQuotation:id=>window.openedQuote=id}));
  });
 
+ const summary=page.getByRole('region',{name:'Filtered sales and profit summary'});await summary.waitFor();await summary.locator('.crm-so-financial-cost strong').filter({hasText:'120.00'}).waitFor();assert.match(await summary.locator('.crm-so-financial-sales strong').innerText(),/200\\.00/);assert.match(await summary.locator('.crm-so-financial-gp strong').innerText(),/80\\.00/);assert.equal(await summary.locator('.crm-so-financial-margin strong').innerText(),'40.00%');const financialBoxes=await summary.locator('article').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));assert.equal(financialBoxes.length,4);assert.ok(financialBoxes.every(b=>Math.abs(b.w-financialBoxes[0].w)<1&&Math.abs(b.h-financialBoxes[0].h)<1));assert.ok(financialBoxes[0].h<=110);
  const panel=page.getByRole('region',{name:'Sales order filters',exact:true});await panel.waitFor();
  const fields=panel.locator('.crm-field');assert.equal(await fields.count(),5);
  const boxes=await fields.evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect(),c=getComputedStyle(n),input=n.querySelector('input,select');return {x:r.x,y:r.y,w:r.width,h:r.height,border:c.borderTopWidth,inner:getComputedStyle(input).borderTopWidth};}));
@@ -20,6 +21,6 @@ try{for(const width of [1440,900,390]){
  if(width>760)assert.ok(boxes.every(b=>Math.abs(b.y-boxes[0].y)<1));
  const reset=panel.getByRole('button',{name:'Reset filters',exact:true});const rb=await reset.boundingBox(),pb=await panel.boundingBox();assert.ok(rb.x+rb.width>pb.x+pb.width-2);assert.ok(rb.y<boxes[0].y);assert.equal(await reset.locator('svg').count(),1);
  await panel.getByRole('textbox').fill('no-matching-order');await panel.getByLabel('SO status',{exact:true}).selectOption('confirmed');await panel.getByLabel('Approval',{exact:true}).selectOption('rejected');await panel.getByLabel('Owner',{exact:true}).selectOption('seller');await panel.getByLabel('Delivery date',{exact:true}).selectOption('overdue');await reset.click();
- assert.equal(await panel.getByRole('textbox').inputValue(),'');for(const select of await panel.locator('select').all())assert.equal(await select.inputValue(),'');
+ assert.equal(await panel.getByRole('textbox').inputValue(),'');await summary.locator('.crm-so-financial-cost strong').filter({hasText:'120.00'}).waitFor();for(const select of await panel.locator('select').all())assert.equal(await select.inputValue(),'');
  assert.ok(await panel.evaluate(n=>n.scrollWidth<=n.clientWidth+1));await page.screenshot({path:`test-artifacts/so-filters-${width}.png`,fullPage:true});assert.deepEqual(errors,[]);await page.close();console.log('PASS SO equal single-frame filters and reset',width);
 }}finally{await browser.close();}

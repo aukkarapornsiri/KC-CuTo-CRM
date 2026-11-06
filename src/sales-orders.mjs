@@ -5,7 +5,7 @@ import {canReviewSO} from './approval-policy.mjs';
 import {createSalesOrderDetailLayout} from './sales-order-detail-layout.mjs';
 import {createQuotationDocumentComponents} from './quotation-document.mjs';
 import {createSOAmendments} from './so-amendments.mjs';
-import {filterOrders,orderMetrics} from './sales-order-view.mjs';
+import {filterOrders,orderMetrics,orderFinancialSummaries} from './sales-order-view.mjs';
 import {createPagination} from './pagination.mjs';
 import {rentalFactor} from './rental-quotation.mjs';
 import {itemPartNumber} from './item-part-number.mjs';
@@ -39,6 +39,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
   React.useEffect(()=>{Scope(defaultDataScope(profile));Page(0);},[profile?.id,profile?.role,profile?.custom_role_key,profile?.is_super_admin]);
   const [total,Total]=React.useState(null);
   const [rows,Rows]=React.useState([]),[selected,Selected]=React.useState(null),[events,Events]=React.useState([]),[busy,Busy]=React.useState(false),[loading,Loading]=React.useState(true),[error,ErrorText]=React.useState(''),[page,Page]=React.useState(0),[filter,Filter]=React.useState(''),[create,Create]=React.useState(false),[action,Action]=React.useState(''),[reason,Reason]=React.useState(''),[serials,Serials]=React.useState({});
+  const [overviewFinancials,OverviewFinancials]=React.useState({});
   const [approval,Approval]=React.useState(null),[approvalRows,ApprovalRows]=React.useState({});
   const [po,PO]=React.useState({no_po:false,po_number:'',po_date:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),expected_delivery_date:'',delivery_details:{ship_to_name:quotation?.customer_name||'',bill_to_name:quotation?.customer_name||'',billing_location:quotation?.counterparty_address||'',recipient_name:quotation?.contact_name||''},note:'',po_file_key:'',po_file_name:''});
   const lock=React.useRef(false),fileKey=React.useRef(''),committed=React.useRef(false),requestRevision=React.useRef(0);
@@ -55,10 +56,16 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
    try{
     let list=[];
     if(demoMode)list=[...(records.native_sales_orders||[])];
-    else for(let offset=0;;offset+=500){const data=await unwrap(client.from('crm_sales_orders').select('id,code,quotation_id,quotation_code,customer_id,customer_name,owner_id,owner_name,po_number,delivery_details,status,total,currency,created_at,expected_delivery_date').order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+499));list.push(...data);if(data.length<500)break;}
+    else for(let offset=0;;offset+=500){const data=await unwrap(client.from('crm_sales_orders').select('id,code,quotation_id,quotation_code,customer_id,customer_name,owner_id,owner_name,po_number,delivery_details,status,subtotal,discount,vat,total,currency,created_at,expected_delivery_date').order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+499));list.push(...data);if(data.length<500)break;}
     let approvals={};
     if(demoMode)approvals=Object.fromEntries(list.map(v=>[v.id,v.so_approval||null]));
     else for(let offset=0;offset<list.length;offset+=200){const data=await unwrap(client.from('crm_so_approvals').select('sales_order_id,status,requested_at,reviewed_at,review_note').in('sales_order_id',list.slice(offset,offset+200).map(v=>v.id)));for(const v of data)approvals[v.sales_order_id]=v;}
+    let financials={};
+    if(canFinancial){
+     if(demoMode)financials=Object.fromEntries(list.map(r=>[r.id,r.cost_sheet||null]));
+     else try{for(let offset=0;offset<list.length;offset+=200){const data=await unwrap(client.from('crm_sales_order_cost_sheets').select('sales_order_id,cost_total').in('sales_order_id',list.slice(offset,offset+200).map(r=>r.id)));for(const f of data)financials[f.sales_order_id]=f;}}catch{financials={};}
+    }
+    if(revision===requestRevision.current)OverviewFinancials(financials);
     if(revision===requestRevision.current){AllRows(list.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))||String(b.id).localeCompare(String(a.id))));ApprovalRows(approvals);}
 
    }catch(e){if(revision===requestRevision.current)ErrorText(describe(e));}finally{if(revision===requestRevision.current)Loading(false);}
@@ -71,7 +78,7 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
    Approval(demoMode?row.so_approval||null:await unwrap(client.from('crm_so_approvals').select('*').eq('sales_order_id',id).maybeSingle()));
    Events(demoMode?(records.sales_order_events||[]).filter(e=>e.sales_order_id===id):await unwrap(client.from('crm_sales_order_events').select('id,action,note,created_at').eq('sales_order_id',id).order('created_at',{ascending:false})));
   }
-  React.useEffect(()=>{if(!can('view')){Loading(false);return;}readList();return()=>{requestRevision.current++;};},[demoMode]);
+  React.useEffect(()=>{if(!can('view')){Loading(false);return;}readList();return()=>{requestRevision.current++;};},[demoMode,canFinancial,profile?.id]);
   React.useEffect(()=>{const list=filterOrders(allRows,{query,scope,owner,approval:approvalFilter,due,status:filter,userId:profile?.id},approvalRows);Total(list.length);const next=Math.min(page,Math.max(0,Math.ceil(list.length/50)-1));if(next!==page)Page(next);Rows(list.slice(next*50,next*50+50));},[allRows,query,scope,owner,approvalFilter,due,filter,page,approvalRows,profile?.id]);
   React.useEffect(()=>{if(initialOrderId&&can('view'))run(()=>openOrder(initialOrderId));},[initialOrderId,demoMode]);
   React.useEffect(()=>{if(!quotation||!can('view'))return;run(async()=>{
@@ -164,15 +171,23 @@ export function createSalesOrders({React,client,useApp,useAccess,records}){
    h('label',{className:'crm-field'},h('span',null,action==='cancelled'?t('เหตุผลยกเลิก','Cancellation reason'):action==='delivered'?t('เลขอ้างอิง / หลักฐานส่งมอบ','Delivery reference / evidence'):t('หมายเหตุปิดงาน','Completion note')),h('textarea',{value:reason,onChange:e=>Reason(e.target.value),required:action!=='completed',minLength:action!=='completed'?3:undefined,maxLength:2000,disabled:busy})),h('div',{className:'crm-actions'},h('button',{type:'submit',disabled:busy},t('ยืนยัน','Confirm')),button(t('ย้อนกลับ','Back'),()=>Action('')))),
    h('section',{id:'so-related-activities',className:'crm-so-connected'},h('h3',null,t('Activities และงานถัดไป','Activities and next actions')),activities.length?activities.map(a=>h('article',{key:a.id},button(a.subject||a.id,()=>{onClose();navigate('activities','act-my',{recordId:a.id});}),h('small',null,(a.status||'')+' · '+date(a.scheduled_at)))):h('p',null,t('ไม่มีกิจกรรมที่เชื่อมกับใบเสนอราคานี้ในสิทธิ์ปัจจุบัน','No linked quotation activities in your access scope')),h('small',null,t('เปิดงานเดิมเพื่ออัปเดตผล ไม่สร้างกิจกรรมซ้ำ','Open existing activities to update results without duplicates'))),
    h('h4',null,t('ประวัติการดำเนินการ','Activity history')),h('ol',null,events.map(e=>h('li',{key:e.id},date(e.created_at)+' · '+statusLabel(e.action)+(e.note?' · '+e.note:'')))));
-  const filtered=filterOrders(allRows,{query,scope,owner,approval:approvalFilter,due,status:filter,userId:profile?.id},approvalRows),metrics=orderMetrics(filtered,approvalRows);
+  const filtered=filterOrders(allRows,{query,scope,owner,approval:approvalFilter,due,status:filter,userId:profile?.id},approvalRows),metrics=orderMetrics(filtered,approvalRows),financialSummaries=orderFinancialSummaries(filtered,overviewFinancials,canFinancial);
+  const summaryMoney=(v,currency)=>loading||v===null?'—':money(v,currency);
   const choose=(label,value,set,options)=>h('label',{className:'crm-field'},h('span',null,label),h('select',{'aria-label':label,value,onChange:e=>{set(e.target.value);Page(0);}},options.map(([value,label])=>h('option',{key:value,value},label))));
   const overview=h('section',{className:'crm-so-overview'},
    h('header',{className:'crm-so-heading'},h('div',null,h('small',null,'KC CuTo CRM / '+t('การขาย','Sales')),h('h1',null,t('ใบสั่งขาย','Sales Orders')),h('p',null,t('ติดตามการอนุมัติ ส่งมอบ และงานถัดไปจากเอกสารชุดเดียวกัน','Track approval, delivery and next actions with shared records'))),h('div',{className:'crm-actions'},button(t('เปิดจากใบเสนอราคา','Open from quotation'),()=>{onClose();navigate('quotations','quot-list');},{className:'crm-so-primary'}),button(t('โหลดใหม่','Refresh'),readList))),
    h('div',{className:'crm-actions'},button(t('SO ของฉัน','My SO'),()=>{Scope('mine');Page(0);},{'aria-pressed':scope==='mine'}),button(t('ทั้งหมดตามสิทธิ์ / ทีม','All permitted / team'),()=>{Scope('all');Page(0);},{'aria-pressed':scope==='all'})),
    h('div',{className:'crm-so-metrics'},...[[t('SO ทั้งหมด','Total orders'),metrics.total,'',()=>Filter('')],[t('รออนุมัติ','Pending approval'),metrics.pending,'amber',()=>ApprovalFilter('pending')],[t('รอส่งมอบ','Awaiting delivery'),metrics.delivery,'blue',()=>Filter('confirmed')],[t('เกินกำหนดส่ง','Overdue delivery'),metrics.overdue,'red',()=>Due('overdue')]].map(([label,value,tone,onClick])=>button(h(React.Fragment,null,h('span',null,label),h('strong',null,loading?'—':value)),()=>{onClick();Page(0);},{key:label,className:'crm-so-metric '+tone}))),
+
+   h('section',{className:'crm-so-financial-overview','aria-label':t('สรุปยอดขายและกำไรตามตัวกรอง','Filtered sales and profit summary')},
+    ...financialSummaries.map(f=>h('div',{key:f.currency,className:'crm-so-financial-group'},financialSummaries.length>1&&h('small',null,f.currency),
+     h('div',{className:'crm-so-financial-cards'},...[[t('ยอดขายรวม (ก่อน VAT)','Total sales (before VAT)'),summaryMoney(f.sales,f.currency),'sales'],[t('ต้นทุนรวม (ก่อน VAT)','Total cost (before VAT)'),summaryMoney(f.cost,f.currency),'cost'],[t('GP รวม','Total GP'),summaryMoney(f.gp,f.currency),'gp'],['% Margin',loading||f.margin===null?'—':f.margin.toFixed(2)+'%','margin']].map(([label,value,tone])=>h('article',{key:tone,className:'crm-so-financial-'+tone},h('small',null,label),h('strong',null,value)))),
+     h('p',{className:'crm-so-financial-note'},'VAT: '+summaryMoney(f.vat,f.currency)+' · '+t('ยอดรวมสุทธิ: ','Net total: ')+summaryMoney(f.total,f.currency)))),
+    h('small',{className:'crm-so-financial-note'},t('รวมทุกรายการตามตัวกรองและสิทธิ์ · แยกตามสกุลเงิน · ต้นทุนและกำไรแสดงเมื่อข้อมูลครบตามสิทธิ์','All filtered permitted orders · Grouped by currency · Cost and profit require complete authorized data'))),
+
    h('section',{className:'crm-so-filter-panel','aria-label':t('ตัวกรองใบสั่งขาย','Sales order filters')},h('header',{className:'crm-so-filter-heading'},h('h2',null,t('ตัวกรองใบสั่งขาย','Sales order filters')),button(h('svg',{viewBox:'0 0 24 24',width:20,height:20,fill:'none',stroke:'currentColor',strokeWidth:1.8,'aria-hidden':true},h('path',{d:'M3 10a9 9 0 1 1 2 8M3 4v6h6'})),()=>{Query('');Filter('');Owner('');ApprovalFilter('');Due('');Page(0);},{className:'crm-so-filter-reset','aria-label':t('ล้างตัวกรอง','Reset filters'),title:t('ล้างตัวกรอง','Reset filters')})),h('div',{className:'crm-so-filters'},h('label',{className:'crm-field'},h('span',null,t('ค้นหาเอกสาร / ลูกค้า','Search documents / customer')),h('input',{value:query,placeholder:'SO / QT / PO / '+t('ลูกค้า','Customer'),onChange:e=>{Query(e.target.value);Page(0);}})),choose(t('สถานะ SO','SO status'),filter,Filter,[['',t('ทั้งหมด','All')],...Object.keys(SO_STATUS).map(s=>[s,statusLabel(s)])]),choose(t('การอนุมัติ','Approval'),approvalFilter,ApprovalFilter,[['',t('ทั้งหมด','All')],['pending',t('รออนุมัติ','Pending')],['approved',t('อนุมัติแล้ว','Approved')],['rejected',t('ไม่อนุมัติ','Rejected')],['none',t('ยังไม่ส่งอนุมัติ','Not submitted')]]),choose(t('ผู้รับผิดชอบ','Owner'),owner,Owner,[['',t('ทุกคน','Everyone')],...Array.from(new Map(allRows.filter(x=>x.owner_id).map(x=>[x.owner_id,[x.owner_id,shortSalesName(x.owner_name)||x.owner_id]])).values())]),choose(t('กำหนดส่ง','Delivery date'),due,Due,[['',t('ทั้งหมด','All')],['today',t('วันนี้','Today')],['month',t('เดือนนี้','This month')],['overdue',t('เกินกำหนด','Overdue')]]))),
    h('section',{className:'crm-so-list'},h('h2',null,t('รายการ SO','Sales orders')),h('p',null,t('ทั้งหมดตามตัวกรอง ','Filtered total ')+(loading?'—':total)+t(' รายการ · ใหม่ล่าสุดก่อน',' orders · Newest first')),loading?h('p',{role:'status'},t('กำลังโหลด…','Loading…')):h('div',{className:'crm-so-table crm-so-order-table'},h('table',null,h('thead',null,h('tr',null,...[t('SO / เอกสารอ้างอิง','SO / references'),t('ลูกค้า / ผู้รับผิดชอบ','Customer / owner'),t('กำหนดส่ง','Delivery date'),t('ยอดสุทธิ','Total'),t('อนุมัติ','Approval'),t('สถานะ SO','SO status'),t('ดำเนินการ','Actions')].map(x=>h('th',{key:x},x)))),h('tbody',null,rows.map(row=>h('tr',{key:row.id},h('td',{'data-label':'SO / QT / PO'},button(row.code,()=>run(()=>openOrder(row.id))),h('small',null,(row.quotation_code||'—')+' · '+(hasNoPO(row)?purchaseOrderLabel(row,lang):'PO '+purchaseOrderLabel(row,lang)))),h('td',{'data-label':t('ลูกค้า','Customer')},row.customer_name,h('small',null,shortSalesName(row.owner_name)||'—')),h('td',{'data-label':t('กำหนดส่ง','Delivery')},date(row.expected_delivery_date)),h('td',{'data-label':t('ยอดสุทธิ','Total')},money(row.total,row.currency)),h('td',{'data-label':t('อนุมัติ','Approval')},h('span',{'data-status':approvalRows[row.id]?.status||'none'},({pending:t('รออนุมัติ','Pending'),approved:t('อนุมัติแล้ว','Approved'),rejected:t('ไม่อนุมัติ','Rejected')})[approvalRows[row.id]?.status]||t('ยังไม่ส่งอนุมัติ','Not submitted'))),h('td',{'data-label':t('สถานะ SO','SO status')},h('span',{'data-status':row.status},statusLabel(row.status))),h('td',null,button(t('เปิด SO','Open SO'),()=>run(()=>openOrder(row.id)),{className:'crm-so-primary'}))))))),!loading&&!rows.length&&h('p',{role:'status'},t('ไม่พบ SO ตามตัวกรอง','No orders match these filters')),h(Pagination,{lang,page,total,onChange:Page,busy:busy||loading})),h('small',null,t('ตัวเลขนับจากทุกรายการตามตัวกรองและสิทธิ์ · สถานะอนุมัติแยกจากการส่งมอบ','Counts cover all filtered permitted orders · Approval and delivery are separate')));
-  return h(Popup,{lang,title:t('ใบสั่งขาย (Sales Orders)','Sales Orders'),busy,error,onClose},h('style',null,styles+redesignStyles+rowStyles),h('div',{className:'crm-so'},!can('view')?h('p',{role:'alert'},t('ไม่มีสิทธิ์เข้าถึง','Access denied')):h(React.Fragment,null,
+  return h(Popup,{lang,title:t('ใบสั่งขาย (Sales Orders)','Sales Orders'),busy,error,onClose},h('style',null,styles+redesignStyles+rowStyles+compactStyles),h('div',{className:'crm-so'},!can('view')?h('p',{role:'alert'},t('ไม่มีสิทธิ์เข้าถึง','Access denied')):h(React.Fragment,null,
    form||detail||overview)));
 
  };
@@ -195,4 +210,22 @@ const rowStyles=`
 .crm-so .crm-so-order-table td:first-child>button{display:block;min-height:0;margin:0;line-height:1.5;padding:0;font-size:13px}.crm-so .crm-so-order-table td small{margin-top:6px;font-size:11px;line-height:1.5}.crm-so .crm-so-order-table td:last-child>button{min-height:40px;width:100%;max-width:100px;padding:8px 10px;white-space:nowrap}.crm-so .crm-so-order-table [data-status]{display:inline-flex;align-items:center;justify-content:center;min-height:28px;box-sizing:border-box;padding:4px 10px;white-space:nowrap}
 }
 @media(max-width:760px){.crm-so .crm-so-order-table tr{box-shadow:0 4px 14px #17283f0a}.crm-so .crm-so-order-table td:first-child>button{min-height:0;line-height:1.5;padding:0}}
+`;
+
+const compactStyles=`
+/* Compact SO workspace — equal single-frame filters and financial summary. */
+.crm-record-popup:has(.crm-so)>.crm-record-popup-body{padding:20px}
+.crm-so-heading h1{font-size:24px;margin:2px 0}.crm-so-heading p{font-size:12px}
+.crm-so-overview>.crm-actions{margin:10px 0}
+.crm-so-metrics{gap:12px;margin:12px 0}.crm-so .crm-so-metric{padding:12px 16px;gap:2px;min-height:76px}.crm-so-metric strong{font-size:24px}
+.crm-so-financial-overview{margin:12px 0 16px}.crm-so-financial-group{margin-bottom:8px}
+.crm-so-financial-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr;gap:12px}
+.crm-so-financial-cards article{box-sizing:border-box;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:14px 18px;border:0;border-radius:12px}
+.crm-so-financial-cards small{font-size:12px;color:inherit}.crm-so-financial-cards strong{font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.crm-so-financial-sales{background:#e6f7f7;color:#088a87}.crm-so-financial-cost{background:#fff4e4;color:#956016}.crm-so-financial-gp{background:#eaf2ff;color:#245ec2}.crm-so-financial-margin{background:#f1edff;color:#6e4db7}
+.crm-so .crm-so-financial-note{font-size:11px;color:#6a7b90;margin:6px 0;display:block}
+.crm-so-filter-heading{margin-bottom:10px}.crm-so-filter-panel{margin-bottom:16px}.crm-so .crm-so-filters>.crm-field{height:76px;padding:10px 14px}
+.crm-so-list{padding:16px}.crm-so-list>h2{font-size:18px;margin-bottom:6px}.crm-so-list>p{margin:6px 0}
+@media(min-width:761px){.crm-so .crm-so-order-table table{border-spacing:0 6px}.crm-so .crm-so-order-table :is(th,td){padding:10px 12px}.crm-so .crm-so-order-table tbody td{height:66px}.crm-so .crm-so-order-table td small{margin-top:3px}}
+@media(max-width:760px){.crm-record-popup:has(.crm-so)>.crm-record-popup-body{padding:16px}.crm-so-financial-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.crm-so-financial-cards article{padding:12px}.crm-so-financial-cards strong{font-size:20px}.crm-so .crm-so-filters>.crm-field{height:68px}.crm-so .crm-so-order-table tr{padding:12px;margin:8px 0}.crm-so-order-table td{padding:5px 0}}
 `;
