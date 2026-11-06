@@ -1,3 +1,4 @@
+import {purchaseOrderLabel} from './sales-order-po.mjs';
 import {itemPartNumber} from './item-part-number.mjs';
 import {firstItemLine,salesOrderSummary} from './sales-order-summary.mjs';
 /** Recompose original controls without changing their handlers or permission gates. */
@@ -25,7 +26,7 @@ export function createSalesOrderDetailLayout(React){
   return h('section',{className:'crm-so-detail kc-so-detail-layout','aria-label':t('รายละเอียด Sales Order','Sales Order details')},h('style',null,styles),
    h('header',{className:'kc-so-hero'},h('div',null,h('small',null,'KC CuTo CRM / '+t('ฝ่ายขาย / ใบสั่งขาย','Sales / Sales Order')),h('h2',null,order.code),h('p',null,[order.customer_name,order.owner_name].filter(Boolean).join(' · '))),h('div',{className:'kc-so-hero-actions'},h('span',{className:'kc-so-order-status'},statusLabel(order.status)),h('button',{type:'button',className:'kc-so-edit-action',onClick:jump('so-revision-card')},t('แก้ไขข้อมูล','Edit details')))),
    h('div',{className:'kc-so-content'},
-    h('div',{className:'kc-so-reference'},h('span',null,'PO: '+(order.po_number||'—')),h('span',null,t('วันที่ PO: ','PO date: ')+date(order.po_date)),quote),
+    h('div',{className:'kc-so-reference'},h('span',null,'PO: '+purchaseOrderLabel(order,lang)),h('span',null,t('วันที่ PO: ','PO date: ')+date(order.po_date)),quote),
     h('div',{className:'kc-so-metric-grid'},metric(t('กำหนดส่งมอบ','Expected delivery'),date(order.expected_delivery_date)),metric(t('ติดตามครั้งถัดไป','Next follow-up'),next?date(next.scheduled_at):t('ยังไม่นัดหมาย','Not scheduled'))),
     card('so-approval-card',t('การอนุมัติ SO และสิทธิ์แก้ไข','SO approval and edit permissions'),h(React.Fragment,null,approval,h('details',{id:'so-revision-card',className:'kc-so-amendment-details',open:amendment?.props?.autoOpen||undefined},h('summary',null,t('คำขอแก้ไข SO / Cost Sheet และประวัติฉบับแก้ไข','SO / Cost Sheet edit requests and revision history')),amendment)),'kc-so-approval-card'),
     h('div',{className:'kc-so-action-grid','aria-label':t('การดำเนินการฝ่ายขาย','Sales actions')},...toolbar,button(t('คำขอแก้ไข SO','SO edit requests'),'so-revision-card')),
@@ -38,7 +39,7 @@ export function createSalesOrderDetailLayout(React){
      !canFinancial&&h('p',{className:'kc-so-hint'},t('GP และ Margin แสดงตามสิทธิ์ดูต้นทุน','GP and margin require cost access')),
      canFinancial&&summary.gp===null&&!financialError&&h('p',{className:'kc-so-hint'},t('GP และ Margin แสดงเมื่อมีข้อมูลต้นทุนครบ','GP and margin appear when complete costs are available')),
      financialError&&h('p',{role:'alert'},financialError,' ',h('button',{type:'button',onClick:()=>Retry(n=>n+1)},t('โหลดใหม่','Retry'))))),
-    h('div',{className:'kc-so-support-grid'},card('so-documents-card',t('เอกสารอ้างอิง','Reference documents'),h(React.Fragment,null,h('p',null,order.po_number||'—'),h('p',{className:'kc-so-hint'},date(order.po_date)),h('div',{className:'crm-actions'},po),h('p',null,order.quotation_code||'—'))),
+    h('div',{className:'kc-so-support-grid'},card('so-documents-card',t('เอกสารอ้างอิง','Reference documents'),h(React.Fragment,null,h('p',null,purchaseOrderLabel(order,lang)),h('p',{className:'kc-so-hint'},date(order.po_date)),h('div',{className:'crm-actions'},po),h('p',null,order.quotation_code||'—'))),
      card('so-customer-card',t('ผู้ติดต่อและการส่งมอบ','Contact and delivery'),h(React.Fragment,null,h('p',null,order.delivery_details?.recipient_name||'—'),h('p',null,order.delivery_details?.recipient_phone||'—'),h('p',null,order.delivery_details?.shipping_address||order.billing_address||'—'),h('p',{className:'kc-so-hint'},t('เลขผู้เสียภาษี: ','Tax ID: ')+(order.tax_id||'—')),...customerLinks))),
     h('section',{className:'kc-so-detail-rest'},...rest)),
    h('footer',{className:'kc-so-footer'},h('small',null,t('เมื่อบันทึกฉบับแก้ไข ต้องส่งอนุมัติ SO อีกครั้ง','Revised sales orders require approval again.')),back));
