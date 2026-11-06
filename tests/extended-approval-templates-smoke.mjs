@@ -33,6 +33,8 @@ try{for(const width of [1440,390]){
   if(kind==='special_purchase'){await form.getByLabel('ผู้ขาย / Supplier',{exact:true}).fill('QA supplier');await form.getByLabel('รายการ',{exact:true}).fill('QA purchase');await form.getByLabel('ราคาต่อหน่วย',{exact:true}).fill('80');}
   await form.getByLabel('เหตุผล / รายละเอียดที่ขอ',{exact:true}).fill('QA request '+kind);await form.screenshot({path:`test-artifacts/template-${kind}-${width}.png`});
   assert.ok(await form.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'form overflow '+kind);
+  assert.ok(await form.locator('.kc-template-form .crm-field').evaluateAll(els=>els.every(el=>getComputedStyle(el).borderTopWidth==='0px')),'no nested field borders '+kind);
+  const columns=await form.locator('.kc-template-form').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);assert.equal(columns,width>600?2:1,'responsive form columns');
   await form.getByRole('button',{name:'ส่งขออนุมัติ',exact:true}).click();await form.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>window.templateCalls.at(-1).args.p_type),kind);
  }
  await root.getByRole('button',{name:'ส่งคำขอ',exact:true}).click();await root.locator('.kc-approval-card').first().waitFor();
