@@ -14,7 +14,7 @@ test('explicit no PO clears stale metadata and preserves status through revision
 test('database saves no PO explicitly, keeps normal validation, idempotency and atomic approval',async()=>{
  const db=new PGlite();try{
  await db.exec(fs.readFileSync('tests/sales-order-no-po-fixture.sql','utf8'));
- await db.exec(fs.readFileSync('supabase/migrations/20261106033239_sales_order_explicit_no_po.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261106034146_sales_order_explicit_no_po.sql','utf8'));
  const id='11111111-1111-4111-8111-111111111111';
  await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
  const q=async()=>{const r=await db.query("insert into quotations(customer_id,owner_id,status,code,customer_name,items,subtotal,discount,vat,total,currency) values($1,$1,'draft','SQ-QA','QA','[{\"name\":\"Item\",\"qty\":1,\"price\":100,\"total\":100}]',100,0,7,107,'THB') returning id",[id]);return r.rows[0].id;};
