@@ -1,0 +1,28 @@
+name: Equal Lead Header Cards
+on:
+  pull_request:
+    paths:
+      - 'src/lead-detail-enterprise.css'
+      - 'tests/lead-header-cards-smoke.mjs'
+      - '.github/workflows/lead-header-cards.yml'
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/lead-detail-enterprise.test.mjs
+      - run: npm install --no-save playwright && npx playwright install chromium
+      - run: |
+          mkdir -p test-artifacts
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/lead-header-http.log 2>&1 &
+          sleep 2
+          node tests/lead-header-cards-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lead-header-cards
+          path: test-artifacts/
