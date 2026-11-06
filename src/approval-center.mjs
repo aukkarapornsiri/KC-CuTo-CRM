@@ -10,11 +10,11 @@ export const approvalCategory=module=>module==='quotations'?'quotation':['sales_
 export function createApprovalCenter({React,client,useApp,useAccess,records}){
  const h=React.createElement,Popup=createRecordPopup(React),TemplateForm=createTemplateRequestForm({React,client,useApp,useAccess}),TemplateDetails=createTemplateRequestDetails(React),unwrap=async q=>{const {data,error}=await q;if(error)throw error;return data;};
  async function readAll(query){const rows=[];for(let offset=0;offset<20000;offset+=500){const batch=await unwrap(query().range(offset,offset+499));rows.push(...batch);if(batch.length<500)return rows;}throw Error('Too many approval records. Please contact your administrator.');}
- return function ApprovalCenter({lang='th',onSource,initialRecordId,initialKind}){
+ return function ApprovalCenter({lang='th',onSource,initialRecordId,initialKind,autoOpenPending=false}){
   const {profile,demoMode,navigate,refreshNotifications}=useApp(),access=useAccess(),t=(th,en)=>lang==='th'?th:en;
   const [rows,Rows]=React.useState([]),[tab,Tab]=React.useState('pending'),[category,Category]=React.useState('all'),[search,Search]=React.useState(''),[selected,Selected]=React.useState(null),[comment,Comment]=React.useState(''),[busy,Busy]=React.useState(false),[loading,Loading]=React.useState(true),[error,ErrorText]=React.useState(''),[message,Message]=React.useState('');
   const [creatingTemplate,CreatingTemplate]=React.useState(false);
-  const generation=React.useRef(0),lock=React.useRef(false);
+  const generation=React.useRef(0),lock=React.useRef(false),autoOpened=React.useRef(false);
   const can=action=>access.can('quotations',action),labels={template:t('คำขอตาม Template','Template request'),quotation_edit:t('ขอแก้ไขใบเสนอราคา','Edit Approved Quotation'),quotation:t('ใบเสนอราคา','Quotation'),so:t('เปิด SO','Open SO'),amendment:t('ขอแก้ไข SO','SO amendment'),service:t('งานบริการ','Service'),lead:t('ลีด','Lead'),other:t('งานอื่น','Other work')};
   const amountLabel=r=>r.kind==='template'?({credit_terms:t('วงเงินเครดิต','Credit limit'),contract_amendment:t('มูลค่าสัญญา','Contract value'),contract_renewal:t('มูลค่าต่ออายุสัญญา','Renewal value'),special_purchase:t('วงเงินจัดซื้อก่อนภาษี','Purchase amount before tax')}[r.template_type]||t('ยอดรวม VAT','Total incl. VAT')):t('ยอดรวม VAT','Total incl. VAT');
   const money=r=>new Intl.NumberFormat(lang==='th'?'th-TH':'en-US',{style:'currency',currency:r.currency||'THB'}).format(Number(r.total||0));
@@ -117,6 +117,10 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
   const requester=r=>r.request?.requested_by===profile?.id||r.request?.submitted_by===profile?.id?t('คุณ','You'):r.requester_name||((r.request?.requested_by===r.owner_id||r.request?.submitted_by===r.owner_id)?r.owner_name:'')||t('ผู้ใช้ในระบบ','CRM user');
   const requestedDate=r=>r.created_at&&Number.isFinite(Date.parse(r.created_at))?new Intl.DateTimeFormat(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(r.created_at)):'—';
   const canAct=r=>r?.kind==='template'?templateCanReview(r.request,profile?.id)&&templatePermitted(r.template_type,(m,a)=>access.can(m,a),true):r?.status==='pending'&&can('approve')&&(r.kind==='quotation'?canReviewQuotation(r.request,profile?.id,true):['amendment','so','quotation_edit'].includes(r.kind)&&canReviewSO(r.request,profile?.id,true)&&r.orderStatus!=='cancelled');
+  React.useEffect(()=>{
+   if(!autoOpenPending||initialRecordId||autoOpened.current||loading||access.loading||tab!=='pending')return;
+   autoOpened.current=true;const first=rows.find(canAct);if(first){Selected(first);Comment('');}
+  },[autoOpenPending,initialRecordId,loading,rows,tab,access.loading,profile?.id]);
   const actionable=canAct(selected);
   const button=(label,fn,props={})=>h('button',{type:'button',onClick:fn,disabled:busy,...props},label);
   return h('section',{className:'kc-approval-app','aria-label':t('ศูนย์อนุมัติ','Approval center')},
@@ -166,5 +170,5 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
 
 export function createApprovalLauncher(deps){
  const {React}=deps,h=React.createElement,Center=createApprovalCenter(deps),Popup=createRecordPopup(React);
- return function ApprovalLauncher({lang}){const [open,Open]=React.useState(false),[recordId,RecordId]=React.useState(null);React.useEffect(()=>{const show=e=>{if(/^[0-9a-f-]{36}$/i.test(e.detail?.id||'')){RecordId(e.detail.id);Open(true);}};window.addEventListener('crm-template-approval',show);return()=>window.removeEventListener('crm-template-approval',show);},[]);return h(React.Fragment,null,h('button',{type:'button',className:'kc-header-approval','aria-label':lang==='th'?'งานอนุมัติ':'Approvals',onClick:()=>{RecordId(null);Open(true);}},h('span',{'aria-hidden':true},'✓ '),lang==='th'?'งานอนุมัติ':'Approvals'),open&&h(Popup,{title:lang==='th'?'ศูนย์อนุมัติ':'Approval center',lang,onClose:()=>Open(false)},h(Center,{lang,initialKind:recordId?'template':undefined,initialRecordId:recordId,onSource:()=>Open(false)})));};
+ return function ApprovalLauncher({lang}){const [open,Open]=React.useState(false),[recordId,RecordId]=React.useState(null),[autoPending,AutoPending]=React.useState(false);React.useEffect(()=>{const show=e=>{if(/^[0-9a-f-]{36}$/i.test(e.detail?.id||'')){RecordId(e.detail.id);AutoPending(false);Open(true);}};window.addEventListener('crm-template-approval',show);return()=>window.removeEventListener('crm-template-approval',show);},[]);return h(React.Fragment,null,h('button',{type:'button',className:'kc-header-approval','aria-label':lang==='th'?'งานอนุมัติ':'Approvals',onClick:e=>{AutoPending(e.currentTarget.dataset.openPending==='true');delete e.currentTarget.dataset.openPending;RecordId(null);Open(true);}},h('span',{'aria-hidden':true},'✓ '),lang==='th'?'งานอนุมัติ':'Approvals'),open&&h(Popup,{title:lang==='th'?'ศูนย์อนุมัติ':'Approval center',lang,onClose:()=>Open(false)},h(Center,{lang,autoOpenPending:autoPending,initialKind:recordId?'template':undefined,initialRecordId:recordId,onSource:()=>Open(false)})));};
 }

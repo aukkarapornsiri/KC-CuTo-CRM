@@ -45,3 +45,16 @@ test('quotation edit deep link selects the exact request instead of another docu
  assert.deepEqual(queries,[{table:'crm_quotation_edit_requests',key:'id',id:'request-id'}]);
  assert.equal(states.find(s=>s.i===4)?.x.request.id,'request-id');
 });
+test('bell auto-opens only the current independent reviewer task once loading finishes',()=>{
+ for(const enabled of [true,false]){
+ const effects=[],selected=[],row={kind:'so',id:'so-ready',status:'pending',orderStatus:'confirmed',request:{status:'pending',requested_by:'seller',current_step:1,approver_ids:['reviewer']}};let state=0;
+ const rows=[{...row,id:'wrong-reviewer',request:{...row.request,approver_ids:['other']}},row];
+ const R={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity)}),useRef:v=>({current:v}),useEffect:f=>effects.push(f),useState:v=>{const i=state++;return [i===0?rows:i===7?false:typeof v==='function'?v():v,x=>{if(i===4)selected.push(x);}];}};
+ const C=createApprovalCenter({React:R,client:{},useApp:()=>({profile:{id:'reviewer'}}),useAccess:()=>({can:()=>true}),records:{}});
+ C({lang:'en',autoOpenPending:enabled});effects.at(-1)();effects.at(-1)();assert.deepEqual(selected,enabled?[row]:[]);
+ }
+});
+test('SO approval button uses the guarded SO RPC with the reviewer profile signature',async()=>{
+ const original=globalThis.window;globalThis.window={dispatchEvent(){}};
+ try{const f=fixture('so');nodes(f.tree).find(n=>n.type==='button'&&n.children.includes('Approve SO')).props.onClick();await new Promise(r=>setTimeout(r,30));assert.deepEqual(f.calls,[{name:'crm_so_approval_action',args:{p_sales_order_id:'record-id',p_action:'approve',p_note:'Reviewed'}}]);}finally{globalThis.window=original;}
+});

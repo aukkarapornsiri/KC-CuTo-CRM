@@ -8,15 +8,15 @@ export function createMobileHome({React,useAccess}){
   React.useEffect(()=>{const m=window.matchMedia('(max-width:640px)'),update=()=>Mobile(m.matches);m.addEventListener('change',update);return()=>m.removeEventListener('change',update);},[]);
   React.useEffect(()=>{if(activeModule==='dashboard')Home(true);},[activeModule]);
   const approval=()=>{const launcher=document.querySelector('.kc-header-approval');if(launcher)launcher.click();else onNavigate('quotations','quot-approval');};
+  const openNotifications=()=>{const launcher=document.querySelector('.kc-header-approval');if(launcher){launcher.dataset.openPending='true';launcher.click();}else approval();};
   React.useEffect(()=>{
    if(!mobile)return;
-   const open=e=>{if(!e.target?.closest?.('.kc-header-notifications'))return;e.preventDefault();e.stopPropagation();approval();};
+   const open=e=>{if(!e.target?.closest?.('.kc-header-notifications'))return;e.preventDefault();e.stopPropagation();openNotifications();};
    document.addEventListener('click',open,true);
    return()=>document.removeEventListener('click',open,true);
   },[mobile,onNavigate]);
   if(!mobile)return renderContent();
   const entries=railEntries(filterModules(modules,access)).filter(x=>x.id!=='settings'),isHome=activeModule==='dashboard'&&home;
-  const openNotifications=approval;
   function goHome(){Home(true);const target=entries.find(x=>x.id==='dashboard')?.target;if(target)onNavigate(target.moduleId,target.pageId);}
   function open(entry){if(entry.id==='dashboard'){Home(false);return;}onNavigate(entry.target.moduleId,entry.target.pageId);}
   return h(React.Fragment,null,isHome?h('section',{className:'kc-mobile-home','aria-label':t('เมนูหลักบนมือถือ','Mobile home')},

@@ -4,7 +4,7 @@ import {createMobileHome} from '../src/mobile-home.mjs';
 function fixture(mobile=true){
  const effects=[],listeners=new Map(),cleanup=[];let launches=0;const routes=[];
  globalThis.window={matchMedia:()=>({matches:mobile,addEventListener(){},removeEventListener(){}})};
- globalThis.document={querySelector:selector=>selector==='.kc-header-approval'?{click:()=>launches++}:null,addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:(name,fn)=>{if(listeners.get(name)===fn)listeners.delete(name);}};
+ globalThis.document={querySelector:selector=>selector==='.kc-header-approval'?{dataset:{},click:()=>launches++}:null,addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:(name,fn)=>{if(listeners.get(name)===fn)listeners.delete(name);}};
  const React={createElement:(type,props,...children)=>({type,props:{...props,children}}),Fragment:'fragment',useState:value=>[typeof value==='function'?value():value,()=>{}],useEffect:fn=>effects.push(fn)};
  const tree=createMobileHome({React,useAccess:()=>({can:()=>false})})({activeModule:'dashboard',modules:[],onNavigate:(...args)=>routes.push(args),renderContent:()=>null});
  effects.forEach(fn=>{const off=fn();if(off)cleanup.push(off);});
