@@ -26,6 +26,12 @@ test('database saves no PO explicitly, keeps normal validation, idempotency and 
  await assert.rejects(convert(await q(),{no_po:'true'}),/Invalid PO choice/);
  await assert.rejects(convert(await q(),{},'PO-2','2026-01-01','bad/path','po.pdf'),/Upload the customer PO/);
  const provided=await convert(await q(),{},'PO-2','2026-01-01',id+'/po.pdf','po.pdf');assert.equal(provided.delivery_details.no_po,false);assert.equal(provided.po_number,'PO-2');
+ const request='22222222-2222-4222-8222-222222222222';
+ await db.query("insert into crm_so_amendments(id,sales_order_id,status,reviewed_by,base_updated_at,reason) values($1,$2,'approved','33333333-3333-4333-8333-333333333333',$3,'Revise note')",[request,s.id,s.updated_at]);
+ await db.query("insert into crm_sales_order_cost_sheets(sales_order_id,cost_total,gp_amount,gp_margin,line_financials) values($1,50,50,50,'[{\"cost_total\":50}]')",[s.id]);
+ const patch={no_po:true,po_number:'',po_date:null,po_file_key:'',po_file_name:'',delivery_details:s.delivery_details,note:'Revised without PO',tax_rate:7,wht_rate:0,document_discount:0,items:[{name:'Item',original_index:0,qty:1,price:100,cost:50,unit:'Unit'}]};
+ const revised=(await db.query('select (private.crm_save_so_amendment($1,$2,$3)).*',[request,s.updated_at,patch])).rows[0];assert.equal(revised.delivery_details.no_po,true);assert.equal(revised.po_date,null);assert.equal(Number(revised.total),107);assert.equal(revised.note,'Revised without PO');
+ assert.equal((await db.query('select status from crm_so_approvals where sales_order_id=$1',[s.id])).rows[0].status,'pending');
  await db.exec("select set_config('test.approval_failure','true',false)");const rejectedQuote=await q();await assert.rejects(convert(rejectedQuote),/Approval unavailable/);assert.equal((await db.query('select count(*)::int n from crm_sales_orders where quotation_id=$1',[rejectedQuote])).rows[0].n,0);
  await db.exec("select set_config('request.jwt.claim.sub','',false)");await assert.rejects(convert(await q()),/permission required/);
  assert.equal((await db.query("select has_function_privilege('authenticated','private.crm_sales_order_create_po(uuid,text,date,text,text,date,text,jsonb,boolean)','EXECUTE') allowed")).rows[0].allowed,false);

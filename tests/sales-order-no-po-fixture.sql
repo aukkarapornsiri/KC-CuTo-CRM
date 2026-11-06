@@ -48,3 +48,19 @@ create function private.crm_so_approval_action(uuid,text,text) returns void lang
 insert into profiles values('11111111-1111-4111-8111-111111111111','qa@example.test','QA',true,null);
 insert into customers values('11111111-1111-4111-8111-111111111111');
 insert into storage.objects values('crm-sales-orders','11111111-1111-4111-8111-111111111111/po.pdf');
+-- Amendment dependencies: exercise the same guarded save path for a no-PO order.
+create function private.crm_active_user() returns boolean language sql as $$select auth.uid() is not null$$;
+create function private.crm_edit_approval_required(text) returns boolean language sql as $$select true$$;
+create function private.crm_quote_financial_access() returns boolean language sql as $$select true$$;
+create function private.crm_so_stock_identity(jsonb) returns jsonb language sql immutable as $$select $1$$;
+create table crm_document_edit_settings(id boolean);
+insert into crm_document_edit_settings values(true);
+alter table crm_sales_orders add column quotation_kind text default 'standard',add column recurring jsonb default '{}';
+alter table crm_so_amendments add column sales_order_id uuid,add column status text,add column approval_bypassed boolean default false,add column reviewed_by uuid,add column base_updated_at timestamptz,add column reason text,add column applied_at timestamptz,add column after_snapshot jsonb;
+alter table crm_sales_order_cost_sheets add column cost_total numeric,add column gp_amount numeric,add column gp_margin numeric,add column line_financials jsonb,add column captured_at timestamptz;
+alter table crm_price_items add column cost numeric,add column account360_vat_mode text,add column status text;
+alter table kc_dw_sales_order_facts add column synced_at timestamptz;
+alter table crm_so_approvals add column requested_by uuid,add column revision int default 1,add column requested_at timestamptz,add column reviewed_by uuid,add column reviewed_at timestamptz,add column review_note text,add column updated_at timestamptz,add column signature_storage_key text,add column reviewer_name text;
+create table crm_so_amendment_cost_history(amendment_id uuid,sales_order_id uuid,before_cost_sheet jsonb,after_cost_sheet jsonb,saved_by uuid);
+
+alter table crm_so_amendments add column before_snapshot jsonb;
