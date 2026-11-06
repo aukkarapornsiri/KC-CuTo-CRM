@@ -21,7 +21,7 @@ try{for(const width of [1440,390]){
  });
  const root=page.locator('#qa-templates'),kinds=['lead_merge','lead_reassignment','so_cancellation','credit_terms','contract_amendment','contract_renewal','inventory_adjustment','special_purchase'];
  for(const kind of kinds){
-  await root.getByRole('button',{name:'+ สร้างคำขอจาก Template',exact:true}).click();const form=page.getByRole('dialog',{name:'สร้างคำขอจาก Template',exact:true});
+  await root.getByRole('button',{name:'สร้างคำขออนุมัติ',exact:true}).click();const form=page.getByRole('dialog',{name:'สร้างคำขอจาก Template',exact:true});
   await form.getByLabel('Template การอนุมัติ',{exact:true}).selectOption(kind);
   const source=form.getByLabel('รายการต้นทาง',{exact:true});await page.waitForFunction(()=>document.querySelector('select[aria-label="รายการต้นทาง"]')?.options.length>1);await source.selectOption({index:1});
   if(kind==='lead_merge')await form.getByLabel('ลีดที่นำมารวม',{exact:true}).selectOption('lead-b');
