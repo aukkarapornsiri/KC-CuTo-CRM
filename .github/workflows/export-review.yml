@@ -1,0 +1,22 @@
+name: Export Review
+on:
+  pull_request:
+    paths:
+      - 'src/sales-order-excel.mjs'
+      - 'src/quotation-print.mjs'
+      - 'tests/export-review-smoke.mjs'
+      - '.github/workflows/export-review.yml'
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install chromium
+      - run: node --test tests/sales-order-excel.test.mjs
+      - run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 &
+          sleep 2
+          node tests/export-review-smoke.mjs

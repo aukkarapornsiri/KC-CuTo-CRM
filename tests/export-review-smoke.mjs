@@ -1,0 +1,11 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+try{for(const width of [390,1440]){
+ const page=await browser.newPage({viewport:{width,height:900},acceptDownloads:true});
+ await page.route('**/export-review-test',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html><body></body></html>'}));await page.goto('http://127.0.0.1:4173/export-review-test');
+ const download=page.waitForEvent('download');await page.evaluate(async()=>{const {downloadSalesOrderExcel}=await import('./src/sales-order-excel.mjs');await downloadSalesOrderExcel({code:'SO-REVIEW',tax_id:'0105541063051',customer_name:'<img src=x onerror=alert(1)>',items:[{name:'Review item',part_number:'PN-1',qty:1,price:100,total:100}],total:107},null,'th',{includeFinancial:false});});assert.equal((await download).suggestedFilename(),'SO-REVIEW.xlsx');
+ const excel=page.getByRole('dialog',{name:'ตรวจทานไฟล์ Excel'});await excel.waitFor();assert.ok((await excel.innerText()).includes('0105541063051'));assert.equal(await excel.locator('img[src=x]').count(),0);await excel.getByRole('button',{name:'ปิด',exact:true}).click();await excel.waitFor({state:'detached'});
+ await page.evaluate(async()=>{const {printQuotation}=await import('./src/quotation-print.mjs');const article=document.createElement('article');article.innerHTML='<header><div class="kc-quote-preview-id"><h2>SQ-REVIEW</h2><dd>Review customer</dd></div></header><div class="kc-quote-preview-line"><span>1</span><span>PN-1</span><span>Review item</span><span>1</span><span>Unit</span><span>100</span><strong>100</strong></div><div class="kc-quote-preview-summary">Total 107</div><footer>Signature</footer>';await printQuotation(article,'SQ-REVIEW');document.querySelector('iframe').contentWindow.dispatchEvent(new Event('afterprint'));});
+ const pdf=page.getByRole('dialog',{name:'Review PDF',exact:true});await pdf.waitFor();assert.ok(await pdf.locator('iframe').isVisible());assert.ok((await page.frameLocator('iframe').locator('body').innerText()).includes('Review item'));assert.equal(await page.title(),'');await pdf.getByRole('button',{name:'ปิด / Close'}).click();await pdf.waitFor({state:'detached'});await page.close();console.log('PASS automatic export review',width);
+}}finally{await browser.close();}
