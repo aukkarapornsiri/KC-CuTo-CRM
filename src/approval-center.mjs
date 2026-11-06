@@ -121,7 +121,7 @@ export function createApprovalCenter({React,client,useApp,useAccess,records}){
   const button=(label,fn,props={})=>h('button',{type:'button',onClick:fn,disabled:busy,...props},label);
   return h('section',{className:'kc-approval-app','aria-label':t('ศูนย์อนุมัติ','Approval center')},
    h('header',{className:'kc-approval-top'},h('div',null,h('h1',null,t('ศูนย์อนุมัติ','Approval center')),h('p',null,t('ตรวจสอบ ตัดสินใจ และติดตามงานในที่เดียว','Review, decide and track work in one place'))),button(h('img',{src:'./assets/approval/refresh.svg',width:20,height:20,alt:''}),()=>void load(),{disabled:busy||loading,'aria-label':t('โหลดใหม่','Refresh'),className:'kc-approval-refresh'})),
-   !demoMode&&EXTENDED_APPROVAL_TEMPLATES.some(x=>templatePermitted(x.id,(m,a)=>access.can(m,a)))&&button(t('+ สร้างคำขอจาก Template','+ New template request'),()=>CreatingTemplate(true),{className:'kc-approval-new-template'}),
+   !demoMode&&EXTENDED_APPROVAL_TEMPLATES.some(x=>templatePermitted(x.id,(m,a)=>access.can(m,a)))&&button(t('สร้างคำขออนุมัติ','Create approval request'),()=>CreatingTemplate(true),{className:'kc-approval-new-template'}),
    creatingTemplate&&h(TemplateForm,{lang,onClose:()=>CreatingTemplate(false),onSaved:()=>{CreatingTemplate(false);Tab('sent');Message(t('ส่งคำขออนุมัติแล้ว','Request submitted'));void load();}}),
    message&&h('p',{role:'status'},message),!selected&&error&&h('p',{role:'alert'},error),
    h('section',{className:'kc-approval-metrics','aria-label':t('สรุปรายการในมุมมองที่เลือก','Summary of selected view')},[
