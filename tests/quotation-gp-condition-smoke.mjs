@@ -16,8 +16,8 @@ try{for(const width of [1440,390]){
  assert.deepEqual(await page.evaluate(()=>{const p=window.gpDemo.crm_approval_policies[0];return{base:p.approver_ids,gp:p.low_gp_approver_ids,threshold:p.low_gp_threshold};}),{base:['manager'],gp:['director'],threshold:20});
  await on.scrollIntoViewIfNeeded();await root.screenshot({path:`test-artifacts/quotation-gp-condition-${width}.png`});
  assert.ok(await root.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'GP settings overflow');
- await root.getByLabel('แบบฟอร์ม / ประเภทคำขอ',{exact:true}).selectOption('so');assert.equal(await root.getByLabel('เงื่อนไขอนุมัติ GP ต่ำ',{exact:true}).count(),0);
- await root.getByLabel('แบบฟอร์ม / ประเภทคำขอ',{exact:true}).selectOption('quotation');assert.equal(await on.isChecked(),true);assert.equal(await root.getByLabel('GP ต่ำกว่า (%)',{exact:true}).inputValue(),'20');
+ await root.locator('[data-flow-type=so]').click();assert.equal(await root.getByLabel('เงื่อนไขอนุมัติ GP ต่ำ',{exact:true}).count(),0);
+ await root.locator('[data-flow-type=quotation]').click();assert.equal(await on.isChecked(),true);assert.equal(await root.getByLabel('GP ต่ำกว่า (%)',{exact:true}).inputValue(),'20');
  await on.uncheck();await root.getByRole('button',{name:'บันทึก Flow Approve',exact:true}).click();await page.waitForFunction(()=>window.gpDemo.crm_approval_policies[0].low_gp_threshold===null);
  assert.deepEqual(await page.evaluate(()=>window.gpDemo.crm_approval_policies[0].low_gp_approver_ids),[]);assert.deepEqual(errors,[]);console.log('PASS low GP condition configuration',width);await page.close();
 }}finally{await browser.close();}
