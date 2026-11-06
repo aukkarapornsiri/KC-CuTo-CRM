@@ -24,9 +24,12 @@ export function salesOrderHTML(order,lang='th'){
  return html.replace(/<header>([\s\S]*?)<\/header><dl>[\s\S]*?<\/dl>/,(_,head)=>`<header class="so-document-header"><div class="so-header-brand">${head}<p>${t('ใบเสนอราคา','Quotation')}: ${escape(order.quotation_code)}</p><p>${t('พนักงานขาย','Salesperson')}: ${escape(order.owner_name)}</p></div>${info}</header>`)
  .replace('</style>','.so-document-header{display:block}.so-document-header:after{content:"";display:block;clear:both}.so-header-brand{float:left;width:30%}.so-header-brand h1{font-size:20px;overflow-wrap:anywhere}.so-header-details{margin-left:34%;font-size:11px}.so-info{display:inline-block;vertical-align:top;width:48%;margin:0 1% 7px 0;overflow-wrap:anywhere}.so-info b{margin-right:5px}.so-info span{white-space:pre-wrap;overflow-wrap:anywhere}.so-info.wide{width:100%}</style>');
 }
+function addPrintReviewControls(popup,lang){
+ const bar=popup.document.createElement('div');bar.className='kc-export-review-controls';bar.style.cssText='position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;gap:16px;padding:12px;background:#e6f7f7;color:#193542';const label=popup.document.createElement('strong');label.textContent=lang==='th'?'ตรวจทานก่อนบันทึก PDF':'Review before saving PDF';const confirm=popup.document.createElement('button');confirm.type='button';confirm.textContent=lang==='th'?'ยืนยันพิมพ์ / บันทึก PDF':'Print / Save PDF';confirm.onclick=()=>popup.print();bar.append(label,confirm);popup.document.body.prepend(bar);const style=popup.document.createElement('style');style.textContent='@media print{.kc-export-review-controls{display:none!important}}';popup.document.head.append(style);
+}
 export function printSalesOrder(order,lang){
  const popup=window.open('','_blank');if(!popup)throw Error(lang==='th'?'กรุณาอนุญาตหน้าต่างพิมพ์':'Allow the print window');
- popup.opener=null;popup.document.write(salesOrderHTML(order,lang));popup.document.close();popup.focus();popup.print();
+ popup.opener=null;popup.document.write(salesOrderHTML(order,lang));popup.document.close();addPrintReviewControls(popup,lang);popup.focus();
 }
 
 export function costSheetHTML(order,financial,lang='th',context={}){
@@ -99,5 +102,5 @@ export async function printCostSheet(order,loadFinancial,lang,loadContext=async(
  // Open synchronously so mobile popup blockers do not discard the print action.
  const popup=window.open('','_blank');if(!popup)throw Error(lang==='th'?'กรุณาอนุญาตหน้าต่างพิมพ์':'Allow the print window');
  popup.opener=null;
- try{const financial=await loadFinancial();if(!financial)throw Error(lang==='th'?'ไม่พบ Cost Sheet หรือไม่มีสิทธิ์ดูต้นทุน':'Cost Sheet unavailable or cost access denied');const context=await loadContext();popup.document.write(costSheetHTML(order,financial,lang,context));popup.document.close();for(const face of document.fonts)popup.document.fonts.add(face);await popup.document.fonts?.ready;await Promise.all([...popup.document.images].map(img=>img.decode()));popup.focus();popup.print();}catch(e){popup.close();throw e;}
+ try{const financial=await loadFinancial();if(!financial)throw Error(lang==='th'?'ไม่พบ Cost Sheet หรือไม่มีสิทธิ์ดูต้นทุน':'Cost Sheet unavailable or cost access denied');const context=await loadContext();popup.document.write(costSheetHTML(order,financial,lang,context));popup.document.close();for(const face of document.fonts)popup.document.fonts.add(face);await popup.document.fonts?.ready;await Promise.all([...popup.document.images].map(img=>img.decode()));addPrintReviewControls(popup,lang);popup.focus();}catch(e){popup.close();throw e;}
 }

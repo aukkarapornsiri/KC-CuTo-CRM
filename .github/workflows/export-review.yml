@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/sales-order-excel.mjs'
       - 'src/quotation-print.mjs'
+      - 'src/sales-order-print.mjs'
       - 'tests/export-review-smoke.mjs'
       - '.github/workflows/export-review.yml'
 jobs:
