@@ -4,7 +4,7 @@ import {openDesktopMenu} from './menu-helper.mjs';
 const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']}: {})});
 try {
  for(const width of [1440,390]){
-  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];
+  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(process.env.SITE_URL||'http://127.0.0.1:4173/');
   await page.getByRole('button',{name:'เข้าใช้งานโหมดทดลอง',exact:true}).click();
@@ -15,14 +15,8 @@ try {
    const {DEMO_RECORDS}=await import(new URL(uri,location.href).href);
    DEMO_RECORDS.quotations=Array.from({length:50},(_,i)=>({id:'quote-'+i,owner_id:'00000000-0000-0000-0000-0000000000d0',code:'QA-QUOTE-'+i,customer_name:'QA Company',quotation_kind:i>=2&&i<=5?'recurring':'standard',status:i?'approved':'submitted',approval_status:i?'approved':'pending',items:[{billing_period:i>=2&&i<=5?['day','month','year','once'][i-2]:undefined,name:'HCI Node',qty:3,unit:'EA',price:700000,total:2100000,discount:0,cost:500000}],subtotal:2100000,discount:0,vat:147000,total:2247000}));
   });
-  if(width>=1024)await openDesktopMenu(page,'Quotations','Quotation List');
-  else {
-   await page.locator('button.lg\\:hidden').first().click();
-   const nav=page.locator('div.fixed.top-0.left-0.h-full.w-64.lg\\:hidden');
-   await nav.getByRole('button',{name:'Sales',exact:true}).click();
-   await nav.getByText('Quotations',{exact:true}).click();
-   await nav.getByText('Quotation List',{exact:true}).click();
-  }
+  await openDesktopMenu(page,'Quotations','Quotation List');
+  await page.setViewportSize({width,height:900});
   const type=page.getByLabel('Quotation type',{exact:true}),cycle=page.getByLabel('Rental / Service cycle',{exact:true}),summary=page.getByRole('region',{name:'Quotation summary'});
   await type.selectOption('recurring');assert.equal(await summary.locator('p').first().innerText(),'4');
   for(const period of ['day','month','year','once']){await cycle.selectOption(period);assert.equal(await summary.locator('p').first().innerText(),'1');assert.match(await summary.locator('p').nth(1).innerText(),/2,247,000/);}

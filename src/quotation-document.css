@@ -107,3 +107,40 @@
 @media(max-width:1000px){.kc-approval-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.kc-quote-detail .kc-approval-compact{padding:16px}.kc-approval-heading{align-items:flex-start;flex-direction:column}.kc-approval-heading h3{font-size:16px}.kc-approval-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kc-approval-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kc-approval-fields>.kc-approval-note{grid-column:1/-1}.kc-quote-detail .kc-approval-actions>.kc-approval-action{font-size:12px;padding:8px 6px;gap:6px}.kc-approval-status{min-width:0}}
 
 .kc-quote-detail .kc-approval-compact{min-height:0}.kc-quote-detail .kc-approval-compact>*{margin:0}.kc-approval-heading h3{margin:0!important}.kc-approval-history{margin:8px 0 16px}
+
+/* Quotation detail refresh — approved Figma 4:133 / 4:325. */
+.crm-quotation-detail-dialog .kc-quote-hero{background:#f1f6f8;padding:24px 32px;border-bottom:1px solid #dce8ed}
+.kc-quote-detail .kc-quote-detail-identity{display:flex;flex-direction:row;align-items:flex-start;gap:20px;min-width:0}
+.kc-quote-detail-identity>div:first-child{min-width:0;flex:1}
+.kc-quote-detail .kc-quote-header-actions{display:flex;align-items:flex-start;width:auto;flex:0 0 auto;gap:0}
+.kc-quote-detail .kc-quote-header-actions>.kc-quote-detail-status{width:max-content;max-width:200px;height:auto;min-height:28px;flex:0 0 auto;padding:5px 12px;margin:0;border-radius:8px;font-size:12px;font-weight:300;line-height:18px;background:#fff3e3;color:#a95b12;overflow-wrap:anywhere}
+.kc-quote-detail-status[data-status=approved]{background:#e6f7f7!important;color:#088a87!important}
+.kc-quote-detail-status[data-status=rejected]{background:#fff1f2!important;color:#b42318!important}
+.kc-quote-detail .kc-quote-primary-actions{display:flex!important;flex-wrap:wrap;align-items:stretch;justify-content:flex-start;gap:12px;margin-top:22px!important}
+.kc-quote-detail .kc-quote-primary-actions>button,.kc-quote-detail .kc-quote-primary-actions>.kc-quote-more>summary{width:auto;flex:0 0 auto;min-height:46px;height:46px;padding:10px 18px;font-size:14px;font-weight:400;border:1px solid #dce8ed;border-radius:12px;background:#fff;color:#088a87;box-shadow:0 3px 9px #0859571a}
+.kc-quote-detail .kc-quote-primary-actions>button.kc-quote-print-action{width:214px;background:#088a87;border-color:#088a87;color:#fff}
+.kc-quote-detail .kc-quote-primary-actions>button.kc-quote-edit-action{width:214px;background:#e6f7f7;border-color:#088a87;color:#088a87}
+.kc-quote-detail .kc-quote-primary-actions>button:hover:not(:disabled),.kc-quote-detail .kc-quote-more>summary:hover{filter:brightness(.97)}
+.kc-quote-detail .kc-quote-primary-actions>button:active:not(:disabled){transform:translateY(1px)}
+.kc-quote-detail .kc-quote-body{padding:24px 32px;background:#f1f6f8;font-weight:300}
+.kc-quote-detail .kc-quote-card{border-color:#dce8ed;border-radius:20px;padding:24px;box-shadow:0 5px 20px #14333d0e}
+.kc-quote-detail .kc-quote-card-grid{gap:24px}
+.kc-quote-detail .kc-quote-card :is(.crm-field>div,.crm-field>span,.kc-quote-customer-name,.kc-quote-preparer strong,.kc-quote-preparer small,.kc-quote-avatar),.kc-quote-detail .kc-quote-metric strong,.kc-quote-detail .kc-quote-profit-summary strong,.kc-quote-detail .kc-quote-hero p,.kc-quote-detail .kc-quote-detail-identity small{font-weight:300!important}
+.kc-quote-detail .kc-quote-card .crm-field>div{font-size:15px;line-height:1.5}
+.kc-quote-detail .kc-quote-card :is(.crm-field>span,.kc-quote-preparer small){font-size:12px;line-height:1.5}
+.kc-quote-detail .kc-quote-card h3,.kc-quote-detail .kc-quote-extra-section>h3{font-weight:600!important;font-size:18px}
+.kc-quote-detail .kc-quote-compact-items table :is(th,td):nth-child(3){text-align:left!important}
+.kc-quote-detail .kc-quote-compact-items table td{font-weight:300!important}
+.kc-quote-detail .kc-quote-compact-items table th{background:#e6f7f7!important;color:#088a87!important;font-weight:400!important}
+.kc-quote-detail .kc-quote-footer .crm-actions>button{border-radius:12px;color:#088a87;box-shadow:0 3px 9px #0859571a;font-weight:400}
+@media(max-width:760px){
+ .crm-quotation-detail-dialog .kc-quote-hero{padding:20px}
+ .kc-quote-detail .kc-quote-detail-identity{gap:12px}
+ .kc-quote-detail .kc-quote-header-actions>.kc-quote-detail-status{font-size:11px;max-width:130px}
+ .crm-quotation-detail-dialog .kc-quote-detail .kc-quote-hero h2{font-size:23px}
+ .kc-quote-detail .kc-quote-primary-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .kc-quote-detail .kc-quote-primary-actions>button,.kc-quote-detail .kc-quote-primary-actions>button.kc-quote-print-action,.kc-quote-detail .kc-quote-primary-actions>button.kc-quote-edit-action,.kc-quote-detail .kc-quote-more>summary{width:100%;min-width:0;padding:8px;font-size:12px;height:auto;min-height:46px;white-space:normal}
+ .kc-quote-detail .kc-quote-body{padding:20px}
+ .kc-quote-detail .kc-quote-card{padding:20px}
+ .kc-quote-detail .kc-quote-card-grid{gap:20px}
+}
