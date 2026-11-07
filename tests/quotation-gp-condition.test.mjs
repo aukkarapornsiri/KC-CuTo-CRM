@@ -4,8 +4,8 @@ import {quotationGPCondition} from '../src/quotation-gp-condition.mjs';
 const people=['manager','director','finance'].map(id=>({id}));
 test('GP condition is opt-in and does not change the base route',()=>{
  const base=['manager'];const extra=['director','finance'];
- assert.deepEqual(quotationGPCondition(false,'bad',[],base,people),{low_gp_threshold:null,low_gp_approver_ids:[]});
- assert.deepEqual(quotationGPCondition(true,'20.25',extra,base,people),{low_gp_threshold:20.25,low_gp_approver_ids:extra});
+ assert.deepEqual(quotationGPCondition(false,'bad',[],base,people),{low_gp_threshold:null,low_gp_amount:null,low_gp_approver_ids:[]});
+ assert.deepEqual(quotationGPCondition(true,'20.25',extra,base,people),{low_gp_threshold:20.25,low_gp_amount:null,low_gp_approver_ids:extra});
  assert.deepEqual(base,['manager']);assert.deepEqual(extra,['director','finance']);
 });
 test('GP conditions reject unusable thresholds and unsafe reviewer sequences',()=>{
@@ -13,4 +13,10 @@ test('GP conditions reject unusable thresholds and unsafe reviewer sequences',()
  for(const ids of [[],[''],['missing'],['manager'],['director','director']])assert.throws(()=>quotationGPCondition(true,20,ids,['manager'],people));
  assert.throws(()=>quotationGPCondition(true,20,['director'],Array(8).fill('manager'),people));
  for(const n of [0,100,0.01,19.99])assert.equal(quotationGPCondition(true,n,['director'],['manager'],people).low_gp_threshold,n);
+});
+
+test('Amount-only and combined thresholds validate independently',()=>{
+ assert.equal(quotationGPCondition(true,'',['director'],['manager'],people,'5000').low_gp_amount,5000);
+ const both=quotationGPCondition(true,20,['director'],['manager'],people,'1000.25');assert.equal(both.low_gp_amount,1000.25);assert.equal(both.low_gp_threshold,20);
+ for(const n of [-1,'bad',1.111,Infinity])assert.throws(()=>quotationGPCondition(true,'',['director'],['manager'],people,n));
 });
