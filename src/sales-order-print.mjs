@@ -103,8 +103,32 @@ export function costSheetHTML(order,financial,lang='th',context={}){
  ${table}<section class="cs-closing">${summary}${approvals}<footer>KC CuTo CRM · INTERNAL USE ONLY · Restricted Cost Information</footer></section></body></html>`;
 }
 export async function printCostSheet(order,loadFinancial,lang,loadContext=async()=>({})){
- // Open synchronously so mobile popup blockers do not discard the print action.
- const popup=window.open('','_blank');if(!popup)throw Error(lang==='th'?'กรุณาอนุญาตหน้าต่างพิมพ์':'Allow the print window');
- popup.opener=null;
- try{const financial=await loadFinancial();if(!financial)throw Error(lang==='th'?'ไม่พบ Cost Sheet หรือไม่มีสิทธิ์ดูต้นทุน':'Cost Sheet unavailable or cost access denied');const context=await loadContext();popup.document.write(costSheetHTML(order,financial,lang,context));popup.document.close();for(const face of document.fonts)popup.document.fonts.add(face);await popup.document.fonts?.ready;await Promise.all([...popup.document.images].map(img=>img.decode()));await addPrintReviewControls(popup,lang,false);popup.focus();popup.print();}catch(e){popup.close();throw e;}
+ const financial=await loadFinancial();
+ if(!financial)throw Error(lang==='th'?'ไม่พบใบต้นทุน หรือไม่มีสิทธิ์ดูต้นทุน':'Cost Sheet unavailable or cost access denied');
+ const context=await loadContext(),opener=document.activeElement,frame=document.createElement('iframe');
+ frame.className='kc-cost-sheet-print-frame';frame.title=lang==='th'?'พิมพ์ใบต้นทุน':'Print Cost Sheet';
+ frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;
+ // Keep a real A4 landscape viewport for measurement without opening a tab.
+ frame.style.cssText='position:fixed;left:-10000px;top:0;width:1123px;height:794px;border:0;pointer-events:none';
+ document.body.append(frame);
+ const target=frame.contentWindow,doc=frame.contentDocument,previousTitle=document.title,printTitle='Cost Sheet '+String(order.code||'');
+ let disposed=false,printMedia;
+ const cleanup=()=>{
+  if(disposed)return;disposed=true;
+  target.removeEventListener('afterprint',cleanup);window.removeEventListener('afterprint',cleanup);
+  printMedia?.removeEventListener('change',mediaChanged);
+  if(document.title===printTitle)document.title=previousTitle;
+  frame.remove();if(opener?.isConnected)opener.focus({preventScroll:true});
+ };
+ let enteredPrint=false;
+ const mediaChanged=e=>{if(e.matches)enteredPrint=true;else if(enteredPrint)cleanup();};
+ try{
+  doc.open();doc.write(costSheetHTML(order,financial,lang,context));doc.close();
+  for(const face of document.fonts)doc.fonts.add(face);
+  await doc.fonts?.ready;await Promise.all([...doc.images].map(img=>img.decode().catch(()=>{})));
+  await addPrintReviewControls(target,lang,false);
+  target.addEventListener('afterprint',cleanup,{once:true});window.addEventListener('afterprint',cleanup,{once:true});
+  printMedia=target.matchMedia('print');printMedia.addEventListener('change',mediaChanged);
+  document.title=printTitle;target.focus();target.print();
+ }catch(e){cleanup();throw e;}
 }

@@ -7,6 +7,7 @@ on:
       - 'src/sales-order-print.mjs'
       - 'tests/export-review-smoke.mjs'
       - 'tests/so-review-fit-smoke.mjs'
+      - 'tests/cost-sheet-direct-print-smoke.mjs'
       - '.github/workflows/export-review.yml'
 jobs:
   review:
@@ -24,6 +25,7 @@ jobs:
           sleep 2
           node tests/export-review-smoke.mjs
           node tests/so-review-fit-smoke.mjs
+          node tests/cost-sheet-direct-print-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
