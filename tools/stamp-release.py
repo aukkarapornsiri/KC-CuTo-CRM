@@ -5,7 +5,11 @@ root=Path(__file__).resolve().parents[1]
 release=sys.argv[1]
 if not re.fullmatch(r'[A-Za-z0-9._-]+',release):raise SystemExit('Invalid release ID')
 imports={}
-for file in [*root.glob('*.js'),*root.glob('src/*.mjs')]:
+# Canonical URLs make bare and historical imports share one module instance.
+for file in root.glob('src/**/*.mjs'):
+    target='./'+file.relative_to(root).as_posix()
+    imports[target]=target+'?v='+release
+for file in [*root.glob('*.js'),*root.glob('src/**/*.mjs')]:
     for spec in re.findall(r'''(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)["'](\.[^"']+)["']''',file.read_text()):
         rel=posixpath.normpath(posixpath.join(str(file.relative_to(root).parent),spec))
         target=rel.split('?')[0].split('#')[0]
