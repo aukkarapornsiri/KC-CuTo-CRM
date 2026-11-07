@@ -213,6 +213,8 @@ const rowStyles=`
 `;
 
 const compactStyles=`
+.crm-record-popup:has(.crm-so)>.crm-record-popup-head{background:#2164d9!important;color:#fff!important;border-bottom-color:#2164d9!important}.crm-record-popup:has(.crm-so)>.crm-record-popup-head :is(h1,h2,h3){color:#fff!important}
+
 /* Compact SO workspace — equal single-frame filters and financial summary. */
 .crm-record-popup:has(.crm-so)>.crm-record-popup-body{padding:20px}
 .crm-so-heading h1{font-size:24px;margin:2px 0}.crm-so-heading p{font-size:12px}

@@ -48,7 +48,6 @@ export function createSalesOrderDetailLayout(React){
  };
 }
 const styles=`
-.crm-record-popup:has(.crm-so)>.crm-record-popup-head{background:#2164d9!important;color:#fff!important;border-bottom-color:#2164d9!important}.crm-record-popup:has(.crm-so)>.crm-record-popup-head :is(h1,h2,h3){color:#fff!important}
 .kc-so-hero .kc-so-hero-actions{flex-wrap:wrap;justify-content:flex-end;align-content:center;min-width:0;max-width:65%}.kc-so-hero .kc-so-hero-actions>.crm-actions{display:contents}.kc-so-hero .kc-so-hero-actions>button,.kc-so-hero .kc-so-hero-actions>.crm-actions>button{width:auto;min-height:44px;flex:0 1 auto;white-space:normal}
 @media(max-width:760px){.kc-so-hero .kc-so-hero-actions{display:flex;max-width:100%;justify-content:flex-end}.kc-so-hero .kc-so-hero-actions button{flex:1 1 140px!important}}
 
