@@ -24,7 +24,7 @@ try{for(const width of [1440,390]){
  if(width>760){assert.ok(Math.abs(supportBoxes[0].h-supportBoxes[1].h)<1);assert.ok(Math.abs(supportBoxes[0].y-supportBoxes[1].y)<1);assert.ok(supportBoxes.every(b=>b.h<240&&b.buttonTop<=18));}
  assert.ok(await support.evaluate(n=>n.scrollWidth<=n.clientWidth+1),'Support cards fit viewport');
  await poCard.getByRole('button',{name:'Open PO attachment',exact:true}).click();await page.getByRole('alert').filter({hasText:'Demo mode: no real attachment'}).waitFor();
- assert.equal(await root.getByRole('button',{name:'Print SO / PDF',exact:true}).count(),1);assert.equal(await root.getByRole('button',{name:'Print Cost Sheet',exact:true}).count(),1);
+ assert.equal(await root.getByRole('button',{name:'Convert to PDF',exact:true}).count(),1);assert.equal(await root.getByRole('button',{name:'Print Cost Sheet',exact:true}).count(),1);
  assert.ok(await root.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'No layout overflow');
  if(width>760){const sizes=await root.locator('#so-items,.kc-so-metric-grid').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().width));assert.ok(Math.abs(sizes[0]-sizes[1])<1,'Items use full content width');}
  await root.getByRole('button',{name:'Open quotation',exact:true}).click();assert.equal(await page.evaluate(()=>window.openedQuote),'qa-quote');
