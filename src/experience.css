@@ -84,3 +84,8 @@ body h1, body h1 *, body [role="heading"][aria-level="1"], body [role="heading"]
 .crm-master-table td[data-field=actions]>button{vertical-align:middle;display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-block:0}
 .crm-master-table :is(th,td):is([data-field=total],[data-field=amount],[data-field=value],[data-field=price],[data-field=cost],[data-field=budget],[data-field=probability]){text-align:right;font-variant-numeric:tabular-nums}
 .crm-master-table :is(th,td):is([data-field=status],[data-field=approval_status]){white-space:nowrap}
+
+/* Trash actions keep their accessible text and click handlers, with icon-only visuals. */
+button:has(svg:is(.kc-trash-icon,.lucide-trash,.lucide-trash-2)){display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;width:36px!important;min-width:36px!important;max-width:36px!important;height:36px!important;min-height:36px!important;padding:8px!important;font-size:0!important;line-height:0!important;flex:0 0 36px!important}
+button:has(svg:is(.kc-trash-icon,.lucide-trash,.lucide-trash-2)) :not(svg):not(svg *){font-size:0!important;line-height:0!important}
+button svg:is(.kc-trash-icon,.lucide-trash,.lucide-trash-2){display:block!important;width:20px!important;height:20px!important;flex:none!important;visibility:visible!important}
