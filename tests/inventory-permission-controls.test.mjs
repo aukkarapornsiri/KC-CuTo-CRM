@@ -6,7 +6,15 @@ const label=n=>(n.children||[]).map(x=>typeof x==='string'?x:typeof x==='object'
 function render(allowed){
  const React={Fragment:'fragment',createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity)}),useEffect:()=>{},useRef:()=>({current:null}),useState:x=>[x&&typeof x==='object'&&'items' in x?{...x,items:[{id:'one',code:'TEST',name:'Test item',status:'active',price:10,cost:5,unit:'unit',stock_mode:'service'}]}:x,()=>{}]};
  const Page=createInventory({React,client:{},useApp:()=>({demoMode:false,profile:{id:'sales',role:'sales_user',is_active:true}}),useAccess:()=>({can:(module,action)=>module==='inventory'&&allowed.includes(action)})});
- return flatten(Page({lang:'en'})).filter(n=>n.type==='button').map(label);
+ return flatten(Page({lang:'en'})).filter(n=>n.type==='button').map(n=>{
+  if(n.props.className==='kc-inventory-delete'){
+   assert.equal(label(n),'','Trash action has no visible text');
+   assert.match(n.props['aria-label'],/^Delete item /);
+   assert.ok(flatten(n).some(x=>x.type==='svg'),'Trash icon remains visible');
+   return 'Delete';
+  }
+  return label(n);
+ });
 }
 test('inventory exposes each action for a normal sales user only when granted',()=>{
  const viewer=render(['view']);assert.ok(!viewer.includes('Add product or service'));assert.ok(!viewer.includes('✎ Edit'));assert.ok(!viewer.includes('Delete'));
