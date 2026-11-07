@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 export const WORKSPACE_DEFAULTS=Object.freeze({enabled:false,primary:'#0AADA9',sidebar:'#172033',background:'#F7FAFA',surface:'#FFFFFF',border:'#DCE6E7',radius:'12',shadow:'soft',text_color:null,link_color:null,button_text:null});
 export const WORKSPACE_PRESETS=[
  ['KC Teal','#0AADA9','#172033','#F7FAFA','#FFFFFF','#DCE6E7'],
@@ -71,7 +72,7 @@ export function createWorkspaceTheme({React,client,useApp,onChange,readableInk})
      field(tr('มิติและเงา','Depth and shadow'),h('select',{'aria-label':tr('มิติและเงา','Depth and shadow'),value:value.shadow,onChange:e=>update('shadow',e.target.value)},[['none','ไม่มีเงา','No shadow'],['soft','เงานุ่ม','Soft shadow'],['raised','เงาชัด','Raised shadow']].map(([v,th,en])=>h('option',{key:v,value:v},tr(th,en))))))),
    valid&&value.enabled&&h('div',{className:'crm-personal-preview',style:{background:valid.background,borderColor:valid.border,color:valid.text_color||readableInk(valid.background)}},h('aside',{style:{background:valid.sidebar,color:readableInk(valid.sidebar)}},'KC KuTo'),h('div',{style:{background:valid.surface,color:valid.text_color||readableInk(valid.surface),border:'1px solid '+valid.border,borderRadius:valid.radius+'px',boxShadow:WORKSPACE_SHADOWS[valid.shadow]}},h('h3',{style:{color:valid.link_color||valid.primary}},tr('ตัวอย่างพื้นที่ทำงาน','Workspace preview')),h('p',null,tr('สีและมิติตามที่คุณเลือก','Your selected colors and depth')),h('span',{style:{background:valid.primary,color:valid.button_text||readableInk(valid.primary),borderRadius:valid.radius+'px'}},tr('ปุ่มตัวอย่าง','Sample button')))),
    !value.enabled&&h('p',null,tr('ใช้สีและมิติจากการตั้งค่าบริษัท','Using company colors and dimensions')),
-   error&&h('p',{role:'alert',className:'crm-error'},error),message&&h('p',{role:'status',className:'crm-notice'},message),
+   error&&h('p',{role:'alert',className:'crm-error'},systemMessage(error,lang)),message&&h('p',{role:'status',className:'crm-notice'},message),
    h('div',{className:'crm-actions'},h('button',{type:'button',disabled:busy||loading,onClick:load},tr('โหลดค่าส่วนตัวใหม่','Reload personal settings')),h('button',{type:'button',disabled:disabled||!dirty,onClick:()=>{setValue({...saved});setError('');setMessage('');}},tr('ยกเลิกสีส่วนตัวที่แก้ไข','Discard personal changes')),h('button',{type:'button',disabled, onClick:()=>{setValue({...WORKSPACE_DEFAULTS});setError('');setMessage('');}},tr('คืนค่าตามบริษัท','Restore company theme')),h('button',{type:'button',className:'crm-save',disabled:disabled||!dirty,onClick:save},busy?tr('กำลังบันทึก…','Saving…'):tr('บันทึกพื้นที่ทำงานส่วนตัว','Save personal workspace'))));
  }
  function WorkspaceLauncher(){

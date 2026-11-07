@@ -7,7 +7,7 @@ export function attachLeadOutcomes(leads,opportunities=[],available=true){
 export function leadOutcomeLabel(row,lang='th'){
  const t=(a,b)=>lang==='th'?a:b,s=row.sales_outcome;
  if(!s?.available)return t('ผลการขาย: ยังตรวจสอบไม่ได้','Sales outcome: unavailable');
- if(s.won)return t('ปิดการขายสำเร็จ (Won)','Closed Won');
+ if(s.won)return t("ปิดการขายสำเร็จ",'Closed Won');
  if(!s.items.length)return null;
- return t('ยังไม่ Won','Not yet Won');
+ return t("ยังไม่ปิดการขายสำเร็จ",'Not yet Won');
 }

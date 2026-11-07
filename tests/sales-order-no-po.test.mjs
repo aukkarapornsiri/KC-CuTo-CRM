@@ -6,9 +6,9 @@ import {salesOrderHTML} from '../src/sales-order-print.mjs';
 import {amendmentDraft,amendmentPatch} from '../src/so-amendments.mjs';
 test('explicit no PO clears stale metadata and preserves status through revisions and print',()=>{
  const p=validatePO({no_po:true,po_number:'OLD',po_date:'2099-01-01',po_file_key:'old/file',po_file_name:'old.pdf'});
- assert.equal(p.po_date,null);assert.equal(p.po_number,'');assert.equal(p.po_file_key,'');assert.ok(hasNoPO(p));assert.equal(purchaseOrderLabel(p),'ไม่มี PO');assert.equal(purchaseOrderLabel(p,'en'),'No PO');assert.equal(purchaseOrderLabel({po_number:'PO-1'}),'PO-1');
+ assert.equal(p.po_date,null);assert.equal(p.po_number,'');assert.equal(p.po_file_key,'');assert.ok(hasNoPO(p));assert.equal(purchaseOrderLabel(p),'ไม่มี ใบสั่งซื้อ');assert.equal(purchaseOrderLabel(p,'en'),'No PO');assert.equal(purchaseOrderLabel({po_number:'PO-1'}),'PO-1');
  const order={...p,items:[],subtotal:0,discount:0,total:0};assert.equal(amendmentPatch(amendmentDraft(order)).no_po,true);
- assert.ok(salesOrderHTML(order,'th').includes('ไม่มี PO'));assert.ok(salesOrderHTML(order,'en').includes('No PO'));
+ assert.ok(salesOrderHTML(order,'th').includes('ไม่มี ใบสั่งซื้อ'));assert.ok(salesOrderHTML(order,'en').includes('No PO'));
  assert.throws(()=>validatePO({no_po:false}),/PO_REQUIRED/);
 });
 test('database saves no PO explicitly, keeps normal validation, idempotency and atomic approval',async()=>{

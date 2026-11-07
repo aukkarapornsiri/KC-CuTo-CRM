@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 import {createPagination} from './pagination.mjs';
 import {createDecisionReports} from './decision-reports.mjs';
 import {shortSalesName} from './sales-name.mjs';
@@ -34,7 +35,7 @@ export function createInternalReports({React,client,useApp,TargetSummary}){
   const dateLabel={close_date:t('วันที่คาดว่าจะปิดดีล','Expected close date'),end_date:t('วันที่สิ้นสุดสัญญา','Contract end date'),scheduled_at:t('วันที่นัดหมาย','Scheduled date'),created_at:t('วันที่สร้างรายการ','Created date')}[dateKey];
   const metrics=metric?[
    ['count',t('โอกาสทั้งหมด','Total opportunities'),format(metric.count),t('รวมทุกสถานะ','Across all statuses')],
-   ['pipeline',t('มูลค่า Pipeline','Open pipeline'),currency(metric.pipeline),t(`จาก ${filtered.length-closed} ดีลที่ยังเปิดอยู่`,`Across ${filtered.length-closed} open deals`)],
+   ['pipeline',t("มูลค่า กระบวนการขาย",'Open pipeline'),currency(metric.pipeline),t(`จาก ${filtered.length-closed} ดีลที่ยังเปิดอยู่`,`Across ${filtered.length-closed} open deals`)],
    ['weighted',t('มูลค่าถ่วงน้ำหนัก','Weighted pipeline'),currency(metric.weighted),t('มูลค่า × โอกาสชนะ','Value × win probability')],
    ['winRate',t('อัตราชนะ','Win rate'),closed?format(metric.winRate)+'%':'—',t(`ชนะ ${won} จาก ${closed} ดีลที่ปิด`,`${won} won / ${closed} closed deals`)]
   ]:[];
@@ -59,10 +60,10 @@ export function createInternalReports({React,client,useApp,TargetSummary}){
   );
   return h('section',{className:'kc-reports kc-reports-enterprise','aria-busy':busy},
    h('header',{className:'kc-reports-heading'},
-    h('div',null,h('small',{className:'kc-report-eyebrow'},'REPORTS & ANALYTICS'),h('h1',null,t('รายงานและการวิเคราะห์','Reports and analytics')),h('p',null,t('เปลี่ยนข้อมูลการขาย ให้เป็นการตัดสินใจที่ชัดเจน','A clear view of your pipeline, performance and next steps.'))),
+    h('div',null,h('small',{className:'kc-report-eyebrow'},t("รายงานและการวิเคราะห์","REPORTS & ANALYTICS")),h('h1',null,t('รายงานและการวิเคราะห์','Reports and analytics')),h('p',null,t('เปลี่ยนข้อมูลการขาย ให้เป็นการตัดสินใจที่ชัดเจน','A clear view of your pipeline, performance and next steps.'))),
     h('div',{className:'kc-report-actions'},h('button',{onClick:()=>Refresh(v=>v+1),disabled:busy},t('โหลดใหม่','Reload')),canExport&&h('button',{className:'kc-report-primary',onClick:exportCSV,disabled:busy||!!error},t('ส่งออก CSV','Export CSV')))
    ),tabs,
-   error&&h('p',{role:'alert',className:'crm-error'},error),
+   error&&h('p',{role:'alert',className:'crm-error'},systemMessage(error,lang)),
    h('section',{className:'kc-report-filter-panel'},
     h('div',{className:'kc-report-filters'},
      select(t('ชุดข้อมูล','Dataset'),entity,changeEntity,['leads','customers','contacts','opportunities','quotations','contracts','assets','tickets','activities','documents'].map(k=>[k,ENTITIES[k].title[lang==='th'?0:1]])),

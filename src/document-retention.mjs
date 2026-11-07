@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 import {DOCUMENT_BUCKETS,validateRetention,dateBounds} from './document-retention-model.mjs';
 import {ACCESS_CHANGED,effectiveRole} from './role-access.mjs';
 export function createDocumentRetention({React,client,useApp}){
@@ -25,8 +26,8 @@ export function createDocumentRetention({React,client,useApp}){
   const action=async fn=>{if(busy)return;S(true);E('');try{await fn();U(x=>x+1);}catch(e){E(e.message||String(e));}finally{S(false);}};
   const btn=(label,onClick,disabled=false,extra={})=>h('button',{type:'button',onClick,disabled:busy||disabled,...extra},label);
   const field=(label,type,value,set,props={})=>h('label',{className:'crm-field'},h('span',null,label),h('input',{type,value,disabled:busy,onChange:e=>set(e.target.value),...props}));
-  if(!allowed||revoked)return h('section',{className:'crm-settings'},h('h1',null,t('จัดการเอกสารและลบอัตโนมัติ','Documents & Auto Deletion')),h('p',{role:'alert'},t('เฉพาะ Super Admin ที่ใช้งานอยู่','Active Super Admin only')));
-  const groupLabel=b=>({'crm-documents':t('เอกสารทั่วไป','General Documents'),'crm-sales-orders':t('เอกสาร PO / SO','PO / SO Documents'),'crm-quotation-assets':t('รูปและลายเซ็นใบเสนอราคา','Quotation Images & Signatures')}[b]||b);
+  if(!allowed||revoked)return h('section',{className:'crm-settings'},h('h1',null,t('จัดการเอกสารและลบอัตโนมัติ','Documents & Auto Deletion')),h('p',{role:'alert'},t("เฉพาะ ผู้ดูแลระบบสูงสุด ที่ใช้งานอยู่",'Active Super Admin only')));
+  const groupLabel=b=>({'crm-documents':t('เอกสารทั่วไป','General Documents'),'crm-sales-orders':t("เอกสาร ใบสั่งซื้อ / ใบสั่งขาย",'PO / SO Documents'),'crm-quotation-assets':t('รูปและลายเซ็นใบเสนอราคา','Quotation Images & Signatures')}[b]||b);
   const stateLabel=s=>({deleting:t('กำลังลบ','Deleting'),failed:t('ลบไม่สำเร็จ','Failed'),deleted:t('ลบแล้ว','Deleted')}[s]||s);
   const save=rule=>action(async()=>{
    const value=validateRetention(rule);
@@ -38,8 +39,8 @@ export function createDocumentRetention({React,client,useApp}){
    const {data,error}=await client.functions.invoke('crm-document-retention',{body:{action:'delete',object_id:row.id,confirm:true}});if(error||data?.error)throw error||Error(data.error);
   });
   return h('section',{className:'crm-settings kc-retention-page'},h('h1',null,t('จัดการเอกสารและลบอัตโนมัติ','Documents & Auto Deletion')),
-   h('p',null,t('รวมไฟล์เอกสาร PO และไฟล์ประกอบใบเสนอราคาของ CRM · เรียงล่าสุดก่อน · วันที่และเวลาไทย','CRM documents, PO files and quotation assets · Newest first · Bangkok dates and time')),
-   error&&h('p',{role:'alert',className:'crm-error'},error),
+   h('p',null,t("รวมไฟล์เอกสาร ใบสั่งซื้อ และไฟล์ประกอบใบเสนอราคาของ CRM · เรียงล่าสุดก่อน · วันที่และเวลาไทย",'CRM documents, PO files and quotation assets · Newest first · Bangkok dates and time')),
+   error&&h('p',{role:'alert',className:'crm-error'},systemMessage(error,lang)),
    h('section',{className:'kc-retention-rules','aria-label':t('กฎอัตโนมัติ','Automatic Rules')},
     h('div',{className:'kc-retention-head'},h('h2',null,t('กฎอัตโนมัติ','Automatic Rules')),h('span',{className:'kc-retention-summary'},t('เปิดใช้งาน ','Enabled ')+rules.filter(r=>r.enabled).length+' / '+rules.length)),
     h('div',{className:'kc-retention-controls'},...rules.map(rule=>h('div',{key:rule.bucket_id,className:'kc-retention-rule'},
@@ -52,6 +53,6 @@ export function createDocumentRetention({React,client,useApp}){
    h('p',{role:'status'},busy?t('กำลังโหลด…','Loading…'):t('จำนวนไฟล์: ','Files: ')+data.total),
    h('div',{className:'crm-table-scroll'},h('table',{className:'crm-master-table'},h('thead',null,h('tr',null,...[t('วันที่อัปโหลด','Uploaded'),t('ชื่อไฟล์','File'),t('กลุ่ม','Group'),t('ขนาด','Size'),t('สถานะ','Status'),t('จัดการ','Actions')].map(x=>h('th',{key:x},x)))),h('tbody',null,...data.rows.map(row=>h('tr',{key:row.id},h('td',null,new Date(row.created_at).toLocaleString(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok'})),h('td',{style:{overflowWrap:'anywhere',maxWidth:340}},row.name),h('td',null,groupLabel(row.bucket_id)),h('td',null,Number(row.metadata?.size||0).toLocaleString()+' B'),h('td',null,row.protected?t('กำลังใช้งาน · ป้องกันการลบ','Referenced · Protected'):stateLabel(row.deletion_state)||t('ไม่มีรายการอ้างอิง','Unreferenced')),h('td',null,btn(t('เปิดไฟล์','Open file'),()=>action(async()=>{const {data,error}=await client.storage.from(row.bucket_id).createSignedUrl(row.name,60);if(error)throw error;const a=document.createElement('a');a.href=data.signedUrl;a.target='_blank';a.rel='noopener';a.click();})),btn(t('ลบถาวร','Delete permanently'),()=>remove(row),row.protected||Date.parse(row.created_at)>Date.now()-86400000))))))),
    h('div',{className:'crm-actions'},btn(t('ก่อนหน้า','Previous'),()=>P(page-1),page===0),h('span',null,String(page+1)),btn(t('ถัดไป','Next'),()=>P(page+1),(page+1)*50>=data.total)),
-   h('h2',null,t('ประวัติการลบล่าสุด','Recent deletion history')),h('div',{className:'crm-table-scroll'},h('table',{className:'crm-master-table'},h('tbody',null,...logs.map(log=>h('tr',{key:log.id},h('td',null,new Date(log.created_at).toLocaleString(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok'})),h('td',{style:{overflowWrap:'anywhere'}},log.object_key),h('td',null,log.source==='scheduled'?t('อัตโนมัติ','Automatic'):t('Super Admin','Super Admin')),h('td',null,stateLabel(log.state)),h('td',null,log.error||'')))))));
+   h('h2',null,t('ประวัติการลบล่าสุด','Recent deletion history')),h('div',{className:'crm-table-scroll'},h('table',{className:'crm-master-table'},h('tbody',null,...logs.map(log=>h('tr',{key:log.id},h('td',null,new Date(log.created_at).toLocaleString(lang==='th'?'th-TH':'en-GB',{timeZone:'Asia/Bangkok'})),h('td',{style:{overflowWrap:'anywhere'}},log.object_key),h('td',null,log.source==='scheduled'?t('อัตโนมัติ','Automatic'):t("ผู้ดูแลระบบสูงสุด",'Super Admin')),h('td',null,stateLabel(log.state)),h('td',null,log.error||'')))))));
  };
 }

@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 import {createPagination} from './pagination.mjs';
 import {recordOptionLabel} from './record-display.mjs';
 import {FOLLOWUP_STATUSES,followupClosed,followupLabel,followupBounds,followupFilter,followupValidation,bangkokInput,fromBangkokInput} from './quotation-followup-model.mjs';
@@ -37,7 +38,7 @@ export function createQuotationFollowup({React,client,useApp,useAccess,records})
  async function saveConfig(e){e.preventDefault();if(lock.current)return;lock.current=true;Busy(true);ErrorText('');try{const patch={enabled:!!config.enabled,business_days:Number(config.business_days),expiry_days:Number(config.expiry_days),escalation_days:Number(config.escalation_days),in_app:!!config.in_app,email:!!config.email,updated_at:new Date().toISOString()};const data=demoMode?patch:await unwrap(client.from('crm_quotation_followup_settings').update(patch).eq('id',true).eq('updated_at',settings.updated_at).select().single());Settings(data);Config(null);Notice(t('บันทึกการตั้งค่าแล้ว','Settings saved'));}catch(e){ErrorText(e.message);}finally{lock.current=false;Busy(false);}}
  const button=(label,action,props={})=>h('button',{type:'button',onClick:action,disabled:busy,...props},label);
  const filters=[['all','ทั้งหมด','All quotations'],['today','ต้องติดตามวันนี้','Due today'],['overdue','เกินกำหนด','Overdue'],['missing','ยังไม่มีกิจกรรมถัดไป','No next activity'],['expiry','ใกล้หมดอายุ','Expiring soon']];
- const errorNode=error&&h('p',{role:'alert',className:'crm-error'},error);
+ const errorNode=error&&h('p',{role:'alert',className:'crm-error'},systemMessage(error,lang));
  return h('section',{className:'crm-settings qf-center'},h('header',{className:'qf-heading'},h('div',null,h('h1',null,t('ติดตามใบเสนอราคา','Quotation follow-up')),h('p',null,t('งานของฉันและทีมตามสิทธิ์ · งานเกินกำหนดอยู่ก่อน · เวลาไทย','Your work and team within access · Overdue first · Bangkok time'))),canConfigure&&button(t('ตั้งค่าการติดตาม','Follow-up settings'),()=>Config({...settings}))),!selected&&!config&&errorNode,notice&&h('p',{role:'status'},notice),
  h('nav',{className:'qf-filters','aria-label':t('ตัวกรองติดตาม','Follow-up filters')},filters.map(([key,th,en])=>button(t(th,en),()=>{Filter(key);Page(0);},{key,'aria-pressed':key===filter}))),
  h('form',{className:'qf-search',onSubmit:e=>{e.preventDefault();Search(query);Page(0);}},h('input',{type:'search',value:query,onChange:e=>Query(e.target.value),'aria-label':t('ค้นหาใบเสนอราคา','Search quotations'),placeholder:t('เลขที่ / ลูกค้า / หัวข้องาน / ผู้รับผิดชอบ','Number / customer / project / owner')}),h('button',{type:'submit',disabled:busy},t('ค้นหา','Search')),button(t('โหลดใหม่','Reload'),load)),

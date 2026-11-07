@@ -1,3 +1,4 @@
+import {systemMessage} from './ui-language.mjs';
 export async function removeUser(client,userId){
  const {data,error}=await client.functions.invoke('crm-user-admin',{body:{user_id:userId,confirm:true}});
  if(error||!data?.ok){
@@ -26,7 +27,7 @@ export function createDeleteUserDialog(React){
    h('h2',{id:'crm-delete-user-title'},tr('ยืนยันลบผู้ใช้','Confirm user removal')),
    h('p',null,h('strong',null,row.display_name||row.email)),h('p',{style:{overflowWrap:'anywhere'}},row.email),
    h('p',{id:'crm-delete-user-description'},tr('ผู้ใช้นี้จะหายจากรายชื่อและไม่สามารถเข้าสู่ CRM ได้ ประวัติงานและเอกสารเดิมจะยังคงอยู่ การดำเนินการนี้ไม่ได้ลบบัญชี Microsoft หรือ Google ขององค์กร','This user will be removed from the list and blocked from CRM. Work history and documents are retained. The organization’s Microsoft or Google account is not deleted.')),
-   error&&h('p',{role:'alert',style:{color:'#b91c1c'}},error),
+   error&&h('p',{role:'alert',style:{color:'#b91c1c'}},systemMessage(error,lang)),
    h('div',{className:'crm-actions'},
     h('button',{type:'button',autoFocus:true,disabled:busy,onClick:onCancel},tr('ยกเลิก','Cancel')),
     h('button',{type:'button',disabled:busy,onClick:submit,style:{background:'#b91c1c',color:'#fff',borderColor:'#b91c1c'}},tr(busy?'กำลังลบ…':'ยืนยันลบผู้ใช้',busy?'Removing…':'Confirm removal'))));

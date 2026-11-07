@@ -5,7 +5,7 @@ export const WORKFLOW_LANES=[
  ['leads','all-leads','ลูกค้าเป้าหมาย','Leads','ค้นหา คัดกรอง และมอบหมายลีด','Capture, qualify and assign leads','◎'],
  ['contacts','contact-list','ผู้ติดต่อ','Contacts','บุคคลและผู้มีอำนาจตัดสินใจของลูกค้า','People and decision makers','♧'],
  ['customers','customer-list','บัญชีลูกค้า','Accounts','ศูนย์รวมข้อมูลลูกค้าและประวัติการทำงาน','Customer profiles and relationship history','▦']]},
- {id:'sales',label:['การขาย','Sales'],note:['จากความต้องการ → เสนอราคา → SO → ดูแลสัญญา','From needs → Quotation → SO → Contract lifecycle'],cards:[
+ {id:'sales',label:['การขาย','Sales'],note:["จากความต้องการ → เสนอราคา → ใบสั่งขาย → ดูแลสัญญา",'From needs → Quotation → SO → Contract lifecycle'],cards:[
  ['opportunities','opp-list','โอกาสการขาย','Opportunities','ติดตามดีลและขั้นตอนการขาย','Track deals and sales stages','◇'],
  ['quotations','quot-list','ใบเสนอราคา','Quotations','จัดทำราคา ขออนุมัติ และดำเนินการขาย','Prepare pricing, approval and sales','▤'],
  ['sales_orders','quot-list','ใบสั่งขาย (SO)','Sales Orders (SO)','รับ PO อนุมัติ SO และติดตามการส่งมอบ','Receive PO, approve SO and track delivery','▣'],

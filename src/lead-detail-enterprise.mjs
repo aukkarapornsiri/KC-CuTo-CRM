@@ -25,7 +25,7 @@ export function createLeadDetailEnterprise({React}){
    [t('อีเมล','Email'),record.email],[t('เว็บไซต์','Website'),record.website],['LINE ID',record.line_id],[t('แหล่งที่มา','Source'),record.source],
    [t('สินค้าที่สนใจ','Product Interest'),record.product_interest],[t('งบประมาณ','Budget'),record.budget],[t('คะแนน','Score'),record.score],[t('สถานะ','Status'),leadStatusLabel(record.status,lang)],
    [t('ความสำคัญ','Priority'),record.priority],[t('ประเทศ','Country'),localizeAddressText(record.mailing_country,lang)],[t('ถนน / เลขที่ / อาคาร','Street / Building'),streetValue(record,'mailing_street',lang)],[t('เมือง / เขต / อำเภอ','City / District'),localizeAddressText(record.mailing_city,lang)],
-   [t('รัฐ / จังหวัด','State / Province'),localizeAddressText(record.mailing_state,lang)],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),shortSalesName(record.owner_name)],[t('ผู้ทำหน้าที่ Assign Lead','Lead assigner'),shortSalesName(record.lead_assigner_name)]
+   [t('รัฐ / จังหวัด','State / Province'),localizeAddressText(record.mailing_state,lang)],[t('รหัสไปรษณีย์','Postal Code'),record.mailing_postal_code],[t('งานถัดไป','Next Action'),record.next_action],[t('ผู้รับผิดชอบ','Owner'),shortSalesName(record.owner_name)],[t("ผู้ทำหน้าที่ มอบหมายลูกค้าเป้าหมาย",'Lead assigner'),shortSalesName(record.lead_assigner_name)]
   ];
   return h('div',{className:'kc-lead-detail-overlay',role:'presentation',onMouseDown:e=>{if(e.target===e.currentTarget)onClose?.();}},
    h('section',{className:'kc-lead-detail-modal',role:'dialog','aria-modal':true,'aria-label':t('รายละเอียดลีด','Lead Detail')},
@@ -57,17 +57,17 @@ export function createLeadDetailEnterprise({React}){
      !canAssign&&h('p',{className:'kc-lead-assign-help'},t('การมอบหมายลีดต้องมีสิทธิ์แก้ไขและมอบหมายในตารางบทบาทและสิทธิ์','Lead assignment requires Edit and Assign permissions in Roles & Permissions'))
     ),
     h('div',{className:'kc-lead-detail-body'+(mobileExpanded?' is-mobile-expanded':'')},history,
-     h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลลีด','Lead Information')),h('span',null,t('ข้อมูลทั่วไปแสดงแบบ Compact เพื่อให้เห็นบริบทได้เร็ว','Compact information for fast context'))),
+     h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('ข้อมูลลีด','Lead Information')),h('span',null,t("ข้อมูลทั่วไปแสดงแบบ กระชับ เพื่อให้เห็นบริบทได้เร็ว",'Compact information for fast context'))),
      h('div',{className:'kc-lead-info-grid'},fields.map(([label,value])=>h('div',{className:'kc-lead-info-field',key:label},h('div',{className:'kc-lead-info-label'},label),h('div',{className:'kc-lead-info-value'},clean(value))))),
      h('section',{className:'kc-lead-note-wrap'},
-      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('หมายเหตุสำคัญ','Important Notes')),h('span',null,t('พื้นที่หลักสำหรับบริบทการขายและความต้องการของลูกค้า · Auto Height ตามข้อมูล','Primary sales context · Auto height'))),
+      h('div',{className:'kc-lead-section-title'},h('i',{className:'kc-lead-section-bar'}),h('strong',null,t('หมายเหตุสำคัญ','Important Notes')),h('span',null,t("พื้นที่หลักสำหรับบริบทการขายและความต้องการของลูกค้า · ปรับความสูงอัตโนมัติ ตามข้อมูล",'Primary sales context · Auto height'))),
       h('div',{className:'kc-lead-note-panel'},h('div',{className:'kc-lead-note-head'},h('span',{'aria-hidden':true},'▤'),t('หมายเหตุ / ข้อมูลการขาย','Notes / Sales Context')),h('div',{className:'kc-lead-note-body'},clean(record.note)))
      ),
      h('footer',{className:'kc-lead-detail-footer'},
       h('span',{className:'kc-lead-detail-audit'},t('อัปเดตล่าสุด: ','Last updated: ')+(record.updated_at?new Date(record.updated_at).toLocaleString(lang==='th'?'th-TH':'en-US'):'-')+' · Owner: '+ownerName),
       h('span',{className:'kc-lead-detail-footer-spacer'}),
       onActivity&&h('button',{type:'button',className:'kc-lead-action-btn',onClick:onActivity},t('บันทึกกิจกรรม','Add Activity')),
-      onOpportunity&&h('button',{type:'button',className:'kc-lead-action-btn primary',onClick:onOpportunity},t('สร้าง Opportunity','Create Opportunity'))
+      onOpportunity&&h('button',{type:'button',className:'kc-lead-action-btn primary',onClick:onOpportunity},t("สร้าง โอกาสการขาย",'Create Opportunity'))
      )
     )
    )
