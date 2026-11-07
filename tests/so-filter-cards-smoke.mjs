@@ -13,6 +13,7 @@ try{for(const width of [1440,900,390]){
   const host=document.createElement('div');document.body.append(host);window.QACreateRoot(host).render(React.createElement(C,{lang:'en',onClose:()=>{window.didClose=true},onQuotation:id=>window.openedQuote=id}));
  });
 
+ const header=page.locator('.crm-record-popup:has(.crm-so)>.crm-record-popup-head');await header.waitFor();assert.equal(await header.evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(33, 100, 217)');assert.equal(await header.locator('h2').evaluate(n=>getComputedStyle(n).color),'rgb(255, 255, 255)');
  const summary=page.getByRole('region',{name:'Filtered sales and profit summary'});await summary.waitFor();await summary.locator('.crm-so-financial-cost strong').filter({hasText:'120.00'}).waitFor();assert.match(await summary.locator('.crm-so-financial-sales strong').innerText(),/200[.]00/);assert.match(await summary.locator('.crm-so-financial-gp strong').innerText(),/80[.]00/);assert.equal(await summary.locator('.crm-so-financial-margin strong').innerText(),'40.00%');const financialBoxes=await summary.locator('article').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));assert.equal(financialBoxes.length,4);assert.ok(financialBoxes.every(b=>Math.abs(b.w-financialBoxes[0].w)<1&&Math.abs(b.h-financialBoxes[0].h)<1));assert.ok(financialBoxes[0].h<=110);
  const panel=page.getByRole('region',{name:'Sales order filters',exact:true});await panel.waitFor();
  const fields=panel.locator('.crm-field');assert.equal(await fields.count(),5);
