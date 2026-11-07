@@ -1,5 +1,23 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {bangkokDay,decisionMetrics,salesScope,readReportOpportunities} from '../src/decision-report-model.mjs';
+test('missing or invalid SO totals stay unavailable for individual, team and company scopes',()=>{
+ for(const value of [null,undefined,'invalid',Infinity]){
+  const d={scope:'team',people:[{id:'a'},{id:'b'}],months:[{month:'2026-10',company_target:1000,company_actual:value,employees:[{profile_id:'a',target:500,actual:100},{profile_id:'b',target:500,actual:value}]}]};
+  for(const s of [salesScope(d,'b','2026-10'),salesScope(d,'','2026-10'),salesScope({...d,scope:'company'},'','2026-10')]){
+   assert.equal(s.actual,null);assert.equal(s.remaining,null);assert.equal(s.attainment,null);
+  }
+  d.months[0].employees[1].actual=0;
+  assert.equal(salesScope(d,'','2026-10').actual,100);
+  d.months[0].employees[1].target=value;
+  assert.equal(salesScope(d,'','2026-10').target,null);
+ }
+});
+test('staleness uses Bangkok calendar dates for timestamp updates at the 14-day boundary',()=>{
+ const base={status:'open',close_date:'2026-10-30',amount:100,next_action:'Call'};
+ const rows=[{...base,id:'recent',updated_at:'2026-10-14T18:00:00Z'},{...base,id:'stale',updated_at:'2026-10-14T16:59:59Z'},{...base,id:'offset',updated_at:'2026-10-15T01:00:00+07:00'},{...base,id:'date-only',updated_at:'2026-10-14'},{...base,id:'invalid',updated_at:'invalid'}];
+ const m=decisionMetrics(rows,{month:'2026-10',today:'2026-10-28'});
+ assert.deepEqual(m.risks.map(r=>[r.record.id,r.days]),[['date-only',14],['stale',14]]);
+});
 test('Bangkok reporting date and monthly scope exclude other owners, months and undated deals',()=>{
  assert.equal(bangkokDay(new Date('2026-10-27T18:00:00Z')),'2026-10-28');
  const rows=[{id:'1',owner_id:'a',status:'open',amount:100,probability:50,close_date:'2026-10-23',stage:'proposal',next_action:'Call'},{id:'2',owner_id:'a',status:'won',amount:200,close_date:'2026-10-05'},{id:'3',owner_id:'a',status:'lost',amount:50,close_date:'2026-10-06'},{id:'4',owner_id:'b',status:'open',amount:999,close_date:'2026-10-20'},{id:'5',owner_id:'a',status:'open',amount:888,close_date:'2026-09-20'},{id:'6',owner_id:'a',status:'open',amount:777}];
