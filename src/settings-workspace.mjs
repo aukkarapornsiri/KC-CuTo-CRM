@@ -134,7 +134,7 @@ export function departmentOptions(current='',lang='th'){
 }
 export const WORKFLOW_TEMPLATES=[
  {id:'quotation',name:'Approve Quotation',th:'อนุมัติใบเสนอราคา',en:'Approve Quotation',flow_th:'ส่งใบเสนอราคา → ผู้อนุมัติตามลำดับ → อนุมัติใบเสนอราคา',flow_en:'Submit quotation → configured approvers → quotation approved'},
- {id:'so',name:'Approve Sales Order (SO)',th:"อนุมัติเปิดใบสั่งขาย (ใบสั่งขาย)",en:'Approve Sales Order (SO)',flow_th:'เปิด SO จากใบเสนอราคา → ผู้อนุมัติตามลำดับ → ดำเนินการส่งมอบ',flow_en:'Convert quotation to SO → configured approvers → delivery enabled'},
+ {id:'so',name:'Approve Sales Order (SO)',th:"อนุมัติเปิดใบสั่งขาย (SO)",en:'Approve Sales Order (SO)',flow_th:'เปิด SO จากใบเสนอราคา → ผู้อนุมัติตามลำดับ → ดำเนินการส่งมอบ',flow_en:'Convert quotation to SO → configured approvers → delivery enabled'},
  {id:'quotation_edit',name:'Edit Approved Quotation',th:'ขอแก้ไขใบเสนอราคาที่อนุมัติแล้ว',en:'Edit Approved Quotation',flow_th:'ขอแก้ไข → อนุมัติให้แก้ไข → บันทึกฉบับแก้ไข → ส่งอนุมัติใบเสนอราคาใหม่',flow_en:'Request editing → authorize editing → save revision → resubmit quotation'},
  {id:'amendment',name:'Edit Approved Sales Order (SO)',th:"ขอแก้ไข ใบสั่งขาย / ใบต้นทุน ที่อนุมัติแล้ว",en:'Edit Approved SO / Cost Sheet',flow_th:'ขอแก้ไข SO / Cost Sheet → อนุมัติให้แก้ไข → บันทึกฉบับแก้ไข → ส่งอนุมัติ SO ใหม่',flow_en:'Request SO / Cost Sheet editing → authorize → save revision → resubmit SO'},
  ...EXTENDED_APPROVAL_TEMPLATES
