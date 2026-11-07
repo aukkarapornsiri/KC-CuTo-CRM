@@ -15,3 +15,9 @@ button svg.lucide-x>*{visibility:hidden}
 button.kc-quote-remove{background:#f00712 url('./close-cross.svg') center/contain no-repeat!important;color:transparent!important;border-color:transparent!important;border-radius:9px!important}
 button.kc-quote-remove:hover:not(:disabled){filter:brightness(.9)}
 button:has(svg.lucide-x):focus-visible,button.kc-quote-remove:focus-visible{outline:2px solid #5d82ad;outline-offset:3px}
+
+/* Shared dimensional dismiss treatment; retain the latest gold-outline asset. */
+:is(button.kc-lead-detail-close,button.kc-dtp-close,button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]:not([aria-label^="ปิดใช้งาน"]):not([aria-label^="ปิดงาน"]))::after{filter:drop-shadow(0 4px 4.5px #9905142e);transition:transform .12s ease,filter .12s ease}
+:is(button.kc-lead-detail-close,button.kc-dtp-close,button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]:not([aria-label^="ปิดใช้งาน"]):not([aria-label^="ปิดงาน"])):hover:not(:disabled)::after{transform:translateY(-1px);filter:drop-shadow(0 5px 5px #99051440)}
+:is(button.kc-lead-detail-close,button.kc-dtp-close,button.crm-popup-close,button.crm-profile-close,button.kc-quote-close,button.crm-quotation-detail-close,button.crm-workspace-close,button[aria-label^="Close"],button[aria-label^="ปิด"]:not([aria-label^="ปิดใช้งาน"]):not([aria-label^="ปิดงาน"])):active:not(:disabled)::after{transform:translateY(1px);filter:drop-shadow(0 1px 2px #99051426)}
+@media(prefers-reduced-motion:reduce){:is(button.crm-popup-close,button.crm-profile-close,button.crm-quotation-detail-close,button[aria-label^="Close"],button[aria-label^="ปิด"])::after{transition:none}}
