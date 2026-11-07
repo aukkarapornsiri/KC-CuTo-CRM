@@ -30,7 +30,7 @@ try{for(const width of [1440,390]){
   if(kind==='contract_amendment')await form.getByLabel('มูลค่าสัญญา (บาท)',{exact:true}).fill('150');
   if(kind==='contract_renewal')await form.getByLabel('วันสิ้นสุด',{exact:true}).fill('2027-12-31');
   if(kind==='inventory_adjustment'){await form.getByLabel('คลังสินค้า',{exact:true}).selectOption('warehouse-a');await form.getByLabel('จำนวนที่ปรับเพิ่ม (+) / ลด (-)',{exact:true}).fill('5');}
-  if(kind==='special_purchase'){await form.getByLabel('ผู้ขาย / Supplier',{exact:true}).fill('QA supplier');await form.getByLabel('รายการ',{exact:true}).fill('QA purchase');await form.getByLabel('ราคาต่อหน่วย',{exact:true}).fill('80');}
+  if(kind==='special_purchase'){await form.getByLabel('ผู้ขาย / ผู้จำหน่าย',{exact:true}).fill('QA supplier');await form.getByLabel('รายการ',{exact:true}).fill('QA purchase');await form.getByLabel('ราคาต่อหน่วย',{exact:true}).fill('80');}
   await form.getByLabel('เหตุผล / รายละเอียดที่ขอ',{exact:true}).fill('QA request '+kind);await form.screenshot({path:`test-artifacts/template-${kind}-${width}.png`});
   assert.ok(await form.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'form overflow '+kind);
   assert.ok(await form.locator('.kc-template-form .crm-field').evaluateAll(els=>els.every(el=>getComputedStyle(el).borderTopWidth==='0px')),'no nested field borders '+kind);
@@ -38,6 +38,6 @@ try{for(const width of [1440,390]){
   await form.getByRole('button',{name:'ส่งขออนุมัติ',exact:true}).click();await form.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>window.templateCalls.at(-1).args.p_type),kind);
  }
  await root.getByRole('button',{name:'ส่งคำขอ',exact:true}).click();await root.locator('.kc-approval-card').first().waitFor();
- await root.locator('.kc-approval-card').first().getByRole('button',{name:'รายละเอียด',exact:true}).click();const detail=page.getByRole('dialog',{name:'คำขอตาม Template',exact:true});await detail.getByText('รายละเอียดที่ขออนุมัติ',{exact:true}).waitFor();await detail.getByRole('button',{name:'ถอนคำขอ',exact:true}).click();await detail.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>window.templateCalls.at(-1).args.p_action),'cancel');
+ await root.locator('.kc-approval-card').first().getByRole('button',{name:'รายละเอียด',exact:true}).click();const detail=page.getByRole('dialog',{name:'คำขอตาม แม่แบบ',exact:true});await detail.getByText('รายละเอียดที่ขออนุมัติ',{exact:true}).waitFor();await detail.getByRole('button',{name:'ถอนคำขอ',exact:true}).click();await detail.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>window.templateCalls.at(-1).args.p_action),'cancel');
  assert.deepEqual(errors,[]);console.log('PASS eight template forms and withdrawal',width);await page.close();
 }}finally{await browser.close();}
