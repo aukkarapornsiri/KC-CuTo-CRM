@@ -28,10 +28,13 @@ try {
   for(const [code,entry] of [['QA-QUOTE-0','Details '],['QA-QUOTE-1','Open Quotation ']]){
    await page.getByRole('button',{name:entry+code,exact:true}).click();
    const dialog=page.getByRole('dialog',{name:'Quotation details',exact:true});
-   await dialog.waitFor();assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
+   await dialog.waitFor();await page.evaluate(()=>document.fonts.load('300 15px "IBM Plex Sans Thai"'));assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
    const box=await dialog.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=901&&box.x>=0&&box.x+box.width<=width+1);
    const hero=await dialog.locator('.kc-quote-hero h2').evaluate(n=>({color:getComputedStyle(n).color,border:getComputedStyle(n).borderBottomWidth,font:getComputedStyle(n).fontFamily}));assert.equal(hero.color,'rgb(18, 60, 70)');assert.equal(hero.border,'0px');assert.match(hero.font,/IBM Plex Sans Thai/);assert.match(hero.font,/sans-serif/);
-   const headerCards=await dialog.locator('.kc-quote-header-actions>*').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,border:getComputedStyle(n).borderColor})));assert.equal(headerCards.length,2);assert.ok(Math.abs(headerCards[0].w-headerCards[1].w)<1&&Math.abs(headerCards[0].h-headerCards[1].h)<1);assert.equal(headerCards[1].border,'rgb(239, 68, 68)');
+   const status=await dialog.locator('.kc-quote-header-actions>.kc-quote-detail-status').evaluate(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,x:n.getBoundingClientRect().right,y:n.getBoundingClientRect().top}));assert.equal(await dialog.locator('.kc-quote-header-actions>button').count(),0);assert.ok(status.w<=200&&status.h<48);const identity=await dialog.locator('.kc-quote-detail-identity').boundingBox();assert.ok(Math.abs(status.x-identity.x-identity.width)<2);
+   const primary=await dialog.locator('.kc-quote-primary-actions>:is(.kc-quote-print-action,.kc-quote-edit-action)').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,y:n.getBoundingClientRect().top,bg:getComputedStyle(n).backgroundColor,color:getComputedStyle(n).color})));assert.equal(primary.length,2);assert.ok(Math.abs(primary[0].w-primary[1].w)<1&&primary[0].h===primary[1].h&&Math.abs(primary[0].y-primary[1].y)<1,JSON.stringify(primary));assert.equal(primary[0].bg,'rgb(8, 138, 135)');assert.equal(primary[1].bg,'rgb(230, 247, 247)');assert.equal(primary[1].color,'rgb(8, 138, 135)');
+   assert.ok(await dialog.locator('.kc-quote-card .crm-field>div').evaluateAll(ns=>ns.every(n=>getComputedStyle(n).fontWeight==='300')));assert.equal(await dialog.locator('.kc-quote-card h3').first().evaluate(n=>getComputedStyle(n).fontWeight),'600');
+   const closeDepth=await dialog.getByRole('button',{name:'Close quotation details',exact:true}).evaluate(n=>getComputedStyle(n,'::after').filter);assert.match(closeDepth,/drop-shadow/);
    const approvalPanel=dialog.locator('.kc-approval-compact');
    const approvalButtons=await approvalPanel.locator('.kc-approval-actions>button').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height,y:n.getBoundingClientRect().y})));
    assert.equal(approvalButtons.length,6);assert.ok(approvalButtons.every(n=>Math.abs(n.w-approvalButtons[0].w)<1&&n.h===44));
@@ -48,7 +51,7 @@ try {
    await dialog.getByRole('button',{name:'Items and services',exact:true}).click();
    assert.ok((await dialog.innerText()).includes('HCI Node'));
    await dialog.locator('.kc-quote-summary-gp strong').getByText('600,000.00',{exact:true}).waitFor();
-   assert.equal(await dialog.locator('.kc-quote-compact-items tbody tr').count(),1);
+   assert.equal(await dialog.locator('.kc-quote-compact-items tbody tr').count(),1);assert.equal(await dialog.locator('.kc-quote-compact-items th').nth(2).evaluate(n=>getComputedStyle(n).textAlign),'left');assert.equal(await dialog.locator('.kc-quote-item-first-line').first().evaluate(n=>getComputedStyle(n).textAlign),'left');
    assert.equal(await dialog.locator('.kc-quote-summary-margin strong').innerText(),'28.57%');assert.equal(await dialog.locator('.kc-quote-summary-cost strong').innerText(),'1,500,000.00');const profitCards=await dialog.locator('.kc-quote-profit-summary article').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));assert.equal(profitCards.length,4);assert.ok(profitCards.every(c=>Math.abs(c.w-profitCards[0].w)<1&&Math.abs(c.h-profitCards[0].h)<1));
    assert.equal(await dialog.getByRole('button',{name:'Edit details',exact:true}).isDisabled(),false);
    await dialog.getByRole('button',{name:'Edit details',exact:true}).click();
