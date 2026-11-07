@@ -144,3 +144,7 @@
  .kc-quote-detail .kc-quote-card{padding:20px}
  .kc-quote-detail .kc-quote-card-grid{gap:20px}
 }
+
+/* Quotation detail title bar. */
+.crm-quotation-detail-dialog>.crm-quotation-detail-head{background:#8b5e34!important;color:#fff!important;border-bottom-color:#8b5e34!important}
+.crm-quotation-detail-dialog>.crm-quotation-detail-head>strong{color:#fff!important}
