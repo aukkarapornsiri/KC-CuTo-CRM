@@ -5,6 +5,10 @@ on:
       - 'src/sales-order-excel.mjs'
       - 'src/quotation-print.mjs'
       - 'src/sales-order-print.mjs'
+      - 'src/pdf-file-save.mjs'
+      - 'src/vendor/html2canvas-1.4.1.mjs'
+      - 'tests/pdf-file-save.test.mjs'
+      - 'tests/pdf-save-browser.mjs'
       - 'tests/export-review-smoke.mjs'
       - 'tests/so-review-fit-smoke.mjs'
       - 'tests/cost-sheet-direct-print-smoke.mjs'
@@ -19,12 +23,13 @@ jobs:
           node-version: '22'
       - run: npm install --no-save playwright && npx playwright install chromium
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
-      - run: node --test tests/sales-order-excel.test.mjs
+      - run: node --test tests/sales-order-excel.test.mjs tests/pdf-file-save.test.mjs
       - run: |
           python3 -m http.server 4173 --bind 127.0.0.1 &
           sleep 2
           node tests/export-review-smoke.mjs
           node tests/so-review-fit-smoke.mjs
+          node tests/pdf-save-browser.mjs
           node tests/cost-sheet-direct-print-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
