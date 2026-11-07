@@ -1,0 +1,22 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';import fs from 'node:fs';import {execFileSync} from 'node:child_process';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});fs.mkdirSync('test-artifacts',{recursive:true});
+try{for(const width of [1440,390])for(const count of [2,45]){
+ const page=await browser.newPage({viewport:{width,height:950}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/pdf-save-test',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html><body>CRM</body></html>'}));await page.goto('http://127.0.0.1:4173/pdf-save-test');
+ const popupEvent=page.waitForEvent('popup');const launch=page.evaluate(async count=>{
+  const fonts=[400,700].map(weight=>new FontFace('IBM Plex Sans Thai','url(./assets/fonts/ibm-plex-sans-thai/'+weight+'.ttf)',{weight:String(weight)}));for(const f of fonts)document.fonts.add(await f.load());
+  const {printSalesOrder}=await import('./src/sales-order-print.mjs');const signature=document.createElement('canvas');signature.width=160;signature.height=40;const ctx=signature.getContext('2d');ctx.fillStyle='#008044';ctx.font='24px sans-serif';ctx.fillText('QA SIGNED',0,30);
+  const financial={cost_total:count*80,line_financials:Array.from({length:count},()=>({cost_total:80}))};
+  await printSalesOrder({code:'SO-SAVE-'+count,customer_name:'บริษัททดสอบ / English customer unchanged',tax_id:'0105566228991',subtotal:count*100,discount:0,vat:count*7,total:count*107,currency:'THB',items:Array.from({length:count},(_,i)=>({name:'สินค้าไทย / PDF-ITEM-'+(i+1),part_number:'PN-'+i,desc:'รายละเอียดสินค้า ภาษาไทย และข้อมูล English unchanged\n'.repeat(3),qty:1,unit:'Unit',price:100,total:100}))},'th',async()=>({includeFinancial:true,financial,approval:{status:'approved',reviewer_name:'QA Approver',reviewed_at:'2026-11-07T06:00:00Z'},signature:signature.toDataURL()}));
+ },count);const popup=await popupEvent;popup.on('pageerror',e=>errors.push(e.message));await launch;
+ await popup.evaluate(()=>{window.printCalls=0;window.print=()=>window.printCalls++;window.pickerOptions=[];window.showSaveFilePicker=async options=>{window.pickerOptions.push(options);return {createWritable:async()=>({write:async blob=>{const bytes=new Uint8Array(await blob.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));window.savedPDF=btoa(binary);},close:async()=>{window.closedWrite=true;}})};};});
+ const save=popup.getByRole('button',{name:'บันทึก PDF',exact:true});await save.click();await popup.waitForFunction(()=>window.closedWrite);
+ assert.equal(await popup.evaluate(()=>window.printCalls),0);assert.deepEqual(await popup.evaluate(()=>({id:pickerOptions[0].id,name:pickerOptions[0].suggestedName})),{id:'kc-cuto-pdf-save',name:'SO-SAVE-'+count+'.pdf'});
+ const file='test-artifacts/direct-pdf-'+width+'-'+count+'.pdf';fs.writeFileSync(file,Buffer.from(await popup.evaluate(()=>window.savedPDF),'base64'));const info=execFileSync('pdfinfo',[file],{encoding:'utf8'});assert.match(info,/Pages:\s+1\b/);assert.match(info,/Page size:\s+841\.89 x 595\.276 pts/);
+ const prefix=file.replace(/\.pdf$/,'');execFileSync('pdftoppm',['-png','-singlefile','-r','96',file,prefix]);
+ await popup.locator('.kc-review-paper').screenshot({path:prefix+'-review.png'});
+ await popup.evaluate(()=>{window.closedWrite=false;window.savedPDF='';window.showSaveFilePicker=async options=>{window.pickerOptions.push(options);throw new DOMException('Cancelled','AbortError');};});await save.click();await save.waitFor({state:'visible'});await popup.waitForFunction(()=>!document.querySelector('.kc-export-review-controls button').disabled);assert.equal(await popup.evaluate(()=>window.savedPDF),'');assert.equal(await popup.getByRole('alert').isVisible(),false);assert.equal(await popup.evaluate(()=>window.pickerOptions[1].id),'kc-cuto-pdf-save');assert.equal(await popup.evaluate(()=>window.printCalls),0);
+ // Unsupported browsers download the generated PDF, without a printer dialog.
+ if(width===1440&&count===2){await popup.evaluate(()=>{window.showSaveFilePicker=undefined;});const dl=popup.waitForEvent('download');await save.click();assert.equal((await dl).suggestedFilename(),'SO-SAVE-2.pdf');}
+ assert.deepEqual(errors,[]);await popup.close();await page.close();console.log('PASS direct PDF save, remembered picker id and no printer',width,count);
+}}finally{await browser.close();}
